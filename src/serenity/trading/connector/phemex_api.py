@@ -144,6 +144,7 @@ class AccountOrderPositionSubscriber:
 
 
 class PhemexOrderPlacer(OrderPlacer):
+    logger = logging.getLogger(__name__)
 
     def __init__(self, credentials: AuthCredentials, scheduler: NetworkScheduler, instance_id: str = 'prod'):
         super().__init__(OrderFactory())
@@ -188,8 +189,19 @@ class PhemexOrderPlacer(OrderPlacer):
             else:
                 raise PhemexError(error_code)
 
+        order_id = response['data']['orderID']
+        order.set_order_id(order_id)
+
     def cancel(self, order: Order):
-        pass
+        symbol = order.get_instrument().get_exchange_instrument_code()
+        cl_ord_id = order.get_cl_ord_id()
+        order_id = order.get_order_id()
+        response = self.trading_conn.send_message('DELETE', '/orders', {
+            'symbol': symbol,
+            'orderID': order_id
+        })
+        if response['data'][0]['bizError'] == 10002:
+            self.logger.warn(f'too late to cancel: clOrdID={cl_ord_id}')
 
     @classmethod
     def __get_scaled_price(cls, price: float) -> int:

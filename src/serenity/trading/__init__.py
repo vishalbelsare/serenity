@@ -44,10 +44,17 @@ class Order:
         self.side = side
 
         self.cl_ord_id = str(uuid1())
+        self.order_id = None
         self.exec_inst = None
 
     def get_cl_ord_id(self) -> str:
         return self.cl_ord_id
+
+    def get_order_id(self) -> str:
+        return self.order_id
+
+    def set_order_id(self, order_id: str):
+        self.order_id = order_id
 
     def get_qty(self) -> float:
         return self.qty
