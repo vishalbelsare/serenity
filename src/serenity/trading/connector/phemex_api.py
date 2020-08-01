@@ -87,10 +87,11 @@ class AccountOrderPositionSubscriber:
                     msg = self.json_messages.get_value()
                     accounts = msg['accounts']
                     for account in accounts:
-                        orders = account['orders']
-                        for order in orders:
-                            order_event = OrderEvent()
-                            self.sub.scheduler.schedule_update(self.sub.order_events, order_event)
+                        if 'orders' in account:
+                            orders = account['orders']
+                            for order in orders:
+                                order_event = OrderEvent()
+                                self.sub.scheduler.schedule_update(self.sub.order_events, order_event)
                     return True
                 else:
                     return False
