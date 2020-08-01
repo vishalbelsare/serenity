@@ -9,12 +9,12 @@ import time
 from math import trunc
 
 import websockets
-from phemex import PhemexConnection, AuthCredentials
-from phemex.order import Contract, OrderHandle
+from phemex import PhemexConnection, AuthCredentials, AuthenticationError, CredentialError, PhemexError
 from tau.core import Signal, NetworkScheduler, MutableSignal, Event
 from tau.signal import Map, Filter
 
-from serenity.trading import OrderPlacer, Order, ExecutionReport, ExecType, OrderStatus, OrderFactory, MarketOrder
+from serenity.trading import OrderPlacer, Order, ExecutionReport, ExecType, OrderStatus, OrderFactory, MarketOrder, \
+    LimitOrder, TimeInForce, ExecInst
 
 
 class WebsocketAuthenticator:
@@ -162,11 +162,48 @@ class PhemexOrderPlacer(OrderPlacer):
         return self.aop_subscriber.get_order_events()
 
     def submit(self, order: Order):
-        if isinstance(order, MarketOrder):
-            contract = Contract(order.get_instrument().get_exchange_instrument_code())
-            self.trading_conn.get_order_placer().get_order_factory().create_market_order(order.get_side(),
-                                                                                         order.get_qty(),
-                                                                                         contract)
+        params = dict()
+        params['actionBy'] = 'FromOrderPlacement'
+        params['clOrdID'] = order.get_cl_ord_id()
+        params['symbol'] = order.get_instrument().get_exchange_instrument_code()
+        params['orderQty'] = order.get_qty()
+        params['side'] = order.get_side().name.lower().capitalize()
+        if isinstance(order, LimitOrder):
+            params['ordType'] = 'Limit'
+            params['priceEp'] = PhemexOrderPlacer.__get_scaled_price(order.get_price())
+            params['timeInForce'] = PhemexOrderPlacer.__get_tif_code(order.get_time_in_force())
+            params['reduceOnly'] = order.get_exec_inst() == ExecInst.PARTICIPATE_DONT_INITIATE
+        elif isinstance(order, MarketOrder):
+            params['ordType'] = 'Market'
+        else:
+            raise ValueError(f'unsupported Order type: {type(order)}')
+
+        response = self.trading_conn.send_message('POST', '/orders', data=json.dumps(params))
+        error_code = int(response.get('code', 200))
+        if error_code > 200:
+            if error_code == 10500:
+                raise AuthenticationError()
+            elif error_code == 401:
+                raise CredentialError()
+            else:
+                raise PhemexError(error_code)
 
     def cancel(self, order: Order):
         pass
+
+    @classmethod
+    def __get_scaled_price(cls, price: float) -> int:
+        return int(price * 10000)
+
+    @classmethod
+    def __get_tif_code(cls, tif: TimeInForce) -> str:
+        if tif == TimeInForce.DAY:
+            return 'Day'
+        elif tif == TimeInForce.GTC:
+            return 'GoodTillCancel'
+        elif tif == TimeInForce.IOC:
+            return 'ImmediateOrCancel'
+        elif tif == TimeInForce.FOK:
+            return 'FillOrKill'
+        else:
+            raise ValueError(f'unsupported TimeInForce: {tif.name}')

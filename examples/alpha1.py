@@ -2,7 +2,6 @@ import logging
 from datetime import timedelta
 from typing import Set
 
-from phemex import PhemexConnection, AuthCredentials
 from phemex.order import Contract, Side, Trigger, Condition, ConditionalOrder
 from tau.core import Event, Network
 from tau.event import Do
@@ -12,7 +11,6 @@ from tau.signal import Filter, BufferWithTime, Map
 from serenity.algo import InvestmentStrategy, StrategyContext
 from serenity.model.exchange import ExchangeInstrument
 from serenity.signal.marketdata import ComputeOHLC
-from serenity.trading.connector.phemex_api import AccountOrderPositionSubscriber, WebsocketAuthenticator
 
 
 class Alpha1Trader(Event):
@@ -21,8 +19,7 @@ class Alpha1Trader(Event):
     def __init__(self, network: Network, strategy):
         self.network = network
         self.strategy = strategy
-        self.order_placer = strategy.trading_conn.get_order_placer()
-        self.order_factory = self.order_placer.get_order_factory()
+        self.order_factory = self.strategy.order_placer.get_order_factory()
 
         self.open_orders = list()
 
@@ -62,9 +59,9 @@ class Alpha1Trader(Event):
                                                         take_profit)
 
                     # place the orders
-                    self.open_orders.append(self.order_placer.submit(primary_order))
-                    self.open_orders.append(self.order_placer.submit(stop_loss_cond))
-                    self.open_orders.append(self.order_placer.submit(take_profit_cond))
+                    self.open_orders.append(self.strategy.order_placer.submit(primary_order))
+                    self.open_orders.append(self.strategy.order_placer.submit(stop_loss_cond))
+                    self.open_orders.append(self.strategy.order_placer.submit(take_profit_cond))
                 else:
                     # enter long position with a stop-loss and a take-profit at +/- 5% last trade px
                     self.logger.info(f'Going long, sell print of {big_print} BTC, EWMA={ewma}, volume={volume}')
@@ -86,9 +83,9 @@ class Alpha1Trader(Event):
                                                         take_profit)
 
                     # place the orders
-                    self.open_orders.append(self.order_placer.submit(primary_order))
-                    self.open_orders.append(self.order_placer.submit(stop_loss_cond))
-                    self.open_orders.append(self.order_placer.submit(take_profit_cond))
+                    self.open_orders.append(self.strategy.order_placer.submit(primary_order))
+                    self.open_orders.append(self.strategy.order_placer.submit(stop_loss_cond))
+                    self.open_orders.append(self.strategy.order_placer.submit(take_profit_cond))
 
             return True
         else:
@@ -108,7 +105,7 @@ class Alpha1(InvestmentStrategy):
     def __init__(self):
         self.ctx = None
         self.trade_qty = None
-        self.trading_conn = None
+        self.order_placer = None
         self.spot_feed = None
         self.futures_feed = None
         self.big_prints = None
@@ -129,31 +126,13 @@ class Alpha1(InvestmentStrategy):
         big_print_qty = float(ctx.getenv('BIG_PRINT_QTY'))
         self.trade_qty = float(ctx.getenv('CONTRACT_TRADE_QTY'))
 
-        api_key = ctx.getenv('PHEMEX_API_KEY')
-        api_secret = ctx.getenv('PHEMEX_API_SECRET')
-        if not api_key:
-            raise ValueError('missing PHEMEX_API_KEY')
-        if not api_secret:
-            raise ValueError('missing PHEMEX_API_SECRET')
-
-        credentials = AuthCredentials(api_key, api_secret)
-
-        exchange_instance = ctx.getenv('PHEMEX_INSTANCE', 'prod')
-        if exchange_instance == 'prod':
-            self.trading_conn = PhemexConnection(credentials)
-        elif exchange_instance == 'test':
-            self.trading_conn = PhemexConnection(credentials, api_url='https://testnet-api.phemex.com')
-        else:
-            raise ValueError(f'Unknown PHEMEX_INSTANCE value: {exchange_instance}')
+        exchange_instance = ctx.getenv('EXCHANGE_INSTANCE', 'prod')
+        op_uri = f'phemex:{exchange_instance}'
+        self.order_placer = ctx.get_order_placer_service().get_order_placer(op_uri)
 
         self.logger.info(f'Connected to Phemex {exchange_instance} instance')
 
         network = self.ctx.get_network()
-
-        # subscribe to AOP messages
-        auth = WebsocketAuthenticator(AuthCredentials(api_key, api_secret))
-        aop_sub = AccountOrderPositionSubscriber(auth, ctx.get_scheduler(), exchange_instance)
-        aop_sub.start()
 
         # scan the spot market for large trades
         btc_usd_spot = self.ctx.get_instrument_cache().get_exchange_instrument('CoinbasePro', 'BTC-USD')

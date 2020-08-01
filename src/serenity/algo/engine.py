@@ -6,6 +6,7 @@ import sys
 
 import fire
 import yaml
+from phemex import AuthCredentials
 from tau.core import NetworkScheduler
 
 from serenity.algo import StrategyContext
@@ -14,12 +15,14 @@ from serenity.marketdata.fh.binance_fh import BinanceFeedHandler
 from serenity.marketdata.fh.coinbasepro_fh import CoinbaseProFeedHandler
 from serenity.marketdata.fh.feedhandler import FeedHandlerRegistry, FeedHandlerMarketdataService
 from serenity.marketdata.fh.phemex_fh import PhemexFeedHandler
+from serenity.trading import OrderPlacerService
+from serenity.trading.connector.phemex_api import PhemexOrderPlacer
 from serenity.utils import init_logging, custom_asyncio_error_handler
 
 
 class Environment:
-    def __init__(self, config_yaml):
-        self.values = {}
+    def __init__(self, config_yaml, parent=None):
+        self.values = parent.values if parent is not None else {}
         for entry in config_yaml:
             key = entry['key']
             value = None
@@ -61,7 +64,7 @@ class AlgoEngine:
                 raise ValueError(f'Unsupported API version: {api_version}')
 
             self.engine_env = Environment(config['environment'])
-            instance_id = self.engine_env.getenv('FEED_INSTANCE', 'prod')
+            instance_id = self.engine_env.getenv('EXCHANGE_INSTANCE', 'prod')
             self.fh_registry = FeedHandlerRegistry()
 
             logger.info('Connecting to Serenity database')
@@ -84,19 +87,37 @@ class AlgoEngine:
                     else:
                         raise ValueError(f'Unsupported feedhandler type: {fh_name}')
 
+            op_service = OrderPlacerService()
+
+            if 'order_placers' in config:
+                logger.info('Registering OrderPlacers')
+                for order_placer in config['order_placers']:
+                    op_name = order_placer['exchange']
+                    if op_name == 'Phemex':
+                        api_key = self.engine_env.getenv('PHEMEX_API_KEY')
+                        api_secret = self.engine_env.getenv('PHEMEX_API_SECRET')
+                        if not api_key:
+                            raise ValueError('missing PHEMEX_API_KEY')
+                        if not api_secret:
+                            raise ValueError('missing PHEMEX_API_SECRET')
+
+                        credentials = AuthCredentials(api_key, api_secret)
+                        op_service.register_order_placer(f'phemex:{instance_id}',
+                                                         PhemexOrderPlacer(credentials, scheduler, instance_id))
+
             self.strategies = []
             for strategy in config['strategies']:
                 strategy_name = strategy['name']
                 self.logger.info(f'Loading strategy: {strategy_name}')
                 module = strategy['module']
                 strategy_class = strategy['strategy-class']
-                env = Environment(strategy['environment'])
+                env = Environment(strategy['environment'], parent=self.engine_env)
 
                 module = importlib.import_module(module)
                 klass = getattr(module, strategy_class)
                 strategy_instance = klass()
                 md_service = FeedHandlerMarketdataService(scheduler.get_network(), self.fh_registry, instance_id)
-                ctx = StrategyContext(scheduler, instrument_cache, md_service, env.values)
+                ctx = StrategyContext(scheduler, instrument_cache, md_service, op_service, env.values)
                 self.strategies.append((strategy_instance, ctx))
 
     def start(self):
