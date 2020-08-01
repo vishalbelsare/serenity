@@ -9,11 +9,12 @@ import time
 from math import trunc
 
 import websockets
-from phemex import PhemexConnection
+from phemex import PhemexConnection, AuthCredentials
+from phemex.order import Contract, OrderHandle
 from tau.core import Signal, NetworkScheduler, MutableSignal, Event
 from tau.signal import Map, Filter
 
-from serenity.trading import OrderPlacer, Order
+from serenity.trading import OrderPlacer, Order, ExecutionReport, ExecType, OrderStatus, OrderFactory, MarketOrder
 
 
 class WebsocketAuthenticator:
@@ -21,9 +22,9 @@ class WebsocketAuthenticator:
     Authentication mechanism for Phemex private WS API.
     """
 
-    def __init__(self, api_key, secret_key):
-        self.api_key = api_key
-        self.secret_key = secret_key
+    def __init__(self, credentials: AuthCredentials):
+        self.api_key = credentials.api_key
+        self.secret_key = credentials.secret_key
 
     def get_user_auth_message(self) -> str:
         expiry = trunc(time.time()) + 60
@@ -46,10 +47,6 @@ class WebsocketAuthenticator:
         return json.dumps(user_auth)
 
 
-class OrderEvent:
-    pass
-
-
 class AccountOrderPositionSubscriber:
     logger = logging.getLogger(__name__)
 
@@ -69,12 +66,15 @@ class AccountOrderPositionSubscriber:
         else:
             raise ValueError(f'Unknown instance_id: {instance_id}')
 
+    def get_order_events(self) -> Signal:
+        return self.order_events
+
     def start(self):
         network = self.scheduler.get_network()
         messages = MutableSignal()
         json_messages = Map(network, messages, lambda x: json.loads(x))
         json_messages = Filter(network, json_messages,
-                               lambda x: x.get('type', None) in ['incremental', 'snapshot'])
+                               lambda x: x.get('type', None) == 'incremental')
 
         class OrderEventScheduler(Event):
             # noinspection PyShadowingNames
@@ -85,13 +85,35 @@ class AccountOrderPositionSubscriber:
             def on_activate(self) -> bool:
                 if self.json_messages.is_valid():
                     msg = self.json_messages.get_value()
-                    accounts = msg['accounts']
-                    for account in accounts:
-                        if 'orders' in account:
-                            orders = account['orders']
-                            for order in orders:
-                                order_event = OrderEvent()
-                                self.sub.scheduler.schedule_update(self.sub.order_events, order_event)
+                    orders = msg['orders']
+                    for order in orders:
+                        order_id = order['orderID']
+                        cl_ord_id = order['clOrdID']
+                        exec_id = order['execID']
+                        cum_qty = order['cumQty']
+                        leaves_qty = order['leavesQty']
+                        last_px = order['execPriceEp'] / 10000
+                        last_qty = order['execQty']
+
+                        exec_type = None
+                        if order['action'] == 'New':
+                            exec_type = ExecType.NEW
+                        elif order['action'] == 'Cancel':
+                            exec_type = ExecType.CANCELED
+
+                        ord_status = None
+                        if order['ordStatus'] == 'New':
+                            ord_status = OrderStatus.NEW
+                        elif order['ordStatus'] == 'Canceled':
+                            ord_status = OrderStatus.CANCELED
+                        elif order['ordStatus'] == 'PartiallyFilled':
+                            ord_status = OrderStatus.PARTIALLY_FILLED
+                        elif order['ordStatus'] == 'Filled':
+                            ord_status = OrderStatus.FILLED
+
+                        order_event = ExecutionReport(order_id, cl_ord_id, exec_id, exec_type,
+                                                      ord_status, cum_qty, leaves_qty, last_px, last_qty)
+                        self.sub.scheduler.schedule_update(self.sub.order_events, order_event)
                     return True
                 else:
                     return False
@@ -123,11 +145,28 @@ class AccountOrderPositionSubscriber:
 
 class PhemexOrderPlacer(OrderPlacer):
 
+    def __init__(self, credentials: AuthCredentials, scheduler: NetworkScheduler, instance_id: str = 'prod'):
+        super().__init__(OrderFactory())
+        auth = WebsocketAuthenticator(credentials)
+        self.aop_subscriber = AccountOrderPositionSubscriber(auth, scheduler, instance_id)
+        self.aop_subscriber.start()
+
+        if instance_id == 'prod':
+            self.trading_conn = PhemexConnection(credentials)
+        elif instance_id == 'test':
+            self.trading_conn = PhemexConnection(credentials, api_url='https://testnet-api.phemex.com')
+        else:
+            raise ValueError(f'Unknown instance_id value: {instance_id}')
+
     def get_order_events(self) -> Signal:
-        pass
+        return self.aop_subscriber.get_order_events()
 
     def submit(self, order: Order):
-        pass
+        if isinstance(order, MarketOrder):
+            contract = Contract(order.get_instrument().get_exchange_instrument_code())
+            self.trading_conn.get_order_placer().get_order_factory().create_market_order(order.get_side(),
+                                                                                         order.get_qty(),
+                                                                                         contract)
 
     def cancel(self, order: Order):
         pass

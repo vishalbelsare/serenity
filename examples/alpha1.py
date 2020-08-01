@@ -151,7 +151,7 @@ class Alpha1(InvestmentStrategy):
         network = self.ctx.get_network()
 
         # subscribe to AOP messages
-        auth = WebsocketAuthenticator(api_key, api_secret)
+        auth = WebsocketAuthenticator(AuthCredentials(api_key, api_secret))
         aop_sub = AccountOrderPositionSubscriber(auth, ctx.get_scheduler(), exchange_instance)
         aop_sub.start()
 
