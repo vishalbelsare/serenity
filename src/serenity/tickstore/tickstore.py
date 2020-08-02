@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Tuple
 
 import pandas as pd
+from azure.storage.blob import BlobServiceClient
 
 
 class BiTimestamp:
@@ -116,8 +117,10 @@ class DataFrameIndex:
 
         # find all dates in range where as_of_time is between start_time and end_time
         symbol_data = self.df.loc[symbol]
-        mask = (symbol_data.index.get_level_values('date') >= pd.to_datetime(start)) \
-            & (symbol_data.index.get_level_values('date') <= pd.to_datetime(end)) \
+        start_time = datetime.datetime.combine(start, datetime.time.min)
+        end_time = datetime.datetime.combine(end, datetime.time.min)
+        mask = (symbol_data.index.get_level_values('date') >= pd.to_datetime(start_time)) \
+            & (symbol_data.index.get_level_values('date') <= pd.to_datetime(end_time)) \
             & (symbol_data['start_time'] <= as_of_time) \
             & (symbol_data['end_time'] >= as_of_time)
         selected = self.df.loc[symbol][mask]
@@ -147,7 +150,8 @@ class DataFrameIndex:
             else:
                 prev_version = prev_version_ndx
             version = prev_version + 1
-            self.df.loc[idx[symbol, pd.to_datetime(as_at_date), prev_version], 'end_time'] = start_time
+            self.df.loc[idx[symbol, pd.to_datetime(datetime.datetime.combine(as_at_date, datetime.time.min)),
+                            prev_version], 'end_time'] = start_time
         else:
             start_time = BiTimestamp.start_as_of
             end_time = BiTimestamp.latest_as_of
@@ -156,8 +160,8 @@ class DataFrameIndex:
         write_path = create_write_path_func(version)
 
         path = str(write_path)
-        self.df.loc[idx[symbol, pd.to_datetime(as_at_date), version], ['start_time', 'end_time', 'path']] = \
-            [start_time, end_time, path]
+        self.df.loc[idx[symbol, pd.to_datetime(datetime.datetime.combine(as_at_date, datetime.time.min)),
+                        version], ['start_time', 'end_time', 'path']] = [start_time, end_time, path]
 
         # dirty the index
         self._mark_dirty(True)
@@ -377,7 +381,13 @@ class AzureBlobTickstore(Tickstore):
     Tickstore meant to run against Microsoft's Azure Blob Storage backend, e.g. for archiving purposes. Note this is
     not suitable for concurrent access to the blob because the index is loaded into memory on the local node and only
     written back to the blob on close. We may want to implement blob locking to at least prevent accidents.
+
+    Note as a performance optimization storage is segmented by YYYYMM fronted by a LRU cache-- so accessing a month
+    that's not in the LRU cache triggers a download from the cache.
     """
+
+    def __init__(self, connect_str: str):
+        self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     def select(self, symbol: str, start: datetime.datetime, end: datetime.datetime,
                as_of_time: datetime.datetime = BiTimestamp.latest_as_of) -> pd.DataFrame:

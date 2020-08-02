@@ -5,7 +5,7 @@ from tau.core import Signal, NetworkScheduler, Network
 
 from serenity.db import InstrumentCache, TypeCodeCache
 from serenity.marketdata import MarketdataService
-from serenity.trading import OrderPlacerService
+from serenity.trading import OrderPlacerService, OrderPlacer
 
 
 class StrategyState(Enum):
@@ -93,6 +93,10 @@ class Strategy(ABC):
         strategy needs to be re-created or the engine restarted in order to continue trading.
         """
         pass
+
+
+class AlgoExecutor(ABC, OrderPlacer):
+    pass
 
 
 class InvestmentStrategy(Strategy):
