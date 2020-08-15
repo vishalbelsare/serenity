@@ -1,16 +1,21 @@
 import datetime
+import io
 import logging
 import os.path
+import pyarrow
+import pyarrow.parquet
 import re
 import shutil
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 import pandas as pd
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import BlobServiceClient
+from diskcache import Cache
 
 
 class BiTimestamp:
@@ -67,6 +72,7 @@ class Tickstore(ABC):
         """
         pass
 
+    @abstractmethod
     def flush(self):
         """
         Writes to disk, uploads data or otherwise commits any transient state without fully closing the store.
@@ -86,6 +92,22 @@ class Tickstore(ABC):
         Destroys the entire tickstore.
         """
         pass
+
+
+class IndexEntry:
+    """
+    A single entry in a DataFrameIndex.
+    """
+
+    def __init__(self, symbol: str, ts: BiTimestamp, version: int, path: str):
+        self.symbol = symbol
+        self.ts = ts
+        self.version = version
+        self.ts = ts
+        self.path = path
+
+    def __str__(self):
+        return f'{self.symbol} - {self.ts} - v{self.version} -> {self.path}'
 
 
 class DataFrameIndex:
@@ -108,6 +130,21 @@ class DataFrameIndex:
             # noinspection PyTypeChecker
             existing_index: pd.DataFrame = pd.read_hdf(str(self.index_path))
             self.df = existing_index
+
+    def symbols(self) -> List[str]:
+        return list(set(self.df.index.get_level_values('symbol')))
+
+    def entries(self, symbol: str) -> List[IndexEntry]:
+        entries = []
+        start_time = BiTimestamp.start_as_of
+        end_time = BiTimestamp.latest_as_of
+        all_by_symbol = self.df.loc[symbol].query(f'"{start_time}" <= end_time <= "{end_time}"')
+        for date_entry in all_by_symbol.index.get_level_values('date'):
+            for version_entry in all_by_symbol.loc[date_entry].index.get_level_values('version'):
+                entry_df = (all_by_symbol.loc[date_entry, version_entry])
+                entry_ts = BiTimestamp(date_entry, entry_df['end_time'])
+                entries.append(IndexEntry(symbol, entry_ts, version_entry, entry_df['path']))
+        return entries
 
     def select(self, symbol: str, start: datetime.date, end: datetime.date,
                as_of_time: datetime.datetime) -> pd.DataFrame:
@@ -193,6 +230,19 @@ class DataFrameIndex:
     def reindex(self):
         self.index_path.unlink()
         self._build_index()
+
+    def strip_prefix(self, db_prefix: str):
+        idx = pd.IndexSlice
+        for symbol in self.symbols():
+            for entry in self.entries(symbol):
+                old_prefix = f'{db_prefix}/{self.table_name}/'
+                if entry.path.startswith(old_prefix):
+                    new_prefix = f'local:{self.table_name}'
+                    new_path = f'{new_prefix}/{entry.path[len(old_prefix):]}'
+                    self.df.loc[idx[symbol, entry.ts.as_at(), entry.version], 'path'] = new_path
+
+        # dirty the index
+        self._mark_dirty(True)
 
     def flush(self):
         if self.dirty:
@@ -287,6 +337,7 @@ class DataFrameIndex:
         self.flush()
 
 
+# noinspection PyTypeChecker
 class LocalTickstore(Tickstore):
     """
     Tickstore meant to run against local disk for maximum performance.
@@ -303,12 +354,13 @@ class LocalTickstore(Tickstore):
 
         # initialize and potentially build the index
         # extract table name
-        table_name = self.base_path.parts[-1]
-        self.index = DataFrameIndex(base_path, base_path.joinpath(Path('index.h5')), table_name)
+        self.table_name = self.base_path.parts[-1]
+        self.index = DataFrameIndex(base_path, base_path.joinpath(Path('index.h5')), self.table_name)
 
         # initialize state
         self.closed = False
 
+    # noinspection DuplicatedCode
     def select(self, symbol: str, start: datetime.datetime, end: datetime.datetime,
                as_of_time: datetime.datetime = BiTimestamp.latest_as_of) -> pd.DataFrame:
         self._check_closed('select')
@@ -321,7 +373,8 @@ class LocalTickstore(Tickstore):
         # load all ticks in range into memory
         loaded_dfs = []
         for index, row in selected.iterrows():
-            loaded_dfs.append(pd.read_hdf(row['path']))
+            logical_path = row['path']
+            loaded_dfs.append(self.read(logical_path))
 
         # pass 2: select ticks matching the exact start/end timestamps
         # noinspection PyTypeChecker
@@ -333,6 +386,11 @@ class LocalTickstore(Tickstore):
         selected_ticks = all_ticks.loc[time_mask]
         selected_ticks.sort_index(inplace=True)
         return selected_ticks
+
+    def read(self, logical_path: str) -> pd.DataFrame:
+        logical_prefix = f'local:{self.table_name}'
+        physical_path = self.base_path.joinpath(Path(logical_path[len(logical_prefix) + 1:]))
+        return pd.read_hdf(str(physical_path))
 
     def insert(self, symbol: str, ts: BiTimestamp, ticks: pd.DataFrame):
         self._check_closed('insert')
@@ -352,9 +410,6 @@ class LocalTickstore(Tickstore):
         write_path.parent.mkdir(parents=True, exist_ok=True)
         ticks.to_hdf(str(write_path), 'ticks', mode='w', append=False, complevel=9, complib='blosc')
 
-    def reindex(self):
-        self.index.reindex()
-
     def delete(self, symbol: str, ts: BiTimestamp):
         self._check_closed('delete')
         self.index.delete(symbol, ts.as_at_date)
@@ -368,7 +423,7 @@ class LocalTickstore(Tickstore):
 
     def close(self):
         if not self.closed:
-            self.index.flush()
+            self.flush()
             self.closed = True
 
     def _check_closed(self, operation):
@@ -381,29 +436,148 @@ class AzureBlobTickstore(Tickstore):
     Tickstore meant to run against Microsoft's Azure Blob Storage backend, e.g. for archiving purposes. Note this is
     not suitable for concurrent access to the blob because the index is loaded into memory on the local node and only
     written back to the blob on close. We may want to implement blob locking to at least prevent accidents.
-
-    Note as a performance optimization storage is segmented by YYYYMM fronted by a LRU cache-- so accessing a month
-    that's not in the LRU cache triggers a download from the cache.
     """
 
-    def __init__(self, connect_str: str):
-        self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+    logger = logging.getLogger(__name__)
 
+    def __init__(self, connect_str: str, db_name: str, cache_dir: Path = Path('/var/tmp/abs_lru_cache'),
+                 timestamp_column: str = 'date'):
+        self.storage = BlobServiceClient.from_connection_string(connect_str)
+        self.container_name = db_name.replace('_', '-').lower()
+        self.container_client = self.storage.get_container_client(self.container_name)
+        self.cache_dir = cache_dir
+        self.cache = Cache(str(self.cache_dir))
+        self.index_path = self.cache_dir.joinpath(Path('index.h5'))
+        self.timestamp_column = timestamp_column
+        self.closed = False
+
+        # try and create the container
+        try:
+            self.storage.create_container(self.container_name)
+        except ResourceExistsError:
+            pass
+
+        # check if index exists
+        blob_list = self.container_client.list_blobs()
+        if 'index' in blob_list:
+            # fetch index from Azure
+            blob_client = self.storage.get_blob_client(container=self.container_name, blob='index')
+            index_blob = blob_client.download_blob()
+
+            # write index into local cache dir
+            with open(self.index_path, 'wb') as index_file:
+                index_file.write(index_blob.readall())
+
+            self.index = DataFrameIndex(Path(f'azure:{db_name}/'), Path(self.index_path), db_name)
+        else:
+            # create new empty index
+            self.index = DataFrameIndex(Path(f'azure:{db_name}/'), Path(self.index_path), db_name)
+
+    # noinspection DuplicatedCode
     def select(self, symbol: str, start: datetime.datetime, end: datetime.datetime,
                as_of_time: datetime.datetime = BiTimestamp.latest_as_of) -> pd.DataFrame:
-        raise NotImplementedError
+        self._check_closed('select')
 
+        # pass 1: grab the list of splays matching the start / end range that are valid for as_of_time
+        selected = self.index.select(symbol, start.date(), end.date(), as_of_time)
+        if selected.empty:
+            return selected
+
+        # load all ticks in range into memory
+        loaded_dfs = []
+        for index, row in selected.iterrows():
+            logical_path = row['path']
+            loaded_dfs.append(self.read(logical_path))
+
+        # pass 2: select ticks matching the exact start/end timestamps
+        # noinspection PyTypeChecker
+        all_ticks = pd.concat(loaded_dfs)
+        time_mask = (all_ticks.index.get_level_values(self.timestamp_column) >= start) \
+                    & (all_ticks.index.get_level_values(self.timestamp_column) <= end)
+
+        # sort the ticks -- probably need to optimize this to sort on paths and sort ticks on ingest
+        selected_ticks = all_ticks.loc[time_mask]
+        selected_ticks.sort_index(inplace=True)
+        return selected_ticks
+
+    # noinspection PyTypeChecker
+    def read(self, logical_path: str) -> pd.DataFrame:
+        logical_prefix = f'azure:{self.container_name}'
+        key = logical_path[len(logical_prefix) + 1:]
+        cached_data = self.cache.get(key)
+        if cached_data is not None:
+            self.logger.info(f'reading ticks from cache: {key}')
+            return pd.read_hdf(io.BytesIO(cached_data))
+        else:
+            blob_client = self.storage.get_blob_client(container=self.container_name, blob=key)
+            tick_blob = blob_client.download_blob()
+            tick_data = tick_blob.readall()
+            self.cache.set(key, tick_data)
+            return pd.read_hdf(io.BytesIO(tick_data))
+
+    # noinspection PyArgumentList
     def insert(self, symbol: str, ts: BiTimestamp, ticks: pd.DataFrame):
-        raise NotImplementedError
+        self._check_closed('insert')
+
+        # encode DataFrame as parquet byte stream
+        table = pyarrow.Table.from_pandas(df=ticks)
+        buf = pyarrow.BufferOutputStream()
+        pyarrow.parquet.write_table(table, buf)
+
+        # determine latest version number
+        # compose a splay path based on YYYY/MM/DD, symbol and version and pass in as a functor
+        # so it can be populated with the bitemporal version
+        as_at_date = ts.as_at()
+
+        def create_write_path(version: int):
+            path = f'azure:{self.container_name}/{as_at_date.year}/{as_at_date.month:02d}/{as_at_date.day:02d}/{symbol}_{version:04d}.h5'
+            self.logger.info(f'writing new data file to {path}')
+            return path
+
+        # insert into local copy of index
+        data_path = self.index.insert(symbol, as_at_date, create_write_path)
+        logical_prefix = f'azure:{self.index.table_name}/'
+        blob_path = data_path[len(logical_prefix):]
+
+        # update cache
+        data_bytes = bytes(buf.getvalue())
+        self.cache.set(blob_path, data_bytes)
+
+        # upload to Azure -- deleting any existing resource first
+
+        self.logger.info(f'uploading to Azure: {blob_path}')
+        blob_client = self.storage.get_blob_client(container=self.container_name, blob=str(blob_path))
+        try:
+            blob_client.delete_blob()
+        except ResourceNotFoundError:
+            pass
+        blob_client.upload_blob(io.BytesIO(data_bytes))
 
     def delete(self, symbol: str, ts: BiTimestamp):
-        raise NotImplementedError
+        self._check_closed('delete')
+        self.index.delete(symbol, ts.as_at())
 
     def flush(self):
-        pass
+        # sync index to disk
+        self.index.flush()
+
+        # upload index to Azure blob storage
+        blob_client = self.storage.get_blob_client(container=self.container_name, blob='index')
+        with open(self.index_path, 'rb') as index_data:
+            try:
+                blob_client.delete_blob()
+            except ResourceNotFoundError:
+                pass
+            blob_client.upload_blob(index_data)
 
     def close(self):
-        pass
+        if not self.closed:
+            self.flush()
+            self.closed = True
+
+    def _check_closed(self, operation):
+        if self.closed:
+            raise Exception('unable to perform operation while closed: ' + operation)
 
     def destroy(self):
         pass
