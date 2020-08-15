@@ -468,7 +468,11 @@ class AzureBlobTickstore(Tickstore):
 
             self.index = DataFrameIndex(Path(f'azure:{db_name}/'), Path(self.index_path), db_name)
         except ResourceNotFoundError:
-            # create new empty index
+            # clear out any previously-downloaded index first
+            if self.index_path.exists():
+                self.index_path.unlink()
+
+            # create new, empty index on local disk (we'll upload this to Azure when we flush())
             self.index = DataFrameIndex(Path(f'azure:{db_name}/'), Path(self.index_path), db_name)
 
     # noinspection DuplicatedCode
@@ -505,13 +509,13 @@ class AzureBlobTickstore(Tickstore):
         cached_data = self.cache.get(key)
         if cached_data is not None:
             self.logger.info(f'reading ticks from cache: {key}')
-            return pd.read_hdf(io.BytesIO(cached_data))
+            return pd.read_parquet(io.BytesIO(cached_data))
         else:
             blob_client = self.storage.get_blob_client(container=self.container_name, blob=key)
             tick_blob = blob_client.download_blob()
             tick_data = tick_blob.readall()
             self.cache.set(key, tick_data)
-            return pd.read_hdf(io.BytesIO(tick_data))
+            return pd.read_parquet(io.BytesIO(tick_data))
 
     # noinspection PyArgumentList
     def insert(self, symbol: str, ts: BiTimestamp, ticks: pd.DataFrame):
