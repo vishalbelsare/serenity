@@ -32,6 +32,9 @@ def tickstore_admin(action: str, db: str, staging_dir: str = '/mnt/raid/data/beh
                 logical_path = entry.path
                 ticks = local_tickstore.read(logical_path)
                 cloud_tickstore.insert(entry.symbol, entry.ts, ticks)
+
+        local_tickstore.close()
+        cloud_tickstore.close()
     else:
         raise Exception(f'Unknown action: {action}')
 

@@ -139,12 +139,12 @@ class DataFrameIndex:
         start_time = BiTimestamp.start_as_of
         end_time = BiTimestamp.latest_as_of
         all_by_symbol = self.df.loc[symbol].query(f'"{start_time}" <= end_time <= "{end_time}"')
-        for date_entry in all_by_symbol.index.get_level_values('date'):
-            for version_entry in all_by_symbol.loc[date_entry].index.get_level_values('version'):
+        for date_entry in all_by_symbol.index.get_level_values('date').unique():
+            for version_entry in all_by_symbol.loc[date_entry].index.get_level_values('version').unique():
                 entry_df = (all_by_symbol.loc[date_entry, version_entry])
                 entry_ts = BiTimestamp(date_entry, entry_df['end_time'])
                 entries.append(IndexEntry(symbol, entry_ts, version_entry, entry_df['path']))
-        return entries
+        return list(entries)
 
     def select(self, symbol: str, start: datetime.date, end: datetime.date,
                as_of_time: datetime.datetime) -> pd.DataFrame:
@@ -455,11 +455,9 @@ class AzureBlobTickstore(Tickstore):
         try:
             self.storage.create_container(self.container_name)
         except ResourceExistsError:
-            pass
+            self.logger.info(f'container {self.container_name} already exists')
 
-        # check if index exists
-        blob_list = self.container_client.list_blobs()
-        if 'index' in blob_list:
+        try:
             # fetch index from Azure
             blob_client = self.storage.get_blob_client(container=self.container_name, blob='index')
             index_blob = blob_client.download_blob()
@@ -469,7 +467,7 @@ class AzureBlobTickstore(Tickstore):
                 index_file.write(index_blob.readall())
 
             self.index = DataFrameIndex(Path(f'azure:{db_name}/'), Path(self.index_path), db_name)
-        else:
+        except ResourceNotFoundError:
             # create new empty index
             self.index = DataFrameIndex(Path(f'azure:{db_name}/'), Path(self.index_path), db_name)
 
@@ -493,7 +491,7 @@ class AzureBlobTickstore(Tickstore):
         # noinspection PyTypeChecker
         all_ticks = pd.concat(loaded_dfs)
         time_mask = (all_ticks.index.get_level_values(self.timestamp_column) >= start) \
-                    & (all_ticks.index.get_level_values(self.timestamp_column) <= end)
+            & (all_ticks.index.get_level_values(self.timestamp_column) <= end)
 
         # sort the ticks -- probably need to optimize this to sort on paths and sort ticks on ingest
         selected_ticks = all_ticks.loc[time_mask]
@@ -530,8 +528,8 @@ class AzureBlobTickstore(Tickstore):
         as_at_date = ts.as_at()
 
         def create_write_path(version: int):
-            path = f'azure:{self.container_name}/{as_at_date.year}/{as_at_date.month:02d}/{as_at_date.day:02d}/{symbol}_{version:04d}.h5'
-            self.logger.info(f'writing new data file to {path}')
+            path = f'azure:{self.container_name}/{as_at_date.year}/{as_at_date.month:02d}/{as_at_date.day:02d}/' \
+                   f'{symbol}_{version:04d}.h5'
             return path
 
         # insert into local copy of index
@@ -543,15 +541,13 @@ class AzureBlobTickstore(Tickstore):
         data_bytes = bytes(buf.getvalue())
         self.cache.set(blob_path, data_bytes)
 
-        # upload to Azure -- deleting any existing resource first
-
+        # upload to Azure
         self.logger.info(f'uploading to Azure: {blob_path}')
         blob_client = self.storage.get_blob_client(container=self.container_name, blob=str(blob_path))
         try:
-            blob_client.delete_blob()
-        except ResourceNotFoundError:
-            pass
-        blob_client.upload_blob(io.BytesIO(data_bytes))
+            blob_client.upload_blob(io.BytesIO(data_bytes), overwrite=False)
+        except ResourceExistsError:
+            self.logger.info(f'skipping upload of existing blob: {blob_path}')
 
     def delete(self, symbol: str, ts: BiTimestamp):
         self._check_closed('delete')
@@ -564,11 +560,7 @@ class AzureBlobTickstore(Tickstore):
         # upload index to Azure blob storage
         blob_client = self.storage.get_blob_client(container=self.container_name, blob='index')
         with open(self.index_path, 'rb') as index_data:
-            try:
-                blob_client.delete_blob()
-            except ResourceNotFoundError:
-                pass
-            blob_client.upload_blob(index_data)
+            blob_client.upload_blob(index_data, overwrite=True)
 
     def close(self):
         if not self.closed:
