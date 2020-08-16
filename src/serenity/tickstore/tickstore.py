@@ -207,9 +207,10 @@ class DataFrameIndex:
 
     def delete(self, symbol: str, as_at_date: datetime.date):
         idx = pd.IndexSlice
+        as_at_datetime = pd.to_datetime(datetime.datetime.combine(as_at_date, datetime.time.min))
         self.df.sort_index(inplace=True)
         try:
-            all_versions = self.df.loc[idx[symbol, as_at_date, :]]
+            all_versions = self.df.loc[idx[symbol, as_at_datetime, :]]
         except KeyError:
             all_versions = pd.DataFrame()
 
@@ -222,7 +223,7 @@ class DataFrameIndex:
                 prev_version = prev_version_ndx[2]
             else:
                 prev_version = prev_version_ndx
-            self.df.loc[idx[symbol, as_at_date, prev_version], 'end_time'] = start_time
+            self.df.loc[idx[symbol, as_at_datetime, prev_version], 'end_time'] = start_time
 
             # dirty the index
             self._mark_dirty(True)
@@ -395,16 +396,18 @@ class LocalTickstore(Tickstore):
     def insert(self, symbol: str, ts: BiTimestamp, ticks: pd.DataFrame):
         self._check_closed('insert')
         as_at_date = ts.as_at()
+        logical_prefix = f'local:{self.table_name}'
 
         # compose a splay path based on YYYY/MM/DD, symbol and version and pass in as a functor
         # so it can be populated with the bitemporal version
         def create_write_path(version: int):
             path = f'{as_at_date.year}/{as_at_date.month:02d}/{as_at_date.day:02d}/{symbol}_{version:04d}.h5'
-            full_path = self.base_path.joinpath(path)
+            full_path = f'{logical_prefix}/{path}'
             self.logger.info(f'writing new data file to {full_path}')
             return full_path
 
-        write_path = self.index.insert(symbol, as_at_date, create_write_path)
+        logical_path = self.index.insert(symbol, as_at_date, create_write_path)
+        write_path = self.base_path.joinpath(Path(logical_path[len(logical_prefix) + 1:]))
 
         # do the tick write, with blosc compression
         write_path.parent.mkdir(parents=True, exist_ok=True)
