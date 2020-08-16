@@ -3,10 +3,11 @@
 Release History
 ---------------
 
-0.3.0 (TBD)
+0.3.0 (2020-08-16)
 ++++++++++++++++++
 
 - Added support for streaming Bollinger Band computation
+- Added Azure blob storage option for tickstores
 - Upgraded to Tau 0.5.0
 
 0.2.0 (2020-05-03)
