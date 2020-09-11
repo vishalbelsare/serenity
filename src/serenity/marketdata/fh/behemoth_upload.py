@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 from pathlib import Path
 
 import fire
@@ -7,7 +8,7 @@ import pandas as pd
 
 from serenity.db import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.tickstore.journal import Journal, NoSuchJournalException
-from serenity.tickstore.tickstore import LocalTickstore, BiTimestamp
+from serenity.tickstore.tickstore import LocalTickstore, BiTimestamp, AzureBlobTickstore
 from serenity.utils import init_logging
 
 
@@ -34,6 +35,7 @@ def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
             upload_order_books(behemoth_path, db_prefix, exchange, logger, symbol, upload_date)
 
 
+# noinspection DuplicatedCode
 def upload_order_books(behemoth_path, db_prefix, exchange, logger, symbol, upload_date):
     books_db = f'{db_prefix}_BOOKS'
     books_path = Path(f'{behemoth_path}/journals/{books_db}/{symbol}')
@@ -69,8 +71,12 @@ def upload_order_books(behemoth_path, db_prefix, exchange, logger, symbol, uploa
             tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{books_db}')), 'time')
             tickstore.insert(symbol, BiTimestamp(upload_date), df)
             tickstore.close()
+            logger.info(f'inserted {len(df)} {symbol} order book records on local disk')
 
-            logger.info(f'inserted {len(df)} {symbol} order book records')
+            cloud_tickstore = connect_azure_blob_tickstore(books_db)
+            cloud_tickstore.insert(symbol, BiTimestamp(upload_date), df)
+            cloud_tickstore.close()
+            logger.info(f'inserted {len(df)} {symbol} order book records in cloud storage')
         else:
             logger.info(f'zero {exchange}/{symbol} books for UTC date {str(upload_date)}')
             tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{books_db}')), 'time')
@@ -118,15 +124,27 @@ def upload_trades(behemoth_path, db_prefix, exchange, logger, symbol, upload_dat
             tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{trades_db}')), 'time')
             tickstore.insert(symbol, BiTimestamp(upload_date), df)
             tickstore.close()
+            logger.info(f'inserted {len(df)} {symbol} trade records on local disk')
 
-            logger.info(f'inserted {len(df)} {symbol} trade records')
+            cloud_tickstore = connect_azure_blob_tickstore(trades_db)
+            cloud_tickstore.insert(symbol, BiTimestamp(upload_date), df)
+            cloud_tickstore.close()
+            logger.info(f'inserted {len(df)} {symbol} trade records in cloud storage')
         else:
             logger.info(f'zero {exchange}/{symbol} ticks for UTC date {str(upload_date)}')
             tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{trades_db}')), 'time')
             tickstore.close()
 
+            cloud_tickstore = connect_azure_blob_tickstore(trades_db)
+            cloud_tickstore.close()
+
     except NoSuchJournalException:
         logger.error(f'missing journal file: {trades_path}')
+
+
+def connect_azure_blob_tickstore(db: str):
+    connect_str = os.getenv('AZURE_CONNECT_STR', None)
+    return AzureBlobTickstore(connect_str, db)
 
 
 if __name__ == '__main__':

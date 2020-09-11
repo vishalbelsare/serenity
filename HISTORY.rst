@@ -3,6 +3,12 @@
 Release History
 ---------------
 
+0.3.2 (2020-09-11)
+++++++++++++++++++
+
+- Started capturing top of order book for Phemex
+- Integrated Azure blob storage with behemoth_upload.py
+
 0.3.1 (2020-08-16)
 ++++++++++++++++++
 

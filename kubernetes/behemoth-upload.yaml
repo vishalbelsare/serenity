@@ -19,6 +19,11 @@ spec:
                 secretKeyRef:
                   name: database-secret-config
                   key: password
+            - name: AZURE_CONNECT_STR
+              valueFrom:
+                secretKeyRef:
+                  name: azure-secret-config
+                  key: connect-str
             volumeMounts:
             - mountPath: /behemoth
               name: behemoth
