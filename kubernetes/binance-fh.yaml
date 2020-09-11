@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: binance-fh
-          image: cloudwallcapital/serenity:2020.04.26-b13
+          image: cloudwallcapital/serenity:2020.09.11-b15
           command: ["python"]
           args: ["serenity/marketdata/fh/binance_fh.py"]
           env:
