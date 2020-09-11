@@ -209,7 +209,7 @@ def create_fh(scheduler: NetworkScheduler, instrument_cache: InstrumentCache, in
 
 
 def main(instance_id: str = 'prod', journal_path: str = '/behemoth/journals/'):
-    ws_fh_main(create_fh, PhemexFeedHandler.get_uri_scheme(), instance_id, journal_path, 'PHEMEX_TRADES')
+    ws_fh_main(create_fh, PhemexFeedHandler.get_uri_scheme(), instance_id, journal_path, 'PHEMEX', True)
 
 
 if __name__ == '__main__':

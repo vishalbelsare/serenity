@@ -23,17 +23,19 @@ def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
     instr_cache = InstrumentCache(cur, TypeCodeCache(cur))
 
     exchanges = {
-        'Phemex': 'PHEMEX_TRADES',
-        'CoinbasePro': 'COINBASE_PRO_TRADES'
+        'Phemex': 'PHEMEX',
+        'CoinbasePro': 'COINBASE'
     }
     for exchange, db in exchanges.items():
         for instrument in instr_cache.get_all_exchange_instruments(exchange):
             symbol = instrument.get_exchange_instrument_code()
-            path = Path(f'{behemoth_path}/journals/{db}/{symbol}')
-            journal = Journal(path)
+
+            # upload trades
+            trades_path = Path(f'{behemoth_path}/journals/{db}_TRADES/{symbol}')
+            trades_journal = Journal(trades_path)
 
             try:
-                reader = journal.create_reader(upload_date)
+                reader = trades_journal.create_reader(upload_date)
 
                 length = reader.get_length()
                 records = []
@@ -58,21 +60,66 @@ def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
                     records.append(record)
 
                 if len(records) > 0:
-                    logger.info(f'uploading journaled {exchange}/{symbol} ticks to Behemoth for UTC date {str(upload_date)}')
+                    logger.info(
+                        f'uploading journaled {exchange}/{symbol} ticks to Behemoth for UTC date {str(upload_date)}')
                     df = pd.DataFrame(records)
                     df.set_index('time', inplace=True)
                     logger.info(f'extracted {len(df)} {symbol} trade records')
-                    tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{db}')), 'time')
+                    tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{db}_TRADES')), 'time')
                     tickstore.insert(symbol, BiTimestamp(upload_date), df)
                     tickstore.close()
 
-                    logger.info(f'inserted {len(df)} {symbol} records')
+                    logger.info(f'inserted {len(df)} {symbol} trade records')
                 else:
                     logger.info(f'zero {exchange}/{symbol} ticks for UTC date {str(upload_date)}')
-                    tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{db}')), 'time')
+                    tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{db}_TRADES')), 'time')
+                    tickstore.close()
+
+            except NoSuchJournalException:
+                logger.error(f'missing journal file: {trades_path}')
+
+            # upload order books
+            books_path = Path(f'{behemoth_path}/journals/{db}_BOOKS/{symbol}')
+            books_journal = Journal(books_path)
+            try:
+                reader = books_journal.create_reader(upload_date)
+
+                length = reader.get_length()
+                records = []
+                while reader.get_pos() < length:
+                    time = reader.read_double()
+
+                    best_bid_qty = reader.read_long()
+                    best_bid_px = reader.read_double()
+                    best_ask_qty = reader.read_long()
+                    best_ask_px = reader.read_double()
+
+                    record = {
+                        'time': datetime.datetime.fromtimestamp(time),
+                        'best_bid_qty': best_bid_qty,
+                        'best_bid_px': best_bid_px,
+                        'best_ask_qty': best_ask_qty,
+                        'best_ask_px': best_ask_px
+                    }
+                    records.append(record)
+
+                if len(records) > 0:
+                    logger.info(
+                        f'uploading journaled {exchange}/{symbol} books to Behemoth for UTC date {str(upload_date)}')
+                    df = pd.DataFrame(records)
+                    df.set_index('time', inplace=True)
+                    logger.info(f'extracted {len(df)} {symbol} order books')
+                    tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{db}_BOOKS')), 'time')
+                    tickstore.insert(symbol, BiTimestamp(upload_date), df)
+                    tickstore.close()
+
+                    logger.info(f'inserted {len(df)} {symbol} order book records')
+                else:
+                    logger.info(f'zero {exchange}/{symbol} books for UTC date {str(upload_date)}')
+                    tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{db}_BOOKS')), 'time')
                     tickstore.close()
             except NoSuchJournalException:
-                logger.error(f'missing journal file: {path}')
+                logger.error(f'missing journal file: {books_path}')
 
 
 if __name__ == '__main__':

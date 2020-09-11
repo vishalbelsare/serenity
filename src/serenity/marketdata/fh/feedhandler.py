@@ -255,7 +255,7 @@ class FeedHandlerMarketdataService(MarketdataService):
         return f'{instrument.get_exchange().get_type_code().lower()}:{self.instance_id}:{symbol}'
 
 
-def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, db: str):
+def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, db: str, journal_books: bool = True):
     init_logging()
     logger = logging.getLogger(__name__)
 
@@ -283,7 +283,7 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 if fh.get_state().get_value() == FeedHandlerState.LIVE:
                     feed = registry.get_feed(f'{uri_scheme}:{instance_id}:{self.trade_symbol}')
                     instrument_code = feed.get_instrument().get_exchange_instrument_code()
-                    journal = Journal(Path(f'{journal_path}/{db}/{instrument_code}'))
+                    journal = Journal(Path(f'{journal_path}/{db}_TRADES/{instrument_code}'))
                     self.appender = journal.create_appender()
 
                     trades = feed.get_trades()
@@ -300,6 +300,41 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 self.appender.write_short(1 if trade.get_side().get_type_code() == 'Buy' else 0)
                 self.appender.write_double(trade.get_qty())
                 self.appender.write_double(trade.get_price())
+
+        if journal_books:
+            class SubscribeOrderBook(Event):
+                def __init__(self, trade_symbol):
+                    self.trade_symbol = trade_symbol
+                    self.appender = None
+
+                def on_activate(self) -> bool:
+                    if fh.get_state().get_value() == FeedHandlerState.LIVE:
+                        feed = registry.get_feed(f'{uri_scheme}:{instance_id}:{self.trade_symbol}')
+                        instrument_code = feed.get_instrument().get_exchange_instrument_code()
+                        journal = Journal(Path(f'{journal_path}/{db}_BOOKS/{instrument_code}'))
+                        self.appender = journal.create_appender()
+
+                        books = feed.get_order_books()
+                        Do(scheduler.get_network(), books, lambda: self.on_book_update(books.get_value()))
+                    return False
+
+                def on_book_update(self, book: OrderBook):
+                    self.appender.write_double(datetime.utcnow().timestamp())
+                    if len(book.get_bids()) > 0:
+                        self.appender.write_long(book.get_best_bid().get_qty())
+                        self.appender.write_double(book.get_best_bid().get_px())
+                    else:
+                        self.appender.write_long(0)
+                        self.appender.write_double(0)
+
+                    if len(book.get_asks()) > 0:
+                        self.appender.write_long(book.get_best_ask().get_qty())
+                        self.appender.write_double(book.get_best_ask().get_px())
+                    else:
+                        self.appender.write_long(0)
+                        self.appender.write_double(0)
+
+            scheduler.get_network().connect(fh.get_state(), SubscribeOrderBook(symbol))
 
         scheduler.get_network().connect(fh.get_state(), SubscribeTrades(symbol))
 
