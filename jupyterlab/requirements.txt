@@ -1,4 +1,4 @@
-Cython==0.29.18
+Cython==0.29.17
 arch==4.15
 cufflinks==0.17.3
 dask==2.26.0
