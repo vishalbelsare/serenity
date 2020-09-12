@@ -11,16 +11,21 @@ with open('HISTORY.rst', 'r') as f:
 
 
 requires = [
+    'azure-storage-blob',
     'coinbasepro',
+    'diskcache',
     'fire',
     'gemini-python',
     'numpy',
     'pandas',
+    'pelican-fix',
     'phemex',
     'psycopg2',
+    'pyarrow',
     'pytau',
     'python-binance',
     'pytz',
+    'pyyaml',
     'scipy',
     'tables',
     'websockets',
@@ -29,7 +34,7 @@ requires = [
 
 setuptools.setup(
     name='serenity-trading',
-    version='0.3.3',
+    version='0.3.4',
     description='A Python cryptocurrency trading system.',
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/x-rst',
