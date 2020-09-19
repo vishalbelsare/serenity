@@ -1,0 +1,21 @@
+api-version: v1Beta
+environment:
+  - key: EXCHANGE_ID
+    value: autofill
+  - key: EXCHANGE_INSTANCE
+    value: prod
+  - key: AZURE_CONNECT_STR
+    value-source: SYSTEM_ENV
+  - key: INSTRUMENTS_TO_CACHE
+    value: Phemex/BTCUSD
+strategies:
+  - name: BollingerBands
+    module: bbands1
+    strategy-class: BollingerBandsStrategy1
+    environment:
+      - key: TRADING_INSTRUMENT
+        value: Phemex/BTCUSD
+      - key: BBANDS_WINDOW
+        value: 20
+      - key: BBANDS_NUM_STD
+        value: 2

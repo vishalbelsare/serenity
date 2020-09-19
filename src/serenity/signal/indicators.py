@@ -10,6 +10,9 @@ class BollingerBands:
         self.upper = upper
         self.lower = lower
 
+    def __str__(self) -> str:
+        return f'BBands(SMA={self.sma}, upper={self.upper}, lower={self.lower})'
+
 
 class ComputeBollingerBands(Function):
     def __init__(self, network: Network, prices: Signal, window: int, num_std: int):

@@ -36,7 +36,7 @@ class Trade:
         return self.price
 
     def __str__(self):
-        return f'{self.instrument} - {self.side.get_type_code()} {self.qty}@{self.price} (ID: {self.trade_id})'
+        return f'{self.instrument} - {self.side} {self.qty}@{self.price} (ID: {self.trade_id})'
 
 
 class BookLevel:
