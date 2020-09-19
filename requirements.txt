@@ -10,7 +10,7 @@ pelican-fix==0.1.0
 phemex==0.3.0
 psycopg2==2.8.6
 pyarrow==1.0.1
-pytau==0.6.1
+pytau==0.7.0
 python-binance==0.7.5
 pytz==2020.1
 pyyaml==5.3.1

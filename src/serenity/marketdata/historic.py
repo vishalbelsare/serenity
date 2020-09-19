@@ -12,12 +12,11 @@ from serenity.trading import Side
 
 
 class HistoricMarketdataService(MarketdataService):
-    def __init__(self, scheduler: HistoricNetworkScheduler, instruments_to_cache: List, azure_connect_str: str,
-                 start_time_millis: int, end_time_millis: int):
+    def __init__(self, scheduler: HistoricNetworkScheduler, instruments_to_cache: List, azure_connect_str: str):
         self.scheduler = scheduler
 
-        start_time = datetime.fromtimestamp(start_time_millis / 1000.0)
-        end_time = datetime.fromtimestamp(end_time_millis / 1000.0)
+        start_time = datetime.fromtimestamp(scheduler.get_start_time() / 1000.0)
+        end_time = datetime.fromtimestamp(scheduler.get_end_time() / 1000.0)
 
         self.book_signal_by_symbol = {}
         self.trade_signal_by_symbol = {}
@@ -30,13 +29,13 @@ class HistoricMarketdataService(MarketdataService):
             trades_signal = MutableSignal()
             scheduler.network.attach(trades_signal)
             self.trade_signal_by_symbol[symbol] = trades_signal
-            for index, row in trades_df.iterrows():
-                at_time = pd.to_datetime([index]).astype(int) / 10**6
-                sequence = row['sequence']
-                trade_id = row['trade_id']
-                side = Side.SELL if row['side'] == 'sell' else Side.BUY
-                qty = row['size']
-                price = row['price']
+            for row in trades_df.itertuples():
+                at_time = row[0].asm8.astype('int64') / 10**6
+                sequence = row[1]
+                trade_id = row[2]
+                side = Side.SELL if row[4] == 'sell' else Side.BUY
+                qty = row[5]
+                price = row[6]
                 trade = Trade(instrument, sequence, trade_id, side, qty, price)
                 scheduler.schedule_update_at(trades_signal, trade, at_time)
 
@@ -47,10 +46,10 @@ class HistoricMarketdataService(MarketdataService):
             books_signal = MutableSignal()
             scheduler.network.attach(books_signal)
             self.book_signal_by_symbol[symbol] = books_signal
-            for index, row in books_df.iterrows():
-                at_time = pd.to_datetime([index]).astype(int) / 10**6
-                best_bid = BookLevel(row['best_bid_px'], row['best_bid_qty'])
-                best_ask = BookLevel(row['best_ask_px'], row['best_ask_qty'])
+            for row in books_df.itertuples():
+                at_time = row[0].asm8.astype('int64') / 10**6
+                best_bid = BookLevel(row[2], row[1])
+                best_ask = BookLevel(row[4], row[3])
                 book = OrderBook(bids=[best_bid], asks=[best_ask])
                 scheduler.schedule_update_at(books_signal, book, at_time)
             tickstore.close()

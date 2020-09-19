@@ -49,12 +49,11 @@ class AlgoBacktester:
             conn.autocommit = True
             cur = conn.cursor()
 
-            self.scheduler = HistoricNetworkScheduler()
+            self.scheduler = HistoricNetworkScheduler(start_time_millis, end_time_millis)
             instrument_cache = InstrumentCache(cur, TypeCodeCache(cur))
             instruments_to_cache = [instrument_cache.get_exchange_instrument('Phemex', 'BTCUSD')]
             md_service = HistoricMarketdataService(self.scheduler, instruments_to_cache,
-                                                   self.bt_env.getenv('AZURE_CONNECT_STR'),
-                                                   start_time_millis, end_time_millis)
+                                                   self.bt_env.getenv('AZURE_CONNECT_STR'))
             op_service = OrderPlacerService()
             op_service.register_order_placer(f'{exchange_id}:{instance_id}',
                                              AutoFillOrderPlacer(self.scheduler, md_service))
@@ -63,8 +62,8 @@ class AlgoBacktester:
             strategy_instance.init(ctx)
             strategy_instance.start()
 
-    def run(self, start_time_millis: int, end_time_millis: int):
-        self.scheduler.run(start_time_millis, end_time_millis)
+    def run(self):
+        self.scheduler.run()
 
 
 def main(config_path: str, module: str, strategy_class: str, start_time: str = None, end_time: str = None,
@@ -76,7 +75,7 @@ def main(config_path: str, module: str, strategy_class: str, start_time: str = N
     end_time_millis = int(time.mktime(datetime.strptime(end_time, timestamp_fmt).timetuple()) * 1000)
 
     engine = AlgoBacktester(config_path, module, strategy_class, strategy_dir, start_time_millis, end_time_millis)
-    engine.run(start_time_millis, end_time_millis)
+    engine.run()
 
 
 if __name__ == '__main__':
