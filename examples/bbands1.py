@@ -1,7 +1,7 @@
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 
-from tau.event import Do
+from tau.core import Event
 from tau.signal import Map, BufferWithTime
 
 from serenity.algo import Strategy, StrategyContext
@@ -25,12 +25,31 @@ class BollingerBandsStrategy1(Strategy):
         exchange_code, instrument_code = ctx.getenv('TRADING_INSTRUMENT').split('/')
         instrument = ctx.get_instrument_cache().get_exchange_instrument(exchange_code, instrument_code)
         trades = ctx.get_marketdata_service().get_trades(instrument)
-        Do(network, trades, lambda: self.logger.info(f'Trade printed: {trades.get_value()}, '
-                                                     f'time={datetime.fromtimestamp(scheduler.get_time() / 1000.0)}'))
         trades_5m = BufferWithTime(scheduler, trades, timedelta(minutes=5))
         prices = ComputeOHLC(network, trades_5m)
-        Do(network, prices, lambda: self.logger.info(f'Trade bin closed: close px={prices.get_value().close_px}, ' 
-                                                     f'time={datetime.fromtimestamp(scheduler.get_time() / 1000.0)}'))
         close_prices = Map(network, prices, lambda x: x.close_px)
         bbands = ComputeBollingerBands(network, close_prices, window, num_std)
-        Do(network, bbands, lambda: self.logger.info(f'Bollinger Bands updated: {bbands.get_value()}'))
+
+        class BollingerTrader(Event):
+            def __init__(self, strategy: BollingerBandsStrategy1):
+                self.strategy = strategy
+                self.last_entry = 0
+                self.last_exit = 0
+                self.cum_pnl = 0
+                self.has_position = False
+
+            def on_activate(self) -> bool:
+                if not self.has_position and close_prices.get_value() < bbands.get_value().lower:
+                    self.last_entry = close_prices.get_value()
+                    self.has_position = True
+                    self.strategy.logger.info(f'Close below lower Bollinger band, entering long position at '
+                                              f'{close_prices.get_value()}')
+
+                elif self.has_position and close_prices.get_value() > bbands.get_value().upper:
+                    self.cum_pnl = self.cum_pnl + close_prices.get_value() - self.last_entry
+                    self.has_position = False
+                    self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
+                                              f'{close_prices.get_value()}, cum PnL={self.cum_pnl}')
+                return False
+
+        network.connect(bbands, BollingerTrader(self))
