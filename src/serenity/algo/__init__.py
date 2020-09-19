@@ -49,7 +49,10 @@ class StrategyContext:
 
     def getenv(self, key: str, default_value=None):
         if key in self.env_vars:
-            return self.env_vars[key]
+            value = self.env_vars[key]
+            if value is None or value == '':
+                return default_value
+            return value
         else:
             return default_value
 
@@ -95,7 +98,7 @@ class Strategy(ABC):
         pass
 
 
-class AlgoExecutor(ABC, OrderPlacer):
+class AlgoExecutor(OrderPlacer, ABC):
     pass
 
 

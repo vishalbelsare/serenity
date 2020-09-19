@@ -509,9 +509,9 @@ class AzureBlobTickstore(Tickstore):
     def read(self, logical_path: str) -> pd.DataFrame:
         logical_prefix = f'azure:{self.container_name}'
         key = logical_path[len(logical_prefix) + 1:]
-        cached_data = self.cache.get(key)
+        cached_data = self.cache.get(logical_path)
         if cached_data is not None:
-            self.logger.info(f'reading ticks from cache: {key}')
+            self.logger.info(f'reading ticks from cache: {logical_path}')
             return pd.read_parquet(io.BytesIO(cached_data))
         else:
             blob_client = self.storage.get_blob_client(container=self.container_name, blob=key)
@@ -541,20 +541,18 @@ class AzureBlobTickstore(Tickstore):
 
         # insert into local copy of index
         data_path = self.index.insert(symbol, as_at_date, create_write_path)
-        logical_prefix = f'azure:{self.index.table_name}/'
-        blob_path = data_path[len(logical_prefix):]
 
         # update cache
         data_bytes = bytes(buf.getvalue())
-        self.cache.set(blob_path, data_bytes)
+        self.cache.set(data_path, data_bytes)
 
         # upload to Azure
-        self.logger.info(f'uploading to Azure: {blob_path}')
-        blob_client = self.storage.get_blob_client(container=self.container_name, blob=str(blob_path))
+        self.logger.info(f'uploading to Azure: {data_path}')
+        blob_client = self.storage.get_blob_client(container=self.container_name, blob=str(data_path))
         try:
             blob_client.upload_blob(io.BytesIO(data_bytes), overwrite=False)
         except ResourceExistsError:
-            self.logger.info(f'skipping upload of existing blob: {blob_path}')
+            self.logger.info(f'skipping upload of existing blob: {data_path}')
 
     def delete(self, symbol: str, ts: BiTimestamp):
         self._check_closed('delete')

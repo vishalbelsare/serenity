@@ -91,8 +91,9 @@ class Peg(Strategy):
 
         self.peg_qty = ctx.getenv('PEG_QTY', 1)
 
+        exchange_id = ctx.getenv('EXCHANGE_ID', 'phemex')
         exchange_instance = ctx.getenv('EXCHANGE_INSTANCE', 'prod')
-        op_uri = f'phemex:{exchange_instance}'
+        op_uri = f'{exchange_id}:{exchange_instance}'
         self.order_placer = ctx.get_order_placer_service().get_order_placer(op_uri)
 
         self.logger.info(f'Connected to Phemex {exchange_instance} instance')

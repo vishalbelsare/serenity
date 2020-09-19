@@ -6,7 +6,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import List
 
-from tau.core import Signal, MutableSignal, NetworkScheduler, Event, Network
+from tau.core import Signal, MutableSignal, NetworkScheduler, Event, Network, RealtimeNetworkScheduler
 from tau.event import Do
 from tau.signal import Function
 
@@ -265,7 +265,7 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
 
     instr_cache = InstrumentCache(cur, TypeCodeCache(cur))
 
-    scheduler = NetworkScheduler()
+    scheduler = RealtimeNetworkScheduler()
     registry = FeedHandlerRegistry()
     fh = create_fh(scheduler, instr_cache, instance_id)
     registry.register(fh)

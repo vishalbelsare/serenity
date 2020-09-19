@@ -7,7 +7,7 @@ import sys
 import fire
 import yaml
 from phemex import AuthCredentials
-from tau.core import NetworkScheduler
+from tau.core import RealtimeNetworkScheduler
 
 from serenity.algo import StrategyContext
 from serenity.db import InstrumentCache, connect_serenity_db, TypeCodeCache
@@ -17,31 +17,7 @@ from serenity.marketdata.fh.feedhandler import FeedHandlerRegistry, FeedHandlerM
 from serenity.marketdata.fh.phemex_fh import PhemexFeedHandler
 from serenity.trading import OrderPlacerService
 from serenity.trading.connector.phemex_api import PhemexOrderPlacer
-from serenity.utils import init_logging, custom_asyncio_error_handler
-
-
-class Environment:
-    def __init__(self, config_yaml, parent=None):
-        self.values = parent.values if parent is not None else {}
-        for entry in config_yaml:
-            key = entry['key']
-            value = None
-            if 'value' in entry:
-                value = entry['value']
-            elif 'value-source' in entry:
-                source = entry['value-source']
-                if source == 'SYSTEM_ENV':
-                    value = os.getenv(key)
-            else:
-                raise ValueError(f'Unsupported value type in Environment entry: {entry}')
-
-            self.values[key] = value
-
-    def getenv(self, key: str, default_val: str = None) -> str:
-        if key in self.values:
-            return self.values[key]
-        else:
-            return default_val
+from serenity.utils import init_logging, custom_asyncio_error_handler, Environment
 
 
 class AlgoEngine:
@@ -72,7 +48,7 @@ class AlgoEngine:
             conn.autocommit = True
             cur = conn.cursor()
 
-            scheduler = NetworkScheduler()
+            scheduler = RealtimeNetworkScheduler()
             instrument_cache = InstrumentCache(cur, TypeCodeCache(cur))
             if 'feedhandlers' in config:
                 logger.info('Registering feedhandlers')

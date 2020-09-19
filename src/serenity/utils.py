@@ -1,6 +1,5 @@
 import logging
-
-from tau.core import Signal, NetworkScheduler, MutableSignal, Event
+import os
 
 
 def init_logging():
@@ -20,3 +19,30 @@ def custom_asyncio_error_handler(loop, context):
     # force shutdown
     loop.stop()
 
+
+class Environment:
+    def __init__(self, config_yaml, parent=None):
+        self.values = parent.values if parent is not None else {}
+        for entry in config_yaml:
+            key = entry['key']
+            value = None
+            if 'value' in entry:
+                value = entry['value']
+            elif 'value-source' in entry:
+                source = entry['value-source']
+                if source == 'SYSTEM_ENV':
+                    value = os.getenv(key)
+            else:
+                raise ValueError(f'Unsupported value type in Environment entry: {entry}')
+
+            self.values[key] = value
+
+    def getenv(self, key: str, default_val: str = None) -> str:
+        if key in self.values:
+            value = self.values[key]
+            if value is None or value == '':
+                return default_val
+            else:
+                return value
+        else:
+            return default_val
