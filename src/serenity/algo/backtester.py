@@ -23,8 +23,7 @@ class AlgoBacktester:
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, config_path: str, strategy_module: str, strategy_class: str, strategy_dir: str,
-                 start_time_millis: int, end_time_millis: int):
+    def __init__(self, config_path: str, strategy_dir: str, start_time_millis: int, end_time_millis: int):
         sys.path.append(strategy_dir)
 
         with open(config_path, 'r') as config_yaml:
@@ -40,10 +39,6 @@ class AlgoBacktester:
             exchange_id = self.bt_env.getenv('EXCHANGE_ID', 'autofill')
             instance_id = self.bt_env.getenv('EXCHANGE_INSTANCE', 'prod')
 
-            module = importlib.import_module(strategy_module)
-            klass = getattr(module, strategy_class)
-            strategy_instance = klass()
-
             self.logger.info('Connecting to Serenity database')
             conn = connect_serenity_db()
             conn.autocommit = True
@@ -51,30 +46,45 @@ class AlgoBacktester:
 
             self.scheduler = HistoricNetworkScheduler(start_time_millis, end_time_millis)
             instrument_cache = InstrumentCache(cur, TypeCodeCache(cur))
-            instruments_to_cache = [instrument_cache.get_exchange_instrument('Phemex', 'BTCUSD')]
+            instruments_to_cache_txt = self.bt_env.getenv('INSTRUMENTS_TO_CACHE')
+            instruments_to_cache_list = instruments_to_cache_txt.split(',')
+            instruments_to_cache = []
+            for instrument in instruments_to_cache_list:
+                exchange, symbol = instrument.split('/')
+                instruments_to_cache.append(instrument_cache.get_exchange_instrument(exchange, symbol))
             md_service = HistoricMarketdataService(self.scheduler, instruments_to_cache,
                                                    self.bt_env.getenv('AZURE_CONNECT_STR'))
             op_service = OrderPlacerService()
             op_service.register_order_placer(f'{exchange_id}:{instance_id}',
                                              AutoFillOrderPlacer(self.scheduler, md_service))
 
-            ctx = StrategyContext(self.scheduler, instrument_cache, md_service, op_service, self.bt_env.values)
-            strategy_instance.init(ctx)
-            strategy_instance.start()
+            self.strategies = []
+            for strategy in config['strategies']:
+                strategy_name = strategy['name']
+                self.logger.info(f'Loading strategy: {strategy_name}')
+                module = strategy['module']
+                strategy_class = strategy['strategy-class']
+                env = Environment(strategy['environment'], parent=self.bt_env)
+
+                module = importlib.import_module(module)
+                klass = getattr(module, strategy_class)
+                strategy_instance = klass()
+                ctx = StrategyContext(self.scheduler, instrument_cache, md_service, op_service, env.values)
+                strategy_instance.init(ctx)
+                strategy_instance.start()
 
     def run(self):
         self.scheduler.run()
 
 
-def main(config_path: str, module: str, strategy_class: str, start_time: str = None, end_time: str = None,
-         strategy_dir: str = '.'):
+def main(config_path: str, start_time: str = None, end_time: str = None, strategy_dir: str = '.'):
     init_logging()
 
     timestamp_fmt = '%Y-%m-%dT%H:%M:%S'
     start_time_millis = int(time.mktime(datetime.strptime(start_time, timestamp_fmt).timetuple()) * 1000)
     end_time_millis = int(time.mktime(datetime.strptime(end_time, timestamp_fmt).timetuple()) * 1000)
 
-    engine = AlgoBacktester(config_path, module, strategy_class, strategy_dir, start_time_millis, end_time_millis)
+    engine = AlgoBacktester(config_path, strategy_dir, start_time_millis, end_time_millis)
     engine.run()
 
 
