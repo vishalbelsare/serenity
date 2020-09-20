@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+0.4.0 (2020-09-20)
+++++++++++++++++++
+
+- Added support for tick-by-tick backtester
+- Added Bollinger Bands trading strategy example
+- Fixed bug in Azure cloud storage layer
+
 0.3.4 (2020-09-11)
 ++++++++++++++++++
 
