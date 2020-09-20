@@ -1,7 +1,7 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-from tau.core import Event
+from tau.core import Event, NetworkScheduler
 from tau.signal import Map, BufferWithTime
 
 from serenity.algo import Strategy, StrategyContext
@@ -31,7 +31,9 @@ class BollingerBandsStrategy1(Strategy):
         bbands = ComputeBollingerBands(network, close_prices, window, num_std)
 
         class BollingerTrader(Event):
-            def __init__(self, strategy: BollingerBandsStrategy1):
+            # noinspection PyShadowingNames
+            def __init__(self, scheduler: NetworkScheduler, strategy: BollingerBandsStrategy1):
+                self.scheduler = scheduler
                 self.strategy = strategy
                 self.last_entry = 0
                 self.last_exit = 0
@@ -43,13 +45,16 @@ class BollingerBandsStrategy1(Strategy):
                     self.last_entry = close_prices.get_value()
                     self.has_position = True
                     self.strategy.logger.info(f'Close below lower Bollinger band, entering long position at '
-                                              f'{close_prices.get_value()}')
+                                              f'{close_prices.get_value()} on '
+                                              f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
 
                 elif self.has_position and close_prices.get_value() > bbands.get_value().upper:
                     self.cum_pnl = self.cum_pnl + close_prices.get_value() - self.last_entry
                     self.has_position = False
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
-                                              f'{close_prices.get_value()}, cum PnL={self.cum_pnl}')
+                                              f'{close_prices.get_value()} on '
+                                              f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}, '
+                                              f'cum PnL={self.cum_pnl}')
                 return False
 
-        network.connect(bbands, BollingerTrader(self))
+        network.connect(bbands, BollingerTrader(scheduler, self))
