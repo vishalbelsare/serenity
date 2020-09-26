@@ -103,6 +103,18 @@ class MarketOrder(Order):
         super().__init__(qty, instrument, side)
 
 
+class StopOrder(Order):
+    """
+    An order that executes at the prevailing market price when the price drops below stop_px.
+    """
+    def __init__(self, qty: int, instrument: ExchangeInstrument, side: Side, stop_px: float):
+        super().__init__(qty, instrument, side)
+        self.stop_px = stop_px
+
+    def get_stop_px(self):
+        return self.stop_px
+
+
 class OrderFactory:
     """
     Helper factory for creating instances of different order types.
@@ -116,6 +128,10 @@ class OrderFactory:
     def create_limit_order(side: Side, qty: int, price: float, instrument: ExchangeInstrument,
                            time_in_force: TimeInForce = TimeInForce.GTC) -> LimitOrder:
         return LimitOrder(price, qty, instrument, side, time_in_force)
+
+    @staticmethod
+    def create_stop_order(side: Side, qty: int, stop_px: float, instrument: ExchangeInstrument) -> StopOrder:
+        return StopOrder(qty, instrument, side, stop_px)
 
 
 class OrderPlacer(ABC):

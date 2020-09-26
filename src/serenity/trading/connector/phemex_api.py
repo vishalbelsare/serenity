@@ -14,7 +14,7 @@ from tau.core import Signal, NetworkScheduler, MutableSignal, Event
 from tau.signal import Map, Filter
 
 from serenity.trading import OrderPlacer, Order, ExecutionReport, ExecType, OrderStatus, OrderFactory, MarketOrder, \
-    LimitOrder, TimeInForce, ExecInst
+    LimitOrder, TimeInForce, ExecInst, StopOrder
 
 
 class WebsocketAuthenticator:
@@ -176,6 +176,9 @@ class PhemexOrderPlacer(OrderPlacer):
             params['reduceOnly'] = order.get_exec_inst() == ExecInst.PARTICIPATE_DONT_INITIATE
         elif isinstance(order, MarketOrder):
             params['ordType'] = 'Market'
+        elif isinstance(order, StopOrder):
+            params['ordType'] = 'Stop'
+            params['stopPxEp'] = PhemexOrderPlacer.__get_scaled_price(order.get_stop_px())
         else:
             raise ValueError(f'unsupported Order type: {type(order)}')
 
