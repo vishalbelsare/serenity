@@ -19,3 +19,5 @@ strategies:
         value: 20
       - key: BBANDS_NUM_STD
         value: 2
+      - key: BBANDS_QTY
+        value: 100000

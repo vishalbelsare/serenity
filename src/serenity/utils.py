@@ -1,5 +1,6 @@
 import logging
 import os
+from enum import Enum
 
 
 def init_logging():

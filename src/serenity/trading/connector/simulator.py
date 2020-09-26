@@ -41,9 +41,9 @@ class AutoFillOrderPlacer(OrderPlacer):
             def on_activate(self) -> bool:
                 if not self.fired:
                     if order.get_side() == Side.BUY:
-                        fill_px = self.order_books.get_value().get_best_ask()
+                        fill_px = self.order_books.get_value().get_best_ask().get_px()
                     else:
-                        fill_px = self.order_books.get_value().get_best_bid()
+                        fill_px = self.order_books.get_value().get_best_bid().get_px()
                     fill_rpt = ExecutionReport(order_id, order.get_cl_ord_id(), str(uuid1()), ExecType.TRADE,
                                                OrderStatus.FILLED, order.get_qty(), 0.0, fill_px, order.get_qty())
                     self.order_placer.scheduler.schedule_update(self.order_placer.order_events, fill_rpt)

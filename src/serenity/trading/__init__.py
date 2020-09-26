@@ -168,7 +168,7 @@ class OrderEvent(ABC):
     pass
 
 
-class ExecType:
+class ExecType(Enum):
     NEW = auto()
     DONE_FOR_DAY = auto()
     CANCELED = auto()
@@ -188,7 +188,7 @@ class ExecType:
     ORDER_STATUS = auto()
 
 
-class OrderStatus:
+class OrderStatus(Enum):
     NEW = auto()
     PARTIALLY_FILLED = auto()
     FILLED = auto()
@@ -246,6 +246,10 @@ class ExecutionReport(OrderEvent):
     def get_last_qty(self) -> float:
         return self.last_qty
 
+    def __str__(self) -> str:
+        return f'ExecutionReport[exec_type={self.exec_type}, order_status={self.order_status}, ' \
+               f'leaves_qty={self.leaves_qty}, last_px={self.last_px}]'
+
 
 class Reject(OrderEvent):
     def __init__(self, message: str):
@@ -253,6 +257,9 @@ class Reject(OrderEvent):
 
     def get_message(self) -> str:
         return self.message
+
+    def __str__(self):
+        return f'Reject[message={self.message}]'
 
 
 class CancelReject(OrderEvent):
@@ -269,3 +276,6 @@ class CancelReject(OrderEvent):
 
     def get_message(self) -> str:
         return self.message
+
+    def __str__(self):
+        return f'CancelReject[message={self.message}]'
