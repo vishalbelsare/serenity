@@ -6,6 +6,12 @@ Release History
 0.4.0 (2020-09-20)
 ++++++++++++++++++
 
+- Added support for stop orders in live & backtest modes
+- Refined bbands1.py example strategy
+
+0.4.0 (2020-09-20)
+++++++++++++++++++
+
 - Added support for tick-by-tick backtester
 - Added Bollinger Bands trading strategy example
 - Fixed bug in Azure cloud storage layer
