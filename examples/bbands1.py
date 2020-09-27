@@ -6,20 +6,17 @@ from tau.event import Do
 from tau.signal import Map, BufferWithTime, Function
 
 from serenity.algo import Strategy, StrategyContext
-from serenity.db import TypeCodeCache
 from serenity.signal.indicators import ComputeBollingerBands
 from serenity.signal.marketdata import ComputeOHLC
 from serenity.trading import OrderPlacerService, Side, OrderStatus, ExecutionReport
 
 
 class ComputeTradeFlowImbalanceSignal(Function):
-    def __init__(self, network: Network, trades: Signal, type_code_cache: TypeCodeCache):
+    def __init__(self, network: Network, trades: Signal):
         super().__init__(network, [trades])
         self.trades = trades
         self.cum_buy_volume = 0
         self.cum_sell_volume = 0
-
-        self.type_code_cache = type_code_cache
 
     def _call(self):
         last_trade = self.trades.get_value()
@@ -54,7 +51,7 @@ class BollingerBandsStrategy1(Strategy):
         prices = ComputeOHLC(network, trades_5m)
         close_prices = Map(network, prices, lambda x: x.close_px)
         bbands = ComputeBollingerBands(network, close_prices, window, num_std)
-        trade_flow = ComputeTradeFlowImbalanceSignal(network, trades, ctx.get_typecode_cache())
+        trade_flow = ComputeTradeFlowImbalanceSignal(network, trades)
 
         op_service = ctx.get_order_placer_service()
         oms = op_service.get_order_manager_service()
