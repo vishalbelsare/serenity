@@ -24,8 +24,8 @@ strategies:
       - key: BBANDS_WINDOW
         value: 20
       - key: BBANDS_NUM_STD
-        value: 3
-      - key: BBANDS_STOP_STD
         value: 2
+      - key: BBANDS_STOP_STD
+        value: 1
       - key: BBANDS_QTY
         value: 10000
