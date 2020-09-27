@@ -7,6 +7,9 @@ Release History
 ++++++++++++++++++
 
 - Added support for stop orders in live & backtest modes
+- Added PositionService, ExchangePositionService and OrderManagerService
+- Refactored AutoFillSimulator and Phemex trading connector to use OMS
+- Upgraded pytau to 0.8.0 to ensure stable sorts in backtest mode
 - Refined bbands1.py example strategy
 
 0.4.0 (2020-09-20)
