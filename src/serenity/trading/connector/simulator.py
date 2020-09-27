@@ -13,26 +13,11 @@ class AutoFillOrderPlacer(OrderPlacer):
         self.scheduler = scheduler
         self.oms = oms
         self.mds = mds
-
-        self.order_events = MutableSignal()
-        self.scheduler.get_network().attach(self.order_events)
-
         self.orders = {}
 
-    def get_order_events(self) -> Signal:
-        return self.order_events
-
     def submit(self, order: Order):
-        order_id = str(uuid1())
-        order.set_order_id(order_id)
-
-        pending_new_rpt = ExecutionReport(order_id, order.get_cl_ord_id(), str(uuid1()), ExecType.PENDING_NEW,
-                                          OrderStatus.PENDING_NEW, 0.0, order.get_qty(), 0.0, 0.0)
-        self.scheduler.schedule_update(self.order_events, pending_new_rpt)
-
-        new_rpt = ExecutionReport(order_id, order.get_cl_ord_id(), str(uuid1()), ExecType.NEW,
-                                  OrderStatus.NEW, 0.0, order.get_qty(), 0.0, 0.0)
-        self.scheduler.schedule_update(self.order_events, new_rpt)
+        self.oms.pending_new(order)
+        self.oms.new(order, str(uuid1()))
 
         class FillScheduler(Event):
             # noinspection PyShadowingNames
@@ -64,22 +49,16 @@ class AutoFillOrderPlacer(OrderPlacer):
                     fill_px = self.order_books.get_value().get_best_ask().get_px()
                 else:
                     fill_px = self.order_books.get_value().get_best_bid().get_px()
-                fill_rpt = ExecutionReport(order_id, order.get_cl_ord_id(), str(uuid1()), ExecType.TRADE,
-                                           OrderStatus.FILLED, order.get_qty(), 0.0, fill_px, order.get_qty())
-                self.order_placer.scheduler.schedule_update(self.order_placer.order_events, fill_rpt)
+
+                self.order_placer.oms.apply_fill(order, order.get_qty(), fill_px, str(uuid1()))
                 self.fired = True
 
         trades = self.mds.get_trades(order.get_instrument())
         order_books = self.mds.get_order_books(order.get_instrument())
-        self.orders[order_id] = order
 
         fill_scheduler = FillScheduler(self, trades, order_books)
         self.scheduler.get_network().connect(trades, fill_scheduler)
         self.scheduler.get_network().connect(order_books, fill_scheduler)
 
     def cancel(self, order):
-        if isinstance(order, StopOrder):
-            del self.orders[order.get_order_id()]
-        else:
-            reject = CancelReject(order.get_cl_ord_id(), order.get_cl_ord_id(), 'Already fully filled')
-            self.scheduler.schedule_update(self.order_events, reject)
+        self.oms.apply_cancel(order, str(uuid1()))

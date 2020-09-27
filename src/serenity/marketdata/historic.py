@@ -14,6 +14,8 @@ from serenity.trading import Side
 class HistoricMarketdataService(MarketdataService):
     def __init__(self, scheduler: HistoricNetworkScheduler, instruments_to_cache: List, azure_connect_str: str):
         self.scheduler = scheduler
+        self.subscribed_instruments = MutableSignal()
+        self.scheduler.get_network().attach(self.subscribed_instruments)
 
         start_time = datetime.fromtimestamp(scheduler.get_start_time() / 1000.0)
         end_time = datetime.fromtimestamp(scheduler.get_end_time() / 1000.0)
@@ -21,6 +23,7 @@ class HistoricMarketdataService(MarketdataService):
         self.book_signal_by_symbol = {}
         self.trade_signal_by_symbol = {}
         for instrument in instruments_to_cache:
+            scheduler.schedule_update(self.subscribed_instruments, instrument)
             symbol = instrument.get_exchange_instrument_code()
             exchange_code_upper = instrument.get_exchange().get_type_code().upper()
 
@@ -53,6 +56,9 @@ class HistoricMarketdataService(MarketdataService):
                 book = OrderBook(bids=[best_bid], asks=[best_ask])
                 scheduler.schedule_update_at(books_signal, book, at_time)
             tickstore.close()
+
+    def get_subscribed_instruments(self) -> Signal:
+        return self.subscribed_instruments
 
     def get_order_book_events(self, instrument: ExchangeInstrument) -> Signal:
         raise NotImplementedError()

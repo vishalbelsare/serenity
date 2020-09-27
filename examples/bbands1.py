@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta, datetime
 
 from tau.core import Event, NetworkScheduler
+from tau.event import Do
 from tau.signal import Map, BufferWithTime
 
 from serenity.algo import Strategy, StrategyContext
@@ -36,8 +37,17 @@ class BollingerBandsStrategy1(Strategy):
         op_service = ctx.get_order_placer_service()
         exchange_id = ctx.getenv('EXCHANGE_ID', 'phemex')
         exchange_instance = ctx.getenv('EXCHANGE_INSTANCE', 'prod')
+        account = ctx.getenv('EXCHANGE_ACCOUNT')
         op_uri = f'{exchange_id}:{exchange_instance}'
 
+        # subscribe to position updates and exchange position updates
+        position = ctx.get_position_service().get_position(account, instrument)
+        Do(ctx.get_scheduler().get_network(), position, lambda: self.logger.info(position.get_value()))
+
+        exch_position = ctx.get_exchange_position_service().get_exchange_positions()
+        Do(ctx.get_scheduler().get_network(), exch_position, lambda: self.logger.info(exch_position.get_value()))
+
+        # order placement logic
         class BollingerTrader(Event):
             # noinspection PyShadowingNames
             def __init__(self, scheduler: NetworkScheduler, op_service: OrderPlacerService,

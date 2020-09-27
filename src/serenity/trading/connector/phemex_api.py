@@ -229,9 +229,6 @@ class PhemexOrderPlacer(OrderPlacer):
 
         (self.trading_conn, ws_uri) = get_phemex_connection(credentials, instance_id)
 
-    def get_order_events(self) -> Signal:
-        return self.oe_subscriber.get_order_events()
-
     def submit(self, order: Order):
         params = dict()
         params['actionBy'] = 'FromOrderPlacement'

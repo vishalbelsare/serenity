@@ -236,10 +236,6 @@ class OrderPlacer(ABC):
     def __init__(self, order_factory: OrderFactory):
         self.order_factory = order_factory
 
-    @abstractmethod
-    def get_order_events(self) -> Signal:
-        pass
-
     def get_order_factory(self) -> OrderFactory:
         """"
         :return: the associated order factory object for this OrderPlacer
