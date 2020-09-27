@@ -11,6 +11,7 @@ from serenity.db import InstrumentCache
 from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHandler, ws_fh_main, Feed
 from serenity.marketdata import Trade
 from serenity.model.exchange import ExchangeInstrument
+from serenity.trading import Side
 
 
 class BinanceFeedHandler(WebsocketFeedHandler):
@@ -117,7 +118,7 @@ class BinanceFeedHandler(WebsocketFeedHandler):
         sequence = msg['data']['E']
         trade_id = msg['data']['a']
         symbol = msg['data']['s']
-        side = self.buy_code if msg['data']['m'] else self.sell_code
+        side = Side.BUY if msg['data']['m'] else Side.SELL
         qty = float(msg['data']['q'])
         price = float(msg['data']['p'])
         instrument = self.known_instrument_ids[symbol]

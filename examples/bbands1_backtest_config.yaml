@@ -20,10 +20,12 @@ strategies:
       - key: BBANDS_BIN_MINUTES
         value: 5
       - key: BBANDS_WINDOW
-        value: 20
+        value: 12
       - key: BBANDS_NUM_STD
-        value: 2
+        value: 3
       - key: BBANDS_STOP_STD
         value: 1
       - key: BBANDS_QTY
         value: 100000
+      - key: TRADE_FLOW_REVERSAL_QTY
+        value: 10000

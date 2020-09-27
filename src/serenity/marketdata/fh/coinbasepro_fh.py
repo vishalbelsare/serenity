@@ -11,6 +11,7 @@ from serenity.db import InstrumentCache
 from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHandler, ws_fh_main, Feed
 from serenity.marketdata import Trade
 from serenity.model.exchange import ExchangeInstrument
+from serenity.trading import Side
 
 
 class CoinbaseProFeedHandler(WebsocketFeedHandler):
@@ -115,7 +116,7 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
     def __extract_trade(self, msg) -> Trade:
         sequence = msg['sequence']
         trade_id = msg['trade_id']
-        side = self.buy_code if msg['side'] == 'buy' else self.sell_code
+        side = Side.BUY if msg['side'] == 'buy' else Side.SELL
         qty = float(msg['size'])
         price = float(msg['price'])
 

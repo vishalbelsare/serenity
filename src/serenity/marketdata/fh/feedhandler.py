@@ -13,8 +13,8 @@ from tau.signal import Function
 from serenity.db import TypeCodeCache, InstrumentCache, connect_serenity_db
 from serenity.marketdata import MarketdataService, OrderBook, OrderBookSnapshot
 from serenity.model.exchange import ExchangeInstrument
-from serenity.model.order import Side
 from serenity.tickstore.journal import Journal
+from serenity.trading import Side
 from serenity.utils import init_logging, custom_asyncio_error_handler
 
 
@@ -125,9 +125,6 @@ class WebsocketFeedHandler(FeedHandler):
         self.instrument_cache = instrument_cache
         self.type_code_cache = instrument_cache.get_type_code_cache()
         self.instance_id = instance_id
-
-        self.buy_code = self.type_code_cache.get_by_code(Side, 'Buy')
-        self.sell_code = self.type_code_cache.get_by_code(Side, 'Sell')
 
         self.instruments = []
         self.known_instrument_ids = {}
@@ -316,7 +313,7 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 self.appender.write_long(trade.get_trade_id())
                 self.appender.write_long(trade.get_trade_id())
                 self.appender.write_string(trade.get_instrument().get_exchange_instrument_code())
-                self.appender.write_short(1 if trade.get_side().get_type_code() == 'Buy' else 0)
+                self.appender.write_short(1 if trade.get_side() == Side.BUY else 0)
                 self.appender.write_double(trade.get_qty())
                 self.appender.write_double(trade.get_price())
 

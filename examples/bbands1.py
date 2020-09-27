@@ -1,14 +1,33 @@
 import logging
 from datetime import timedelta, datetime
 
-from tau.core import Event, NetworkScheduler
+from tau.core import Event, NetworkScheduler, Signal, Network
 from tau.event import Do
-from tau.signal import Map, BufferWithTime
+from tau.signal import Map, BufferWithTime, Function
 
 from serenity.algo import Strategy, StrategyContext
+from serenity.db import TypeCodeCache
 from serenity.signal.indicators import ComputeBollingerBands
 from serenity.signal.marketdata import ComputeOHLC
 from serenity.trading import OrderPlacerService, Side, OrderStatus, ExecutionReport
+
+
+class ComputeTradeFlowImbalanceSignal(Function):
+    def __init__(self, network: Network, trades: Signal, type_code_cache: TypeCodeCache):
+        super().__init__(network, [trades])
+        self.trades = trades
+        self.cum_buy_volume = 0
+        self.cum_sell_volume = 0
+
+        self.type_code_cache = type_code_cache
+
+    def _call(self):
+        last_trade = self.trades.get_value()
+        if last_trade.get_side() == Side.BUY:
+            self.cum_buy_volume = last_trade.get_qty()
+        else:
+            self.cum_sell_volume = last_trade.get_qty()
+        self._update(self.cum_buy_volume - self.cum_sell_volume)
 
 
 class BollingerBandsStrategy1(Strategy):
@@ -28,12 +47,14 @@ class BollingerBandsStrategy1(Strategy):
         stop_std = int(ctx.getenv('BBANDS_STOP_STD'))
         bin_minutes = int(ctx.getenv('BBANDS_BIN_MINUTES', 5))
         exchange_code, instrument_code = ctx.getenv('TRADING_INSTRUMENT').split('/')
+        trade_flow_qty = int(ctx.getenv('TRADE_FLOW_REVERSAL_QTY', 10_000))
         instrument = ctx.get_instrument_cache().get_exchange_instrument(exchange_code, instrument_code)
         trades = ctx.get_marketdata_service().get_trades(instrument)
         trades_5m = BufferWithTime(scheduler, trades, timedelta(minutes=bin_minutes))
         prices = ComputeOHLC(network, trades_5m)
         close_prices = Map(network, prices, lambda x: x.close_px)
         bbands = ComputeBollingerBands(network, close_prices, window, num_std)
+        trade_flow = ComputeTradeFlowImbalanceSignal(network, trades, ctx.get_typecode_cache())
 
         op_service = ctx.get_order_placer_service()
         oms = op_service.get_order_manager_service()
@@ -61,9 +82,11 @@ class BollingerBandsStrategy1(Strategy):
                 self.last_exit = 0
                 self.cum_pnl = 0
                 self.stop = None
+                self.volatility_pause = False
 
                 self.scheduler.get_network().connect(oms.get_order_events(), self)
                 self.scheduler.get_network().connect(position, self)
+                self.scheduler.get_network().connect(trade_flow, self)
 
             def on_activate(self) -> bool:
                 if self.scheduler.get_network().has_activated(oms.get_order_events()):
@@ -80,10 +103,21 @@ class BollingerBandsStrategy1(Strategy):
                                         (position.get_value().get_qty() / self.last_entry)
                             self.cum_pnl = self.cum_pnl + trade_pnl
                             self.strategy.logger.info(f'Trade P&L={trade_pnl}; cumulative P&L={self.cum_pnl}')
-
+                elif self.scheduler.get_network().has_activated(trade_flow):
+                    if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
+                        self.volatility_pause = True
+                        return False
+                    elif trade_flow.get_value() > trade_flow_qty and self.volatility_pause:
+                        self.volatility_pause = False
+                        return False
                 elif position.get_value().get_qty() == 0 and close_prices.get_value() < bbands.get_value().lower:
-                    self.strategy.logger.info(f'Close below lower Bollinger band, entering long position at '
-                                              f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                    if self.volatility_pause:
+                        self.strategy.logger.info(f'Net selling pressure while below BB lower bound; paused trading at '
+                                                  f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                        return False
+
+                    self.strategy.logger.info(f'Close below lower Bollinger band while rallying, enter long position '
+                                              f'at {datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
 
                     stop_px = close_prices.get_value() - ((bbands.get_value().sma - bbands.get_value().lower) *
                                                           (stop_std / num_std))

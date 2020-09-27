@@ -14,6 +14,7 @@ from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHa
     OrderBookBuilder
 from serenity.marketdata import Trade, OrderBookEvent, OrderBookSnapshot, OrderBookUpdate, BookLevel
 from serenity.model.exchange import ExchangeInstrument
+from serenity.trading import Side
 
 
 class PhemexFeedHandler(WebsocketFeedHandler):
@@ -175,9 +176,9 @@ class PhemexFeedHandler(WebsocketFeedHandler):
         for trade in msg['trades']:
             trade_id = trade[0]
             if trade[1] == 'Buy':
-                side = self.buy_code
+                side = Side.BUY
             else:
-                side = self.sell_code
+                side = Side.SELL
             price = float(trade[2]) / pow(10, price_scale)
             qty = float(trade[3])
 

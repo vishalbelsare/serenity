@@ -4,7 +4,7 @@ from typing import List, Optional
 from tau.core import Signal
 
 from serenity.model.exchange import ExchangeInstrument
-from serenity.model.order import Side
+from serenity.trading import Side
 
 
 class Trade:
