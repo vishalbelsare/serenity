@@ -26,10 +26,11 @@ class BollingerBandsStrategy1(Strategy):
         window = int(ctx.getenv('BBANDS_WINDOW'))
         num_std = int(ctx.getenv('BBANDS_NUM_STD'))
         stop_std = int(ctx.getenv('BBANDS_STOP_STD'))
+        bin_minutes = int(ctx.getenv('BBANDS_BIN_MINUTES', 5))
         exchange_code, instrument_code = ctx.getenv('TRADING_INSTRUMENT').split('/')
         instrument = ctx.get_instrument_cache().get_exchange_instrument(exchange_code, instrument_code)
         trades = ctx.get_marketdata_service().get_trades(instrument)
-        trades_5m = BufferWithTime(scheduler, trades, timedelta(minutes=5))
+        trades_5m = BufferWithTime(scheduler, trades, timedelta(minutes=bin_minutes))
         prices = ComputeOHLC(network, trades_5m)
         close_prices = Map(network, prices, lambda x: x.close_px)
         bbands = ComputeBollingerBands(network, close_prices, window, num_std)
@@ -75,11 +76,11 @@ class BollingerBandsStrategy1(Strategy):
                         if position.get_value().get_qty() == 0:
                             self.last_entry = order_event.get_last_px()
                         else:
-                            self.cum_pnl = (order_event.get_last_px() - self.last_entry) * \
-                                           (position.get_value().get_qty() / self.last_entry)
-                            self.strategy.logger.info(f'Cumulative P&L: {self.cum_pnl}')
+                            trade_pnl = (order_event.get_last_px() - self.last_entry) * \
+                                        (position.get_value().get_qty() / self.last_entry)
+                            self.cum_pnl = self.cum_pnl + trade_pnl
+                            self.strategy.logger.info(f'Trade P&L={trade_pnl}; cumulative P&L={self.cum_pnl}')
 
-                    self.cum_pnl = self.cum_pnl + close_prices.get_value() - self.last_entry
                 elif position.get_value().get_qty() == 0 and close_prices.get_value() < bbands.get_value().lower:
                     self.strategy.logger.info(f'Close below lower Bollinger band, entering long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')

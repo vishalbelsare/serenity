@@ -19,6 +19,8 @@ strategies:
     environment:
       - key: TRADING_INSTRUMENT
         value: Phemex/BTCUSD
+      - key: BBANDS_BIN_MINUTES
+        value: 5
       - key: BBANDS_WINDOW
         value: 20
       - key: BBANDS_NUM_STD
