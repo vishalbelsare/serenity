@@ -17,7 +17,6 @@ from serenity.model.exchange import ExchangeInstrument
 
 
 class PhemexFeedHandler(WebsocketFeedHandler):
-
     logger = logging.getLogger(__name__)
 
     def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, instance_id: str = 'prod'):
@@ -149,7 +148,16 @@ class PhemexFeedHandler(WebsocketFeedHandler):
                                      f'{instrument.get_exchange_instrument_code()}')
                     await sock.send(subscribe_msg_txt)
                     while True:
-                        self.scheduler.schedule_update(messages, await sock.recv())
+                        # noinspection PyBroadException
+                        try:
+                            self.scheduler.schedule_update(messages, await sock.recv())
+                        except BaseException as error:
+                            self.logger.info(f'disconnected; attempting to reconnect: {error}')
+                            asyncio.ensure_future(
+                                do_subscribe(instrument, trade_subscribe_msg, trade_messages, 'trade'))
+                            asyncio.ensure_future(
+                                do_subscribe(instrument, orderbook_subscribe_msg, obe_messages, 'order book'))
+                            break
 
             asyncio.ensure_future(do_subscribe(instrument, trade_subscribe_msg, trade_messages, 'trade'))
             asyncio.ensure_future(do_subscribe(instrument, orderbook_subscribe_msg, obe_messages, 'order book'))

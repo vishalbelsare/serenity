@@ -26,4 +26,4 @@ strategies:
       - key: BBANDS_STOP_STD
         value: 2
       - key: BBANDS_QTY
-        value: 100000
+        value: 10000
