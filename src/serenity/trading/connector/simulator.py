@@ -1,10 +1,10 @@
 from uuid import uuid1
 
-from tau.core import Signal, NetworkScheduler, MutableSignal, Event
+from tau.core import Signal, NetworkScheduler, Event
 
 from serenity.marketdata import MarketdataService
-from serenity.trading import OrderPlacer, Order, ExecutionReport, ExecType, OrderStatus, CancelReject, OrderFactory, \
-    Side, StopOrder, LimitOrder, MarketOrder, OrderManagerService
+from serenity.trading import OrderPlacer, Order, OrderFactory, Side, StopOrder, LimitOrder, MarketOrder, \
+    OrderManagerService
 
 
 class AutoFillOrderPlacer(OrderPlacer):
@@ -61,4 +61,5 @@ class AutoFillOrderPlacer(OrderPlacer):
         self.scheduler.get_network().connect(order_books, fill_scheduler)
 
     def cancel(self, order):
+        self.oms.pending_cancel(order)
         self.oms.apply_cancel(order, str(uuid1()))
