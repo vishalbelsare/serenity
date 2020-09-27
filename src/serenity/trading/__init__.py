@@ -297,6 +297,10 @@ class OrderState:
     def get_leaves_qty(self) -> float:
         return self.order.get_qty() - self.cum_qty
 
+    def is_terminal(self) -> bool:
+        return self.ord_status in [OrderStatus.FILLED, OrderStatus.CANCELED, OrderStatus.EXPIRED,
+                                   OrderStatus.DONE_FOR_DAY, OrderStatus.REJECTED]
+
     def transition(self, ord_status: OrderStatus, exec_type: ExecType) -> OrderState:
         new_state = OrderState(self.order, ord_status, exec_type)
         new_state.cum_qty = self.cum_qty
@@ -334,6 +338,7 @@ class OrderManagerService:
     def get_order_events(self) -> Signal:
         return self.order_events
 
+    # noinspection PyTypeChecker
     def get_order_by_order_id(self, order_id) -> Order:
         order_state = self.order_state_by_order_id.get(order_id, None)
         if order_state is None:
@@ -366,11 +371,9 @@ class OrderManagerService:
 
     def pending_cancel(self, order: Order):
         order_state = self.order_state_by_order_id[order.get_order_id()]
-        ord_status = order_state.get_ord_status()
         order_id = order.get_order_id()
         cl_ord_id = order.get_cl_ord_id()
-        if ord_status in [OrderStatus.FILLED, OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.DONE_FOR_DAY,
-                          OrderStatus.REJECTED]:
+        if order_state.is_terminal():
             self.scheduler.schedule_update(self.order_events, CancelReject(cl_ord_id, cl_ord_id,
                                                                            'Attempt to pending cancel terminal order'))
         else:
@@ -383,8 +386,7 @@ class OrderManagerService:
         ord_status = order_state.get_ord_status()
         order_id = order.get_order_id()
         cl_ord_id = order.get_cl_ord_id()
-        if ord_status in [OrderStatus.FILLED, OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.DONE_FOR_DAY,
-                          OrderStatus.REJECTED]:
+        if order_state.is_terminal():
             self.scheduler.schedule_update(self.order_events, CancelReject(cl_ord_id, cl_ord_id,
                                                                            'Attempt to apply cancel to terminal order'))
         elif ord_status == OrderStatus.PENDING_CANCEL:
@@ -424,6 +426,8 @@ class OrderManagerService:
         elif order_state.get_leaves_qty() != leaves_qty:
             raise ValueError(f'expected leaves_qty={order_state.get_leaves_qty}; got {leaves_qty}')
 
+    def is_terminal(self, order_id) -> bool:
+        return self.order_state_by_order_id[order_id].is_terminal()
 
 class OrderPlacerService:
     def __init__(self, scheduler: NetworkScheduler, oms: OrderManagerService):

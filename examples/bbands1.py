@@ -8,7 +8,7 @@ from tau.signal import Map, BufferWithTime
 from serenity.algo import Strategy, StrategyContext
 from serenity.signal.indicators import ComputeBollingerBands
 from serenity.signal.marketdata import ComputeOHLC
-from serenity.trading import OrderPlacerService, Side, OrderStatus
+from serenity.trading import OrderPlacerService, Side, OrderStatus, ExecutionReport
 
 
 class BollingerBandsStrategy1(Strategy):
@@ -35,6 +35,7 @@ class BollingerBandsStrategy1(Strategy):
         bbands = ComputeBollingerBands(network, close_prices, window, num_std)
 
         op_service = ctx.get_order_placer_service()
+        oms = op_service.get_order_manager_service()
         exchange_id = ctx.getenv('EXCHANGE_ID', 'phemex')
         exchange_instance = ctx.getenv('EXCHANGE_INSTANCE', 'prod')
         account = ctx.getenv('EXCHANGE_ACCOUNT')
@@ -58,29 +59,28 @@ class BollingerBandsStrategy1(Strategy):
                 self.last_entry = 0
                 self.last_exit = 0
                 self.cum_pnl = 0
-                self.position = 0
                 self.stop = None
 
-                self.scheduler.get_network().connect(self.op.get_order_events(), self)
+                self.scheduler.get_network().connect(oms.get_order_events(), self)
+                self.scheduler.get_network().connect(position, self)
 
             def on_activate(self) -> bool:
-                if self.scheduler.get_network().has_activated(self.op.get_order_events()):
-                    order_event = self.op.get_order_events().get_value()
-                    if order_event.get_order_status() == OrderStatus.FILLED:
+                if self.scheduler.get_network().has_activated(oms.get_order_events()):
+                    order_event = oms.get_order_events().get_value()
+                    if isinstance(order_event, ExecutionReport) \
+                            and order_event.get_order_status() == OrderStatus.FILLED:
                         order_type = 'stop order' if order_event.get_order_id() == self.stop.order_id \
                             else 'market order'
                         self.strategy.logger.info(f'Received fill event for {order_type}: {order_event}')
-                        if self.position == 0:
+                        if position.get_value().get_qty() == 0:
                             self.last_entry = order_event.get_last_px()
-                            self.position = self.position + order_event.get_last_qty()
                         else:
                             self.cum_pnl = (order_event.get_last_px() - self.last_entry) * \
-                                           (self.position / self.last_entry)
-                            self.position = self.position - order_event.get_last_qty()
+                                           (position.get_value().get_qty() / self.last_entry)
                             self.strategy.logger.info(f'Cumulative P&L: {self.cum_pnl}')
 
                     self.cum_pnl = self.cum_pnl + close_prices.get_value() - self.last_entry
-                elif self.position == 0 and close_prices.get_value() < bbands.get_value().lower:
+                elif position.get_value().get_qty() == 0 and close_prices.get_value() < bbands.get_value().lower:
                     self.strategy.logger.info(f'Close below lower Bollinger band, entering long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
 
@@ -95,7 +95,7 @@ class BollingerBandsStrategy1(Strategy):
 
                     self.op.submit(order)
                     self.op.submit(self.stop)
-                elif self.position > 0 and close_prices.get_value() > bbands.get_value().upper:
+                elif position.get_value().get_qty() > 0 and close_prices.get_value() > bbands.get_value().upper:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)

@@ -13,9 +13,9 @@ class AutoFillOrderPlacer(OrderPlacer):
         self.scheduler = scheduler
         self.oms = oms
         self.mds = mds
-        self.orders = {}
 
     def submit(self, order: Order):
+        order.set_order_id(str(uuid1()))
         self.oms.pending_new(order)
         self.oms.new(order, str(uuid1()))
 
@@ -28,7 +28,7 @@ class AutoFillOrderPlacer(OrderPlacer):
                 self.fired = False
 
             def on_activate(self) -> bool:
-                if self.fired or order.get_order_id() not in self.order_placer.orders:
+                if self.fired or self.order_placer.oms.is_terminal(order.get_order_id()):
                     return False
 
                 if self.order_placer.scheduler.get_network().has_activated(self.trades):
