@@ -4,13 +4,14 @@ from tau.core import Signal, NetworkScheduler, MutableSignal, Event
 
 from serenity.marketdata import MarketdataService
 from serenity.trading import OrderPlacer, Order, ExecutionReport, ExecType, OrderStatus, CancelReject, OrderFactory, \
-    Side, StopOrder, LimitOrder, MarketOrder
+    Side, StopOrder, LimitOrder, MarketOrder, OrderManagerService
 
 
 class AutoFillOrderPlacer(OrderPlacer):
-    def __init__(self, scheduler: NetworkScheduler, mds: MarketdataService):
-        super().__init__(OrderFactory())
+    def __init__(self, scheduler: NetworkScheduler, oms: OrderManagerService, mds: MarketdataService, account: str):
+        super().__init__(OrderFactory(account))
         self.scheduler = scheduler
+        self.oms = oms
         self.mds = mds
 
         self.order_events = MutableSignal()

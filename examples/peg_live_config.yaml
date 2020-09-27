@@ -6,6 +6,8 @@ order_placers:
 environment:
   - key: EXCHANGE_INSTANCE
     value-source: SYSTEM_ENV
+  - key: EXCHANGE_ACCOUNT
+    value: 2106230001
   - key: PHEMEX_API_KEY
     value-source: SYSTEM_ENV
   - key: PHEMEX_API_SECRET

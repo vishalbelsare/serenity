@@ -12,6 +12,9 @@ class Currency:
     def get_currency_code(self) -> str:
         return self.currency_code
 
+    def __str__(self) -> str:
+        return self.currency_code
+
 
 class InstrumentType(TypeCode):
     def __init__(self, type_id: int, type_code: str):

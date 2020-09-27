@@ -2,6 +2,7 @@ import logging
 from enum import Enum, auto
 
 from tau.core import Event
+from tau.event import Do
 
 from serenity.algo import Strategy, StrategyContext
 from serenity.trading import Side
@@ -21,10 +22,10 @@ class PegTrader(Event):
     def on_activate(self) -> bool:
         if self.strategy.peg_type == PegType.NEAR:
             if self.strategy.peg_side == Side.BUY:
-                book_level = self.strategy.futures_book.get_value().get_best_bid()
+                book_level = self.strategy.peg_book.get_value().get_best_bid()
                 side_name = 'bid'
             else:
-                book_level = self.strategy.futures_book.get_value().get_best_ask()
+                book_level = self.strategy.peg_book.get_value().get_best_ask()
                 side_name = 'ask'
 
             if self.last_level is None or book_level.get_px() != self.last_level.get_px():
@@ -67,15 +68,18 @@ class Peg(Strategy):
         self.peg_side = None
         self.peg_qty = None
         self.order_placer = None
-        self.futures_book = None
+        self.peg_book = None
         self.trader = None
 
     def init(self, ctx: StrategyContext):
         self.ctx = ctx
 
-        self.peg_instrument = self.ctx.get_instrument_cache().get_exchange_instrument('Phemex',
-                                                                                      ctx.getenv('PEG_INSTRUMENT',
-                                                                                                 'BTCUSD'))
+        account = ctx.getenv('EXCHANGE_ACCOUNT', None)
+        if account is None:
+            raise ValueError('Missing EXCHANGE_ACCOUNT')
+
+        peg_symbol = ctx.getenv('PEG_INSTRUMENT', 'BTCUSD')
+        self.peg_instrument = self.ctx.get_instrument_cache().get_exchange_instrument('Phemex', peg_symbol)
 
         peg_type = ctx.getenv('PEG_TYPE', 'Near')
         if peg_type == 'Near':
@@ -99,19 +103,25 @@ class Peg(Strategy):
         self.logger.info(f'Connected to Phemex {exchange_instance} instance')
 
         # subscribe to top of book
-        btc_usd_future = self.ctx.get_instrument_cache().get_exchange_instrument('Phemex', 'BTCUSD')
-        self.futures_book = self.ctx.get_marketdata_service().get_order_books(btc_usd_future)
+        self.peg_book = self.ctx.get_marketdata_service().get_order_books(self.peg_instrument)
+
+        # subscribe to position updates and exchange position updates
+        position = self.ctx.get_position_service().get_position(account, self.peg_instrument)
+        Do(ctx.get_scheduler().get_network(), position, lambda: self.logger.info(position.get_value()))
+
+        exch_position = self.ctx.get_exchange_position_service().get_exchange_positions()
+        Do(ctx.get_scheduler().get_network(), exch_position, lambda: self.logger.info(exch_position.get_value()))
 
     def start(self):
         super().start()
 
         self.trader = PegTrader(self)
-        self.ctx.get_network().connect(self.futures_book, self.trader)
+        self.ctx.get_network().connect(self.peg_book, self.trader)
 
     def stop(self):
         super().stop()
 
-        self.ctx.get_network().disconnect(self.futures_book, self.trader)
+        self.ctx.get_network().disconnect(self.peg_book, self.trader)
         self.trader.stop()
 
         self.trader = None

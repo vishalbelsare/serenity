@@ -4,6 +4,8 @@ environment:
     value: autofill
   - key: EXCHANGE_INSTANCE
     value: prod
+  - key: EXCHANGE_ACCOUNT
+    value: 2106230001
   - key: AZURE_CONNECT_STR
     value-source: SYSTEM_ENV
   - key: INSTRUMENTS_TO_CACHE

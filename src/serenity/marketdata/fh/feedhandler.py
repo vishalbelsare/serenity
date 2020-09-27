@@ -184,6 +184,7 @@ class FeedHandlerRegistry:
 
     def __init__(self):
         self.fh_registry = {}
+        self.feeds = {}
 
     def get_feedhandlers(self) -> List[FeedHandler]:
         return list(self.fh_registry.values())
@@ -194,11 +195,17 @@ class FeedHandlerRegistry:
         e.g. phemex:prod:BTCUSD or coinbase:test:BTC-USD. Raises an exception if there is no
         registered handler for the given URI.
         """
-        (scheme, instance, instrument_id) = uri.split(':')
-        fh = self.fh_registry[f'{scheme}:{instance}']
-        if not fh:
-            raise ValueError(f'Unknown FeedHandler URI: {uri}')
-        return fh.get_feed(uri)
+        if uri in self.feeds:
+            return self.feeds[uri]
+        else:
+            (scheme, instance, instrument_id) = uri.split(':')
+            fh = self.fh_registry[f'{scheme}:{instance}']
+            if not fh:
+                raise ValueError(f'Unknown FeedHandler URI: {uri}')
+
+            feed = fh.get_feed(uri)
+            self.feeds[uri] = feed
+            return feed
 
     def register(self, feedhandler: FeedHandler):
         """
@@ -236,21 +243,33 @@ class FeedHandlerMarketdataService(MarketdataService):
     via the FeedHandlerRegistry to subscribe to marketdata streams.
     """
 
-    def __init__(self, network: Network, registry: FeedHandlerRegistry, instance_id: str = 'prod'):
-        self.network = network
+    def __init__(self, scheduler: NetworkScheduler, registry: FeedHandlerRegistry, instance_id: str = 'prod'):
+        self.scheduler = scheduler
         self.registry = registry
         self.instance_id = instance_id
+        self.subscribed_instruments = MutableSignal()
+        self.notified_instruments = set()
+        scheduler.get_network().attach(self.subscribed_instruments)
+
+    def get_subscribed_instruments(self) -> Signal:
+        return self.subscribed_instruments
 
     def get_order_book_events(self, instrument: ExchangeInstrument) -> Signal:
-        return self.registry.get_feed(self.__get_feed_uri(instrument)).get_order_book_events()
+        order_book_events = self.registry.get_feed(self.__get_feed_uri(instrument)).get_order_book_events()
+        return order_book_events
 
     def get_order_books(self, instrument: ExchangeInstrument) -> Signal:
-        return self.registry.get_feed(self.__get_feed_uri(instrument)).get_order_books()
+        order_books = self.registry.get_feed(self.__get_feed_uri(instrument)).get_order_books()
+        return order_books
 
     def get_trades(self, instrument: ExchangeInstrument) -> Signal:
-        return self.registry.get_feed(self.__get_feed_uri(instrument)).get_trades()
+        trades = self.registry.get_feed(self.__get_feed_uri(instrument)).get_trades()
+        return trades
 
     def __get_feed_uri(self, instrument: ExchangeInstrument) -> str:
+        if instrument not in self.notified_instruments:
+            self.notified_instruments.add(instrument)
+            self.scheduler.schedule_update(self.subscribed_instruments, instrument)
         symbol = instrument.get_exchange_instrument_code()
         return f'{instrument.get_exchange().get_type_code().lower()}:{self.instance_id}:{symbol}'
 

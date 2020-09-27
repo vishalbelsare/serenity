@@ -15,8 +15,9 @@ from serenity.marketdata.fh.binance_fh import BinanceFeedHandler
 from serenity.marketdata.fh.coinbasepro_fh import CoinbaseProFeedHandler
 from serenity.marketdata.fh.feedhandler import FeedHandlerRegistry, FeedHandlerMarketdataService
 from serenity.marketdata.fh.phemex_fh import PhemexFeedHandler
-from serenity.trading import OrderPlacerService
-from serenity.trading.connector.phemex_api import PhemexOrderPlacer
+from serenity.position import PositionService
+from serenity.trading import OrderPlacerService, OrderManagerService
+from serenity.trading.connector.phemex_api import PhemexOrderPlacer, PhemexExchangePositionService
 from serenity.utils import init_logging, custom_asyncio_error_handler, Environment
 
 
@@ -43,6 +44,8 @@ class AlgoEngine:
             instance_id = self.engine_env.getenv('EXCHANGE_INSTANCE', 'prod')
             self.fh_registry = FeedHandlerRegistry()
 
+            account = self.engine_env.getenv('EXCHANGE_ACCOUNT', 'Main')
+
             logger.info('Connecting to Serenity database')
             conn = connect_serenity_db()
             conn.autocommit = True
@@ -63,7 +66,11 @@ class AlgoEngine:
                     else:
                         raise ValueError(f'Unsupported feedhandler type: {fh_name}')
 
-            op_service = OrderPlacerService()
+            oms = OrderManagerService(scheduler)
+            op_service = OrderPlacerService(scheduler, oms)
+            md_service = FeedHandlerMarketdataService(scheduler, self.fh_registry, instance_id)
+            self.xps = None
+            ps = None
 
             if 'order_placers' in config:
                 logger.info('Registering OrderPlacers')
@@ -79,7 +86,14 @@ class AlgoEngine:
 
                         credentials = AuthCredentials(api_key, api_secret)
                         op_service.register_order_placer(f'phemex:{instance_id}',
-                                                         PhemexOrderPlacer(credentials, scheduler, instance_id))
+                                                         PhemexOrderPlacer(credentials, scheduler, oms, account,
+                                                                           instance_id))
+
+                        self.xps = PhemexExchangePositionService(credentials, scheduler, instrument_cache, account,
+                                                                 instance_id)
+                        self.ps = PositionService(scheduler, oms)
+                    else:
+                        raise ValueError(f'Unsupported order placer: {op_name}')
 
             self.strategies = []
             for strategy in config['strategies']:
@@ -92,13 +106,17 @@ class AlgoEngine:
                 module = importlib.import_module(module)
                 klass = getattr(module, strategy_class)
                 strategy_instance = klass()
-                md_service = FeedHandlerMarketdataService(scheduler.get_network(), self.fh_registry, instance_id)
-                ctx = StrategyContext(scheduler, instrument_cache, md_service, op_service, env.values)
+                ctx = StrategyContext(scheduler, instrument_cache, md_service, op_service, self.ps, self.xps,
+                                      env.values)
                 self.strategies.append((strategy_instance, ctx))
 
     def start(self):
+        # start the live feeds
         for feedhandler in self.fh_registry.get_feedhandlers():
             asyncio.ensure_future(feedhandler.start())
+
+        # subscribe to exchange positions
+        self.xps.subscribe()
 
         def start_strategies():
             for (strategy, ctx) in self.strategies:

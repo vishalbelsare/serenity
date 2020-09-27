@@ -107,6 +107,14 @@ class OrderBook:
         self.bid_px_map = {x.get_px(): x for x in bids}
         self.ask_px_map = {x.get_px(): x for x in asks}
 
+    def get_mid(self) -> float:
+        best_bid = self.get_best_bid()
+        best_ask = self.get_best_ask()
+        if best_bid is not None and best_ask is not None:
+            return (best_bid.get_px() + best_ask.get_px()) / 2
+        else:
+            return None
+
     def get_best_bid(self) -> Optional[BookLevel]:
         if len(self.bids) > 0:
             return self.bids[0]
@@ -154,6 +162,10 @@ class OrderBook:
 
 
 class MarketdataService(ABC):
+    @abstractmethod
+    def get_subscribed_instruments(self) -> Signal:
+        pass
+
     @abstractmethod
     def get_order_book_events(self, instrument: ExchangeInstrument) -> Signal:
         pass

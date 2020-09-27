@@ -11,7 +11,8 @@ from tau.core import HistoricNetworkScheduler
 from serenity.algo import StrategyContext
 from serenity.db import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.marketdata.historic import HistoricMarketdataService
-from serenity.trading import OrderPlacerService
+from serenity.position import PositionService, NullExchangePositionService
+from serenity.trading import OrderPlacerService, OrderManagerService
 from serenity.trading.connector.simulator import AutoFillOrderPlacer
 from serenity.utils import init_logging, Environment
 
@@ -38,6 +39,7 @@ class AlgoBacktester:
             self.bt_env = Environment(config['environment'])
             exchange_id = self.bt_env.getenv('EXCHANGE_ID', 'autofill')
             instance_id = self.bt_env.getenv('EXCHANGE_INSTANCE', 'prod')
+            account = self.bt_env.getenv('EXCHANGE_ACCOUNT', 'Main')
 
             self.logger.info('Connecting to Serenity database')
             conn = connect_serenity_db()
@@ -52,11 +54,14 @@ class AlgoBacktester:
             for instrument in instruments_to_cache_list:
                 exchange, symbol = instrument.split('/')
                 instruments_to_cache.append(instrument_cache.get_exchange_instrument(exchange, symbol))
+            oms = OrderManagerService(self.scheduler)
             md_service = HistoricMarketdataService(self.scheduler, instruments_to_cache,
                                                    self.bt_env.getenv('AZURE_CONNECT_STR'))
-            op_service = OrderPlacerService()
+            op_service = OrderPlacerService(self.scheduler, oms)
             op_service.register_order_placer(f'{exchange_id}:{instance_id}',
-                                             AutoFillOrderPlacer(self.scheduler, md_service))
+                                             AutoFillOrderPlacer(self.scheduler, oms, md_service, account))
+
+            xps = NullExchangePositionService(self.scheduler)
 
             self.strategies = []
             for strategy in config['strategies']:
@@ -69,7 +74,8 @@ class AlgoBacktester:
                 module = importlib.import_module(module)
                 klass = getattr(module, strategy_class)
                 strategy_instance = klass()
-                ctx = StrategyContext(self.scheduler, instrument_cache, md_service, op_service, env.values)
+                ctx = StrategyContext(self.scheduler, instrument_cache, md_service, op_service,
+                                      PositionService(self.scheduler, oms), xps, env.values)
                 strategy_instance.init(ctx)
                 strategy_instance.start()
 
