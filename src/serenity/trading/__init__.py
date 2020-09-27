@@ -295,7 +295,10 @@ class OrderState:
         return self.last_px
 
     def get_leaves_qty(self) -> float:
-        return self.order.get_qty() - self.cum_qty
+        if self.is_terminal():
+            return 0
+        else:
+            return self.order.get_qty() - self.cum_qty
 
     def is_terminal(self) -> bool:
         return self.ord_status in [OrderStatus.FILLED, OrderStatus.CANCELED, OrderStatus.EXPIRED,
@@ -419,15 +422,9 @@ class OrderManagerService:
             self.order_state_by_order_id[order_id] = fill_state
             self.scheduler.schedule_update(self.order_events, fill_state.create_execution_report(exec_id))
 
-    def validate_state(self, order: Order, cum_qty: float, leaves_qty: float):
-        order_state = self.order_state_by_order_id[order.get_order_id()]
-        if order_state.get_cum_qty() != cum_qty:
-            raise ValueError(f'expected cum_qty={order_state.get_cum_qty}; got {cum_qty}')
-        elif order_state.get_leaves_qty() != leaves_qty:
-            raise ValueError(f'expected leaves_qty={order_state.get_leaves_qty}; got {leaves_qty}')
-
     def is_terminal(self, order_id) -> bool:
         return self.order_state_by_order_id[order_id].is_terminal()
+
 
 class OrderPlacerService:
     def __init__(self, scheduler: NetworkScheduler, oms: OrderManagerService):

@@ -99,8 +99,6 @@ class OrderEventSubscriber:
                     for order_msg in orders:
                         order_id = order_msg['orderID']
                         exec_id = order_msg['execID']
-                        cum_qty = order_msg['cumQty']
-                        leaves_qty = order_msg['leavesQty']
                         last_px = order_msg['execPriceEp'] / 10000
                         last_qty = order_msg['execQty']
 
@@ -115,8 +113,6 @@ class OrderEventSubscriber:
                             self.sub.oms.apply_cancel(order, exec_id)
                         elif order_msg['ordStatus'] == 'PartiallyFilled' or order_msg['ordStatus'] == 'Filled':
                             self.sub.oms.apply_fill(order, last_px, last_qty, exec_id)
-
-                        self.sub.oms.validate_state(order, cum_qty, leaves_qty)
 
                     return True
                 else:
@@ -246,6 +242,8 @@ class PhemexOrderPlacer(OrderPlacer):
         elif isinstance(order, StopOrder):
             params['ordType'] = 'Stop'
             params['stopPxEp'] = PhemexOrderPlacer.__get_scaled_price(order.get_stop_px())
+            params['triggerType'] = 'ByLastPrice'
+
         else:
             raise ValueError(f'unsupported Order type: {type(order)}')
 
