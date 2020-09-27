@@ -1,4 +1,6 @@
 import logging
+import pandas as pd
+
 from datetime import timedelta, datetime
 
 from tau.core import Event, NetworkScheduler, Signal, Network
@@ -55,6 +57,8 @@ class BollingerBandsStrategy1(Strategy):
 
         op_service = ctx.get_order_placer_service()
         oms = op_service.get_order_manager_service()
+        dcs = ctx.get_data_capture_service()
+
         exchange_id = ctx.getenv('EXCHANGE_ID', 'phemex')
         exchange_instance = ctx.getenv('EXCHANGE_INSTANCE', 'prod')
         account = ctx.getenv('EXCHANGE_ACCOUNT')
@@ -62,10 +66,22 @@ class BollingerBandsStrategy1(Strategy):
 
         # subscribe to position updates and exchange position updates
         position = ctx.get_position_service().get_position(account, instrument)
-        Do(ctx.get_scheduler().get_network(), position, lambda: self.logger.info(position.get_value()))
+        Do(scheduler.get_network(), position, lambda: self.logger.info(position.get_value()))
 
         exch_position = ctx.get_exchange_position_service().get_exchange_positions()
-        Do(ctx.get_scheduler().get_network(), exch_position, lambda: self.logger.info(exch_position.get_value()))
+        Do(scheduler.get_network(), exch_position, lambda: self.logger.info(exch_position.get_value()))
+
+        # capture trade flow and Bollinger Band data
+        Do(scheduler.get_network(), trade_flow, lambda: dcs.capture('TradeFlows', {
+            'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
+            'trade_flow': trade_flow.get_value()
+        }))
+        Do(scheduler.get_network(), bbands, lambda: dcs.capture('BollingerBands', {
+            'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
+            'sma': bbands.get_value().sma,
+            'upper': bbands.get_value().upper,
+            'lower': bbands.get_value().lower
+        }))
 
         # order placement logic
         class BollingerTrader(Event):
@@ -100,6 +116,12 @@ class BollingerBandsStrategy1(Strategy):
                                         (position.get_value().get_qty() / self.last_entry)
                             self.cum_pnl = self.cum_pnl + trade_pnl
                             self.strategy.logger.info(f'Trade P&L={trade_pnl}; cumulative P&L={self.cum_pnl}')
+
+                            dcs.capture('PnL', {
+                                'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
+                                'trade_pnl': trade_pnl,
+                                'cum_pnk': self.cum_pnl
+                            })
                 elif self.scheduler.get_network().has_activated(trade_flow):
                     if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
                         self.volatility_pause = True

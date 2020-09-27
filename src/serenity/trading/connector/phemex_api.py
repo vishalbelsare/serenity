@@ -120,7 +120,7 @@ class OrderEventSubscriber:
 
         network.connect(json_messages, OrderEventScheduler(self, json_messages))
 
-        # noinspection PyShadowingNames
+        # noinspection PyShadowingNames,PyBroadException
         async def do_subscribe():
             async with websockets.connect(self.ws_uri) as sock:
                 self.logger.info(f'sending Account-Order-Position subscription request for orders')
@@ -138,7 +138,12 @@ class OrderEventSubscriber:
                 }
                 await sock.send(json.dumps(aop_sub_msg))
                 while True:
-                    self.scheduler.schedule_update(messages, await sock.recv())
+                    try:
+                        self.scheduler.schedule_update(messages, await sock.recv())
+                    except BaseException as error:
+                        self.logger.info(f'disconnected; attempting to reconnect: {error}')
+                        asyncio.ensure_future(do_subscribe())
+                        break
 
         asyncio.ensure_future(do_subscribe())
 
@@ -207,7 +212,12 @@ class PhemexExchangePositionService(ExchangePositionService):
                 }
                 await sock.send(json.dumps(aop_sub_msg))
                 while True:
-                    self.scheduler.schedule_update(messages, await sock.recv())
+                    try:
+                        self.scheduler.schedule_update(messages, await sock.recv())
+                    except BaseException as error:
+                        self.logger.info(f'disconnected; attempting to reconnect: {error}')
+                        asyncio.ensure_future(do_subscribe())
+                        break
 
         asyncio.ensure_future(do_subscribe())
 

@@ -10,6 +10,8 @@ environment:
     value-source: SYSTEM_ENV
   - key: INSTRUMENTS_TO_CACHE
     value: Phemex/BTCUSD
+  - key: EXTRA_OUTPUTS
+    value: TradeFlows,BollingerBands,PnL
 strategies:
   - name: BollingerBands
     module: bbands1

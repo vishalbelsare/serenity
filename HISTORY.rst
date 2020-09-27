@@ -3,7 +3,12 @@
 Release History
 ---------------
 
-0.4.0 (2020-09-20)
+0.6.0 (TBD)
+++++++++++++++++++
+
+- Added DataCaptureService and integrated with live & backtest modes
+
+0.5.0 (2020-09-26)
 ++++++++++++++++++
 
 - Added support for stop orders in live & backtest modes

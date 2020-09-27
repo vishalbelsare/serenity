@@ -223,6 +223,9 @@ class ExecutionReport(OrderEvent):
     def get_last_qty(self) -> float:
         return self.last_qty
 
+    def is_fill(self) -> bool:
+        return self.order_status in [OrderStatus.PARTIALLY_FILLED, OrderStatus.FILLED]
+
     def __str__(self) -> str:
         return f'ExecutionReport[exec_type={self.exec_type}, order_status={self.order_status}, ' \
                f'leaves_qty={self.leaves_qty}, last_px={self.last_px}]'
@@ -336,10 +339,14 @@ class OrderManagerService:
         self.order_state_by_order_id = {}
         self.order_by_cl_ord_id = {}
         self.order_events = MutableSignal()
+        self.orders = MutableSignal()
         self.scheduler.get_network().attach(self.order_events)
 
     def get_order_events(self) -> Signal:
         return self.order_events
+
+    def get_orders(self) -> Signal:
+        return self.orders
 
     # noinspection PyTypeChecker
     def get_order_by_order_id(self, order_id) -> Order:
@@ -364,6 +371,7 @@ class OrderManagerService:
         self.order_state_by_order_id[order_id] = pending_state
         self.order_by_cl_ord_id[order.get_cl_ord_id()] = order
         self.scheduler.schedule_update(self.order_events, pending_state.create_execution_report(str(uuid1())))
+        self.scheduler.schedule_update(self.orders, order)
 
     def new(self, order: Order, exec_id: str):
         order_id = order.get_order_id()

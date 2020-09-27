@@ -1,7 +1,7 @@
 import asyncio
 import importlib
 import logging
-import os
+import signal
 import sys
 
 import fire
@@ -10,6 +10,7 @@ from phemex import AuthCredentials
 from tau.core import RealtimeNetworkScheduler
 
 from serenity.algo import StrategyContext
+from serenity.analytics import HDF5DataCaptureService, Mode
 from serenity.db import InstrumentCache, connect_serenity_db, TypeCodeCache
 from serenity.marketdata.fh.binance_fh import BinanceFeedHandler
 from serenity.marketdata.fh.coinbasepro_fh import CoinbaseProFeedHandler
@@ -70,7 +71,9 @@ class AlgoEngine:
             op_service = OrderPlacerService(scheduler, oms)
             md_service = FeedHandlerMarketdataService(scheduler, self.fh_registry, instance_id)
             self.xps = None
-            ps = None
+
+            extra_outputs = self.engine_env.getenv('EXTRA_OUTPUTS', '').split(',')
+            self.dcs = HDF5DataCaptureService(Mode.LIVE, scheduler, extra_outputs)
 
             if 'order_placers' in config:
                 logger.info('Registering OrderPlacers')
@@ -96,8 +99,10 @@ class AlgoEngine:
                         raise ValueError(f'Unsupported order placer: {op_name}')
 
             self.strategies = []
+            self.strategy_names = []
             for strategy in config['strategies']:
                 strategy_name = strategy['name']
+                self.strategy_names.append(strategy_name)
                 self.logger.info(f'Loading strategy: {strategy_name}')
                 module = strategy['module']
                 strategy_class = strategy['strategy-class']
@@ -106,7 +111,7 @@ class AlgoEngine:
                 module = importlib.import_module(module)
                 klass = getattr(module, strategy_class)
                 strategy_instance = klass()
-                ctx = StrategyContext(scheduler, instrument_cache, md_service, op_service, self.ps, self.xps,
+                ctx = StrategyContext(scheduler, instrument_cache, md_service, op_service, self.ps, self.xps, self.dcs,
                                       env.values)
                 self.strategies.append((strategy_instance, ctx))
 
@@ -128,6 +133,16 @@ class AlgoEngine:
 
         # crash out on any exception
         asyncio.get_event_loop().set_exception_handler(custom_asyncio_error_handler)
+
+        # store output after event loop shuts down, right before exit
+        # noinspection PyUnusedLocal
+        def signal_handler(sig, frame):
+            for strategy_name in self.strategy_names:
+                snapshot_id = self.dcs.store_snapshot(strategy_name)
+                self.logger.info(f'stored snapshot: {snapshot_id}')
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
 
         # go!
         asyncio.get_event_loop().run_forever()

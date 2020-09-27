@@ -7,8 +7,10 @@ from datetime import datetime
 import fire
 import yaml
 from tau.core import HistoricNetworkScheduler
+from tau.event import Do
 
 from serenity.algo import StrategyContext
+from serenity.analytics import HDF5DataCaptureService, Mode
 from serenity.db import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.marketdata.historic import HistoricMarketdataService
 from serenity.position import PositionService, NullExchangePositionService
@@ -63,9 +65,20 @@ class AlgoBacktester:
 
             xps = NullExchangePositionService(self.scheduler)
 
+            extra_outputs = self.bt_env.getenv('EXTRA_OUTPUTS', '').split(',')
+            self.dcs = HDF5DataCaptureService(Mode.BACKTEST, self.scheduler, extra_outputs)
+
+            # wire up orders and fills from OMS
+            Do(self.scheduler.get_network(), oms.get_orders(),
+               lambda: self.dcs.capture_order(oms.get_orders().get_value()))
+            Do(self.scheduler.get_network(), oms.get_order_events(),
+               lambda: self.dcs.capture_fill(oms.get_order_events().get_value()))
+
             self.strategies = []
+            self.strategy_names = []
             for strategy in config['strategies']:
                 strategy_name = strategy['name']
+                self.strategy_names.append(strategy_name)
                 self.logger.info(f'Loading strategy: {strategy_name}')
                 module = strategy['module']
                 strategy_class = strategy['strategy-class']
@@ -75,12 +88,17 @@ class AlgoBacktester:
                 klass = getattr(module, strategy_class)
                 strategy_instance = klass()
                 ctx = StrategyContext(self.scheduler, instrument_cache, md_service, op_service,
-                                      PositionService(self.scheduler, oms), xps, env.values)
+                                      PositionService(self.scheduler, oms), xps, self.dcs, env.values)
                 strategy_instance.init(ctx)
                 strategy_instance.start()
 
     def run(self):
         self.scheduler.run()
+
+        # store output after historic run completes
+        for strategy_name in self.strategy_names:
+            snapshot_id = self.dcs.store_snapshot(strategy_name)
+            self.logger.info(f'stored snapshot: {snapshot_id}')
 
 
 def main(config_path: str, start_time: str = None, end_time: str = None, strategy_dir: str = '.'):

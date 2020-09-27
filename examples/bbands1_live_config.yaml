@@ -12,6 +12,8 @@ environment:
     value-source: SYSTEM_ENV
   - key: PHEMEX_API_SECRET
     value-source: SYSTEM_ENV
+  - key: EXTRA_OUTPUTS
+    value: TradeFlows,BollingerBands,PnL
 strategies:
   - name: BollingerBands
     module: bbands1

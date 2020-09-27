@@ -3,6 +3,7 @@ from enum import Enum, auto
 
 from tau.core import Signal, NetworkScheduler, Network
 
+from serenity.analytics import DataCaptureService
 from serenity.db import InstrumentCache, TypeCodeCache
 from serenity.marketdata import MarketdataService
 from serenity.position import PositionService, ExchangePositionService
@@ -23,13 +24,14 @@ class StrategyContext:
 
     def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache,
                  md_service: MarketdataService, op_service: OrderPlacerService, position_service: PositionService,
-                 xps: ExchangePositionService, env_vars: dict):
+                 xps: ExchangePositionService, dcs: DataCaptureService, env_vars: dict):
         self.scheduler = scheduler
         self.instrument_cache = instrument_cache
         self.md_service = md_service
         self.op_service = op_service
         self.position_service = position_service
         self.xps = xps
+        self.dcs = dcs
         self.env_vars = env_vars
 
     def get_scheduler(self) -> NetworkScheduler:
@@ -55,6 +57,9 @@ class StrategyContext:
 
     def get_exchange_position_service(self) -> ExchangePositionService:
         return self.xps
+
+    def get_data_capture_service(self) -> DataCaptureService:
+        return self.dcs
 
     def getenv(self, key: str, default_value=None):
         if key in self.env_vars:
