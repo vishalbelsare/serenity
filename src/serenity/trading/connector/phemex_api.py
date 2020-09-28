@@ -196,28 +196,29 @@ class PhemexExchangePositionService(ExchangePositionService):
 
         # noinspection PyShadowingNames
         async def do_subscribe():
-            async with websockets.connect(self.ws_uri) as sock:
-                self.logger.info(f'sending Account-Order-Position subscription request for positions')
-                auth_msg = self.auth.get_user_auth_message(2)
-                await sock.send(auth_msg)
-                error_msg = await sock.recv()
-                error_struct = json.loads(error_msg)
-                if error_struct['error'] is not None:
-                    raise ConnectionError(f'Unable to authenticate: {error_msg}')
+            while True:
+                async with websockets.connect(self.ws_uri) as sock:
+                    self.logger.info(f'sending Account-Order-Position subscription request for positions')
+                    auth_msg = self.auth.get_user_auth_message(2)
+                    await sock.send(auth_msg)
+                    error_msg = await sock.recv()
+                    error_struct = json.loads(error_msg)
+                    if error_struct['error'] is not None:
+                        raise ConnectionError(f'Unable to authenticate: {error_msg}')
 
-                aop_sub_msg = {
-                    'id': 3,
-                    'method': 'aop.subscribe',
-                    'params': []
-                }
-                await sock.send(json.dumps(aop_sub_msg))
-                while True:
-                    try:
-                        self.scheduler.schedule_update(messages, await sock.recv())
-                    except BaseException as error:
-                        self.logger.info(f'disconnected; attempting to reconnect: {error}')
-                        asyncio.ensure_future(do_subscribe())
-                        break
+                    aop_sub_msg = {
+                        'id': 3,
+                        'method': 'aop.subscribe',
+                        'params': []
+                    }
+                    await sock.send(json.dumps(aop_sub_msg))
+                    while True:
+                        try:
+                            self.scheduler.schedule_update(messages, await sock.recv())
+                        except BaseException as error:
+                            self.logger.info(f'disconnected; attempting to reconnect: {error}')
+                            asyncio.ensure_future(do_subscribe())
+                            break
 
         asyncio.ensure_future(do_subscribe())
 
