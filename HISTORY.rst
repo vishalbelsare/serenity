@@ -3,10 +3,11 @@
 Release History
 ---------------
 
-0.6.0 (TBD)
+0.5.1 (2020-09-28)
 ++++++++++++++++++
 
 - Added DataCaptureService and integrated with live & backtest modes
+- Fixed reconnection logic for all Phemex websocket-based interfaces
 
 0.5.0 (2020-09-26)
 ++++++++++++++++++
