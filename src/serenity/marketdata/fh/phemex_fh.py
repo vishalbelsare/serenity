@@ -1,6 +1,8 @@
 import asyncio
 import json
 import logging
+import socket
+
 from typing import List
 
 import fire
@@ -36,6 +38,9 @@ class PhemexFeedHandler(WebsocketFeedHandler):
         self.instrument_trades = {}
         self.instrument_order_book_events = {}
         self.instrument_order_books = {}
+
+        # timeout in seconds
+        self.timeout = 60
 
     @staticmethod
     def get_uri_scheme() -> str:
@@ -141,24 +146,40 @@ class PhemexFeedHandler(WebsocketFeedHandler):
 
             network.connect(order_book_events, OrderBookEventScheduler(self, order_book_events))
 
-            # noinspection PyShadowingNames
+            # noinspection PyShadowingNames,PyBroadException
             async def do_subscribe(instrument, subscribe_msg, messages, msg_type):
-                async with websockets.connect(self.ws_uri) as sock:
-                    subscribe_msg_txt = json.dumps(subscribe_msg)
-                    self.logger.info(f'sending {msg_type} subscription request for '
-                                     f'{instrument.get_exchange_instrument_code()}')
-                    await sock.send(subscribe_msg_txt)
-                    while True:
-                        # noinspection PyBroadException
-                        try:
-                            self.scheduler.schedule_update(messages, await sock.recv())
-                        except BaseException as error:
-                            self.logger.info(f'disconnected; attempting to reconnect: {error}')
-                            asyncio.ensure_future(
-                                do_subscribe(instrument, trade_subscribe_msg, trade_messages, 'trade'))
-                            asyncio.ensure_future(
-                                do_subscribe(instrument, orderbook_subscribe_msg, obe_messages, 'order book'))
-                            break
+                while True:
+                    try:
+                        async with websockets.connect(self.ws_uri) as sock:
+                            subscribe_msg_txt = json.dumps(subscribe_msg)
+                            self.logger.info(f'sending {msg_type} subscription request for '
+                                             f'{instrument.get_exchange_instrument_code()}')
+                            await sock.send(subscribe_msg_txt)
+                            while True:
+                                try:
+                                    self.scheduler.schedule_update(messages, await sock.recv())
+                                except BaseException as error:
+                                    self.logger.error(f'disconnected; attempting to reconnect after {self.timeout} '
+                                                      f'seconds: {error}')
+                                    await asyncio.sleep(self.timeout)
+
+                                    # exit inner loop
+                                    break
+                    except socket.gaierror:
+                        self.logger.error(f'failed with socket error; attempting to reconnect after {self.timeout} '
+                                          f'seconds: {error}')
+                        await asyncio.sleep(self.timeout)
+                        continue
+                    except ConnectionRefusedError:
+                        self.logger.error(f'connection refused; attempting to reconnect after {self.timeout} '
+                                          f'seconds: {error}')
+                        await asyncio.sleep(self.timeout)
+                        continue
+                    except BaseException:
+                        self.logger.error(f'unknown connection error; attempting to reconnect after {self.timeout} '
+                                          f'seconds: {error}')
+                        await asyncio.sleep(self.timeout)
+                        continue
 
             asyncio.ensure_future(do_subscribe(instrument, trade_subscribe_msg, trade_messages, 'trade'))
             asyncio.ensure_future(do_subscribe(instrument, orderbook_subscribe_msg, obe_messages, 'order book'))
