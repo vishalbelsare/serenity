@@ -3,6 +3,7 @@ FROM python:3.8-slim-buster
 RUN apt-get update && apt-get install --yes gcc libpq-dev
 
 COPY $PWD/src /app
+COPY $PWD/strategies /strategies
 COPY $PWD/requirements.txt /app
 WORKDIR /app
 
