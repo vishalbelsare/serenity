@@ -340,6 +340,8 @@ class OrderManagerService:
         self.order_by_cl_ord_id = {}
         self.order_events = MutableSignal()
         self.orders = MutableSignal()
+
+        self.scheduler.get_network().attach(self.orders)
         self.scheduler.get_network().attach(self.order_events)
 
     def get_order_events(self) -> Signal:
