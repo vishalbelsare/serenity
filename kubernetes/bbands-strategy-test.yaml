@@ -34,11 +34,11 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: phemex-secret-config
-                  key: api-key
+                  key: bbands-api-key-test
             - name: PHEMEX_API_SECRET
               valueFrom:
                 secretKeyRef:
                   name: phemex-secret-config
-                  key: api-secret
+                  key: bbands-api-secret-test
             - name: EXCHANGE_INSTANCE
               value: test
