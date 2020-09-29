@@ -165,17 +165,17 @@ class PhemexFeedHandler(WebsocketFeedHandler):
 
                                     # exit inner loop
                                     break
-                    except socket.gaierror:
+                    except socket.gaierror as error:
                         self.logger.error(f'failed with socket error; attempting to reconnect after {self.timeout} '
                                           f'seconds: {error}')
                         await asyncio.sleep(self.timeout)
                         continue
-                    except ConnectionRefusedError:
+                    except ConnectionRefusedError as error:
                         self.logger.error(f'connection refused; attempting to reconnect after {self.timeout} '
                                           f'seconds: {error}')
                         await asyncio.sleep(self.timeout)
                         continue
-                    except BaseException:
+                    except BaseException as error:
                         self.logger.error(f'unknown connection error; attempting to reconnect after {self.timeout} '
                                           f'seconds: {error}')
                         await asyncio.sleep(self.timeout)
