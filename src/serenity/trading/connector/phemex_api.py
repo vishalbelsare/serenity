@@ -116,7 +116,7 @@ class OrderEventSubscriber:
                         elif order_msg['ordStatus'] == 'Canceled':
                             self.sub.oms.apply_cancel(order, exec_id)
                         elif order_msg['ordStatus'] == 'PartiallyFilled' or order_msg['ordStatus'] == 'Filled':
-                            self.sub.oms.apply_fill(order, last_px, last_qty, exec_id)
+                            self.sub.oms.apply_fill(order, last_qty, last_px, exec_id)
 
                     return True
                 else:

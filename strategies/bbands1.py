@@ -104,8 +104,7 @@ class BollingerBandsStrategy1(Strategy):
             def on_activate(self) -> bool:
                 if self.scheduler.get_network().has_activated(oms.get_order_events()):
                     order_event = oms.get_order_events().get_value()
-                    if isinstance(order_event, ExecutionReport) \
-                            and order_event.get_order_status() == OrderStatus.FILLED:
+                    if isinstance(order_event, ExecutionReport) and order_event.is_fill():
                         order_type = 'stop order' if order_event.get_order_id() == self.stop.order_id \
                             else 'market order'
                         self.strategy.logger.info(f'Received fill event for {order_type}: {order_event}')
