@@ -271,7 +271,8 @@ class FeedHandlerMarketdataService(MarketdataService):
         return f'{instrument.get_exchange().get_type_code().lower()}:{self.instance_id}:{symbol}'
 
 
-def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, db: str, journal_books: bool = True):
+def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, db: str, journal_books: bool = True,
+               include_symbol: str = '*'):
     init_logging()
     logger = logging.getLogger(__name__)
 
@@ -283,11 +284,13 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
 
     scheduler = RealtimeNetworkScheduler()
     registry = FeedHandlerRegistry()
-    fh = create_fh(scheduler, instr_cache, instance_id)
+    fh = create_fh(scheduler, instr_cache, include_symbol, instance_id)
     registry.register(fh)
 
     for instrument in fh.get_instruments():
         symbol = instrument.get_exchange_instrument_code()
+        if not (symbol == include_symbol or include_symbol == '*'):
+            continue
 
         # subscribe to FeedState in advance so we know when the Feed is ready to subscribe trades
         class SubscribeTrades(Event):

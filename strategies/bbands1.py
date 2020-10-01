@@ -110,7 +110,7 @@ class BollingerBandsStrategy1(Strategy):
                         self.strategy.logger.info(f'Received fill event for {order_type}: {order_event}')
                         if position.get_value().get_qty() == 0:
                             self.last_entry = order_event.get_last_px()
-                        else:
+                        elif order_event.get_order_status() == OrderStatus.FILLED:
                             trade_pnl = (order_event.get_last_px() - self.last_entry) * \
                                         (position.get_value().get_qty() / self.last_entry)
                             self.cum_pnl = self.cum_pnl + trade_pnl

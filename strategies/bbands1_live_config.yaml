@@ -1,6 +1,7 @@
 api-version: v1Beta
 feedhandlers:
   - exchange: Phemex
+    include_symbol: BTCUSD
 order_placers:
   - exchange: Phemex
 environment:

@@ -58,8 +58,10 @@ class AlgoEngine:
                 logger.info('Registering feedhandlers')
                 for feedhandler in config['feedhandlers']:
                     fh_name = feedhandler['exchange']
+                    include_symbol = feedhandler.get('include_symbol', '*')
                     if fh_name == 'Phemex':
-                        self.fh_registry.register(PhemexFeedHandler(scheduler, instrument_cache, instance_id))
+                        self.fh_registry.register(PhemexFeedHandler(scheduler, instrument_cache, include_symbol,
+                                                                    instance_id))
                     elif fh_name == 'Binance':
                         self.fh_registry.register(BinanceFeedHandler(scheduler, instrument_cache, instance_id))
                     elif fh_name == 'CoinbasePro':

@@ -22,7 +22,8 @@ from serenity.trading import Side
 class PhemexFeedHandler(WebsocketFeedHandler):
     logger = logging.getLogger(__name__)
 
-    def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, instance_id: str = 'prod'):
+    def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, include_symbol: str = '*',
+                 instance_id: str = 'prod'):
         if instance_id == 'prod':
             self.ws_uri = 'wss://phemex.com/ws'
             self.phemex = PhemexConnection()
@@ -38,6 +39,8 @@ class PhemexFeedHandler(WebsocketFeedHandler):
         self.instrument_trades = {}
         self.instrument_order_book_events = {}
         self.instrument_order_books = {}
+
+        self.include_symbol = include_symbol
 
         # timeout in seconds
         self.timeout = 60
@@ -74,115 +77,115 @@ class PhemexFeedHandler(WebsocketFeedHandler):
 
         for instrument in self.get_instruments():
             symbol = instrument.get_exchange_instrument_code()
+            if symbol == self.include_symbol or self.include_symbol == '*':
+                self.instrument_trades[symbol] = MutableSignal()
+                self.instrument_order_book_events[symbol] = MutableSignal()
+                self.instrument_order_books[symbol] = OrderBookBuilder(network, self.instrument_order_book_events[symbol])
 
-            self.instrument_trades[symbol] = MutableSignal()
-            self.instrument_order_book_events[symbol] = MutableSignal()
-            self.instrument_order_books[symbol] = OrderBookBuilder(network, self.instrument_order_book_events[symbol])
+                # magic: inject the bare Signal into the graph so we can
+                # fire events on it without any downstream connections
+                network.attach(self.instrument_trades[symbol])
+                network.attach(self.instrument_order_book_events[symbol])
+                network.attach(self.instrument_order_books[symbol])
 
-            # magic: inject the bare Signal into the graph so we can
-            # fire events on it without any downstream connections
-            network.attach(self.instrument_trades[symbol])
-            network.attach(self.instrument_order_book_events[symbol])
-            network.attach(self.instrument_order_books[symbol])
+                trade_subscribe_msg = {
+                    'id': 1,
+                    'method': 'trade.subscribe',
+                    'params': [symbol]
+                }
 
-            trade_subscribe_msg = {
-                'id': 1,
-                'method': 'trade.subscribe',
-                'params': [symbol]
-            }
+                trade_messages = MutableSignal()
+                trade_json_messages = Map(network, trade_messages, lambda x: json.loads(x))
+                trade_incr_messages = Filter(network, trade_json_messages,
+                                             lambda x: x.get('type', None) == 'incremental')
+                trade_lists = Map(network, trade_incr_messages, lambda x: self.__extract_trades(x))
+                trades = FlatMap(self.scheduler, trade_lists)
 
-            trade_messages = MutableSignal()
-            trade_json_messages = Map(network, trade_messages, lambda x: json.loads(x))
-            trade_incr_messages = Filter(network, trade_json_messages,
-                                         lambda x: x.get('type', None) == 'incremental')
-            trade_lists = Map(network, trade_incr_messages, lambda x: self.__extract_trades(x))
-            trades = FlatMap(self.scheduler, trade_lists)
+                class TradeScheduler(Event):
+                    # noinspection PyShadowingNames
+                    def __init__(self, fh: PhemexFeedHandler, trades: Signal):
+                        self.fh = fh
+                        self.trades = trades
 
-            class TradeScheduler(Event):
-                # noinspection PyShadowingNames
-                def __init__(self, fh: PhemexFeedHandler, trades: Signal):
-                    self.fh = fh
-                    self.trades = trades
+                    def on_activate(self) -> bool:
+                        if self.trades.is_valid():
+                            trade = self.trades.get_value()
+                            trade_symbol = trade.get_instrument().get_exchange_instrument_code()
+                            trade_signal = self.fh.instrument_trades[trade_symbol]
+                            self.fh.scheduler.schedule_update(trade_signal, trade)
+                            return True
+                        else:
+                            return False
 
-                def on_activate(self) -> bool:
-                    if self.trades.is_valid():
-                        trade = self.trades.get_value()
-                        trade_symbol = trade.get_instrument().get_exchange_instrument_code()
-                        trade_signal = self.fh.instrument_trades[trade_symbol]
-                        self.fh.scheduler.schedule_update(trade_signal, trade)
-                        return True
-                    else:
-                        return False
+                network.connect(trades, TradeScheduler(self, trades))
 
-            network.connect(trades, TradeScheduler(self, trades))
+                orderbook_subscribe_msg = {
+                    'id': 2,
+                    'method': 'orderbook.subscribe',
+                    'params': [symbol]
+                }
 
-            orderbook_subscribe_msg = {
-                'id': 2,
-                'method': 'orderbook.subscribe',
-                'params': [symbol]
-            }
+                obe_messages = MutableSignal()
+                obe_json_messages = Map(network, obe_messages, lambda x: json.loads(x))
+                obe_json_messages = Filter(network, obe_json_messages,
+                                           lambda x: x.get('type', None) in ['incremental', 'snapshot'])
+                order_book_events = Map(network, obe_json_messages, lambda x: self.__extract_order_book_event(x))
 
-            obe_messages = MutableSignal()
-            obe_json_messages = Map(network, obe_messages, lambda x: json.loads(x))
-            obe_json_messages = Filter(network, obe_json_messages,
-                                       lambda x: x.get('type', None) in ['incremental', 'snapshot'])
-            order_book_events = Map(network, obe_json_messages, lambda x: self.__extract_order_book_event(x))
+                class OrderBookEventScheduler(Event):
+                    # noinspection PyShadowingNames
+                    def __init__(self, fh: PhemexFeedHandler, order_book_events: Signal):
+                        self.fh = fh
+                        self.order_book_events = order_book_events
 
-            class OrderBookEventScheduler(Event):
-                # noinspection PyShadowingNames
-                def __init__(self, fh: PhemexFeedHandler, order_book_events: Signal):
-                    self.fh = fh
-                    self.order_book_events = order_book_events
+                    def on_activate(self) -> bool:
+                        if self.order_book_events.is_valid():
+                            obe = self.order_book_events.get_value()
+                            obe_symbol = obe.get_instrument().get_exchange_instrument_code()
+                            obe_signal = self.fh.instrument_order_book_events[obe_symbol]
+                            self.fh.scheduler.schedule_update(obe_signal, obe)
+                            return True
+                        else:
+                            return False
 
-                def on_activate(self) -> bool:
-                    if self.order_book_events.is_valid():
-                        obe = self.order_book_events.get_value()
-                        obe_symbol = obe.get_instrument().get_exchange_instrument_code()
-                        obe_signal = self.fh.instrument_order_book_events[obe_symbol]
-                        self.fh.scheduler.schedule_update(obe_signal, obe)
-                        return True
-                    else:
-                        return False
+                network.connect(order_book_events, OrderBookEventScheduler(self, order_book_events))
 
-            network.connect(order_book_events, OrderBookEventScheduler(self, order_book_events))
+                # noinspection PyShadowingNames,PyBroadException
+                async def do_subscribe(instrument, subscribe_msg, messages, msg_type):
+                    while True:
+                        try:
+                            async with websockets.connect(self.ws_uri) as sock:
+                                subscribe_msg_txt = json.dumps(subscribe_msg)
+                                self.logger.info(f'sending {msg_type} subscription request for '
+                                                 f'{instrument.get_exchange_instrument_code()}')
+                                await sock.send(subscribe_msg_txt)
+                                while True:
+                                    try:
+                                        self.scheduler.schedule_update(messages, await sock.recv())
+                                    except BaseException as error:
+                                        self.logger.error(f'disconnected; attempting to reconnect after {self.timeout} '
+                                                          f'seconds: {error}')
+                                        await asyncio.sleep(self.timeout)
 
-            # noinspection PyShadowingNames,PyBroadException
-            async def do_subscribe(instrument, subscribe_msg, messages, msg_type):
-                while True:
-                    try:
-                        async with websockets.connect(self.ws_uri) as sock:
-                            subscribe_msg_txt = json.dumps(subscribe_msg)
-                            self.logger.info(f'sending {msg_type} subscription request for '
-                                             f'{instrument.get_exchange_instrument_code()}')
-                            await sock.send(subscribe_msg_txt)
-                            while True:
-                                try:
-                                    self.scheduler.schedule_update(messages, await sock.recv())
-                                except BaseException as error:
-                                    self.logger.error(f'disconnected; attempting to reconnect after {self.timeout} '
-                                                      f'seconds: {error}')
-                                    await asyncio.sleep(self.timeout)
+                                        # exit inner loop
+                                        break
+                        except socket.gaierror as error:
+                            self.logger.error(f'failed with socket error; attempting to reconnect after {self.timeout} '
+                                              f'seconds: {error}')
+                            await asyncio.sleep(self.timeout)
+                            continue
+                        except ConnectionRefusedError as error:
+                            self.logger.error(f'connection refused; attempting to reconnect after {self.timeout} '
+                                              f'seconds: {error}')
+                            await asyncio.sleep(self.timeout)
+                            continue
+                        except BaseException as error:
+                            self.logger.error(f'unknown connection error; attempting to reconnect after {self.timeout} '
+                                              f'seconds: {error}')
+                            await asyncio.sleep(self.timeout)
+                            continue
 
-                                    # exit inner loop
-                                    break
-                    except socket.gaierror as error:
-                        self.logger.error(f'failed with socket error; attempting to reconnect after {self.timeout} '
-                                          f'seconds: {error}')
-                        await asyncio.sleep(self.timeout)
-                        continue
-                    except ConnectionRefusedError as error:
-                        self.logger.error(f'connection refused; attempting to reconnect after {self.timeout} '
-                                          f'seconds: {error}')
-                        await asyncio.sleep(self.timeout)
-                        continue
-                    except BaseException as error:
-                        self.logger.error(f'unknown connection error; attempting to reconnect after {self.timeout} '
-                                          f'seconds: {error}')
-                        await asyncio.sleep(self.timeout)
-                        continue
-
-            asyncio.ensure_future(do_subscribe(instrument, trade_subscribe_msg, trade_messages, 'trade'))
-            asyncio.ensure_future(do_subscribe(instrument, orderbook_subscribe_msg, obe_messages, 'order book'))
+                asyncio.ensure_future(do_subscribe(instrument, trade_subscribe_msg, trade_messages, 'trade'))
+                asyncio.ensure_future(do_subscribe(instrument, orderbook_subscribe_msg, obe_messages, 'order book'))
 
         # we are now live
         self.scheduler.schedule_update(self.state, FeedHandlerState.LIVE)
@@ -234,12 +237,12 @@ class PhemexFeedHandler(WebsocketFeedHandler):
             return OrderBookUpdate(instrument, bids, asks, seq_num)
 
 
-def create_fh(scheduler: NetworkScheduler, instrument_cache: InstrumentCache, instance_id):
-    return PhemexFeedHandler(scheduler, instrument_cache, instance_id)
+def create_fh(scheduler: NetworkScheduler, instrument_cache: InstrumentCache, include_symbol: str, instance_id: str):
+    return PhemexFeedHandler(scheduler, instrument_cache, include_symbol, instance_id)
 
 
-def main(instance_id: str = 'prod', journal_path: str = '/behemoth/journals/'):
-    ws_fh_main(create_fh, PhemexFeedHandler.get_uri_scheme(), instance_id, journal_path, 'PHEMEX', True)
+def main(instance_id: str = 'prod', include_symbol: str = '*', journal_path: str = '/behemoth/journals/'):
+    ws_fh_main(create_fh, PhemexFeedHandler.get_uri_scheme(), instance_id, journal_path, 'PHEMEX', True, include_symbol)
 
 
 if __name__ == '__main__':
