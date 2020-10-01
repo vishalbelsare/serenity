@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: bbands-strategy-test
-          image: cloudwallcapital/serenity:2020.09.29-b27
+          image: cloudwallcapital/serenity:2020.09.29-b28
           command: ["python"]
           args: ["serenity/algo/engine.py", "/strategies/bbands1_live_config.yaml", "--strategy-dir=/strategies"]
           env:
