@@ -1,4 +1,6 @@
 import logging
+from enum import Enum, auto
+
 import pandas as pd
 
 from datetime import timedelta, datetime
@@ -83,6 +85,11 @@ class BollingerBandsStrategy1(Strategy):
             'lower': bbands.get_value().lower
         }))
 
+        class TraderState(Enum):
+            LONG = auto()
+            FLAT = auto()
+            WAITING = auto()
+
         # order placement logic
         class BollingerTrader(Event):
             # noinspection PyShadowingNames
@@ -96,6 +103,7 @@ class BollingerBandsStrategy1(Strategy):
                 self.cum_pnl = 0
                 self.stop = None
                 self.volatility_pause = False
+                self.trader_state = TraderState.WAITING
 
                 self.scheduler.get_network().connect(oms.get_order_events(), self)
                 self.scheduler.get_network().connect(position, self)
@@ -108,9 +116,7 @@ class BollingerBandsStrategy1(Strategy):
                         order_type = 'stop order' if order_event.get_order_id() == self.stop.order_id \
                             else 'market order'
                         self.strategy.logger.info(f'Received fill event for {order_type}: {order_event}')
-                        if position.get_value().get_qty() == 0:
-                            self.last_entry = order_event.get_last_px()
-                        elif order_event.get_order_status() == OrderStatus.FILLED:
+                        if self.trader_state == TraderState.LONG:
                             trade_pnl = (order_event.get_last_px() - self.last_entry) * \
                                         (position.get_value().get_qty() / self.last_entry)
                             self.cum_pnl = self.cum_pnl + trade_pnl
@@ -121,6 +127,11 @@ class BollingerBandsStrategy1(Strategy):
                                 'trade_pnl': trade_pnl,
                                 'cum_pnk': self.cum_pnl
                             })
+
+                            if order_event.get_order_status() == OrderStatus.FILLED:
+                                self.trader_state = TraderState.FLAT
+                        else:
+                            self.last_entry = order_event.get_last_px()
                 elif self.scheduler.get_network().has_activated(trade_flow):
                     if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
                         self.volatility_pause = True
@@ -128,14 +139,16 @@ class BollingerBandsStrategy1(Strategy):
                     elif trade_flow.get_value() > trade_flow_qty and self.volatility_pause:
                         self.volatility_pause = False
                         return False
-                elif position.get_value().get_qty() == 0 and close_prices.get_value() < bbands.get_value().lower:
+                elif self.trader_state == TraderState.FLAT and close_prices.get_value() < bbands.get_value().lower:
                     if self.volatility_pause:
                         self.strategy.logger.info(f'Net selling pressure while below BB lower bound; paused trading at '
                                                   f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                        self.trader_state = TraderState.WAITING
                         return False
 
                     self.strategy.logger.info(f'Close below lower Bollinger band while rallying, enter long position '
                                               f'at {datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                    self.trader_state = TraderState.LONG
 
                     stop_px = close_prices.get_value() - ((bbands.get_value().sma - bbands.get_value().lower) *
                                                           (stop_std / num_std))
@@ -151,6 +164,8 @@ class BollingerBandsStrategy1(Strategy):
                 elif position.get_value().get_qty() > 0 and close_prices.get_value() > bbands.get_value().upper:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                    self.trader_state = TraderState.FLAT
+
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)
                     self.op.submit(order)
                     self.op.cancel(self.stop)
