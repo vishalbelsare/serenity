@@ -96,7 +96,7 @@ class PositionService(Event):
         if self.scheduler.get_network().has_activated(self.oms.get_order_events()):
             order_events = self.oms.get_order_events()
             order_event = order_events.get_value()
-            if isinstance(order_event, ExecutionReport) and order_event.get_exec_type() == ExecType.TRADE:
+            if isinstance(order_event, ExecutionReport) and order_event.is_fill():
                 order = self.oms.get_order_by_order_id(order_event.get_order_id())
                 account = order.get_account()
                 last_qty = order_event.get_last_qty()
