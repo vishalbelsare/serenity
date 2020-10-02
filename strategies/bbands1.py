@@ -86,9 +86,9 @@ class BollingerBandsStrategy1(Strategy):
         }))
 
         class TraderState(Enum):
+            GOING_LONG = auto()
             LONG = auto()
             FLAT = auto()
-            WAITING = auto()
 
         # order placement logic
         class BollingerTrader(Event):
@@ -103,7 +103,7 @@ class BollingerBandsStrategy1(Strategy):
                 self.cum_pnl = 0
                 self.stop = None
                 self.volatility_pause = False
-                self.trader_state = TraderState.WAITING
+                self.trader_state = TraderState.FLAT
 
                 self.scheduler.get_network().connect(oms.get_order_events(), self)
                 self.scheduler.get_network().connect(position, self)
@@ -130,8 +130,10 @@ class BollingerBandsStrategy1(Strategy):
 
                             if order_event.get_order_status() == OrderStatus.FILLED:
                                 self.trader_state = TraderState.FLAT
-                        else:
+                        elif self.trader_state == TraderState.GOING_LONG:
                             self.last_entry = order_event.get_last_px()
+                            self.strategy.logger.info(f'Entered long position: entry price={self.last_entry}')
+                            self.trader_state = TraderState.LONG
                 elif self.scheduler.get_network().has_activated(trade_flow):
                     if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
                         self.volatility_pause = True
@@ -143,12 +145,11 @@ class BollingerBandsStrategy1(Strategy):
                     if self.volatility_pause:
                         self.strategy.logger.info(f'Net selling pressure while below BB lower bound; paused trading at '
                                                   f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
-                        self.trader_state = TraderState.WAITING
                         return False
 
                     self.strategy.logger.info(f'Close below lower Bollinger band while rallying, enter long position '
                                               f'at {datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
-                    self.trader_state = TraderState.LONG
+                    self.trader_state = TraderState.GOING_LONG
 
                     stop_px = close_prices.get_value() - ((bbands.get_value().sma - bbands.get_value().lower) *
                                                           (stop_std / num_std))
@@ -164,7 +165,6 @@ class BollingerBandsStrategy1(Strategy):
                 elif position.get_value().get_qty() > 0 and close_prices.get_value() > bbands.get_value().upper:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
-                    self.trader_state = TraderState.FLAT
 
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)
                     self.op.submit(order)
