@@ -11,7 +11,7 @@ from math import trunc
 from typing import Any
 
 import websockets
-from phemex import PhemexConnection, AuthCredentials, AuthenticationError, CredentialError, PhemexError
+from phemex import PhemexConnection, AuthCredentials
 from tau.core import Signal, NetworkScheduler, MutableSignal, Event
 from tau.signal import Map, Filter
 
@@ -310,17 +310,17 @@ class PhemexOrderPlacer(OrderPlacer):
 
         response = self.trading_conn.send_message('POST', '/orders', data=json.dumps(params))
         error_code = int(response.get('code', 200))
-        if error_code > 200:
-            if error_code == 10500:
-                raise AuthenticationError()
-            elif error_code == 401:
-                raise CredentialError()
-            else:
-                raise PhemexError(error_code)
-
         order_id = response['data']['orderID']
         order.set_order_id(order_id)
         self.oms.pending_new(order)
+
+        if error_code > 200:
+            if error_code == 10500:
+                self.oms.reject(order, 'Authentiation error')
+            elif error_code == 401:
+                self.oms.reject(order, 'Credential error')
+            else:
+                self.oms.reject(order, f'Trading error: {error_code}')
 
     def cancel(self, order: Order):
         symbol = order.get_instrument().get_exchange_instrument_code()

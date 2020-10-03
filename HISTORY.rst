@@ -3,6 +3,12 @@
 Release History
 ---------------
 
+0.6.0 (2020-10-03)
+++++++++++++++++++
+
+- Major upgrade to Tau reactive framework to address threading issues
+- Further strategy improvements
+
 0.5.1 (2020-09-28)
 ++++++++++++++++++
 

@@ -432,6 +432,11 @@ class OrderManagerService:
             self.order_state_by_order_id[order_id] = fill_state
             self.scheduler.schedule_update(self.order_events, fill_state.create_execution_report(exec_id))
 
+    def reject(self, order, msg: str):
+        order_state = self.order_state_by_order_id[order.get_order_id()]
+        order_state = order_state.transition(OrderStatus.REJECTED, ExecType.REJECTED)
+        self.scheduler.schedule_update(self.order_events, Reject(msg))
+
     def is_terminal(self, order_id) -> bool:
         return self.order_state_by_order_id[order_id].is_terminal()
 

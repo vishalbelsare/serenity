@@ -12,7 +12,7 @@ from tau.signal import Map, BufferWithTime, Function
 from serenity.algo import Strategy, StrategyContext
 from serenity.signal.indicators import ComputeBollingerBands
 from serenity.signal.marketdata import ComputeOHLC
-from serenity.trading import OrderPlacerService, Side, OrderStatus, ExecutionReport
+from serenity.trading import OrderPlacerService, Side, OrderStatus, ExecutionReport, Reject
 
 
 class ComputeTradeFlowImbalanceSignal(Function):
@@ -134,6 +134,8 @@ class BollingerBandsStrategy1(Strategy):
                             self.last_entry = order_event.get_last_px()
                             self.strategy.logger.info(f'Entered long position: entry price={self.last_entry}')
                             self.trader_state = TraderState.LONG
+                    elif isinstance(order_event, Reject):
+                        self.strategy.logger.error(f'Order rejected: {order_event.get_message()}')
                 elif self.scheduler.get_network().has_activated(trade_flow):
                     if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
                         self.volatility_pause = True
