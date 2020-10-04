@@ -9,10 +9,11 @@ from tau.core import Event, NetworkScheduler, Signal, Network
 from tau.event import Do
 from tau.signal import Map, BufferWithTime, Function
 
-from serenity.algo import Strategy, StrategyContext
+from serenity.algo.api import Strategy, StrategyContext
 from serenity.signal.indicators import ComputeBollingerBands
 from serenity.signal.marketdata import ComputeOHLC
-from serenity.trading import OrderPlacerService, Side, OrderStatus, ExecutionReport, Reject
+from serenity.trading.api import Side, OrderStatus, ExecutionReport, Reject
+from serenity.trading.oms import OrderPlacerService
 
 
 class ComputeTradeFlowImbalanceSignal(Function):
@@ -85,6 +86,10 @@ class BollingerBandsStrategy1(Strategy):
             'lower': bbands.get_value().lower
         }))
 
+        # log basic marketdata
+        Do(scheduler.get_network(), trades, lambda: self.logger.info(trades.get_value()))
+        Do(scheduler.get_network(), prices, lambda: self.logger.info(prices.get_value()))
+
         class TraderState(Enum):
             GOING_LONG = auto()
             LONG = auto()
@@ -139,9 +144,11 @@ class BollingerBandsStrategy1(Strategy):
                 elif self.scheduler.get_network().has_activated(trade_flow):
                     if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
                         self.volatility_pause = True
+                        self.strategy.logger.info(f'Toggled volatility pause ON: {trade_flow.get_value()}')
                         return False
                     elif trade_flow.get_value() > trade_flow_qty and self.volatility_pause:
                         self.volatility_pause = False
+                        self.strategy.logger.info(f'Toggled volatility pause OFF: {trade_flow.get_value()}')
                         return False
                 elif self.trader_state == TraderState.FLAT and close_prices.get_value() < bbands.get_value().lower:
                     if self.volatility_pause:

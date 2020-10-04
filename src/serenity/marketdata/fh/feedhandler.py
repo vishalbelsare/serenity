@@ -10,11 +10,11 @@ from tau.core import Signal, MutableSignal, NetworkScheduler, Event, Network, Re
 from tau.event import Do
 from tau.signal import Function
 
-from serenity.db import TypeCodeCache, InstrumentCache, connect_serenity_db
-from serenity.marketdata import MarketdataService, OrderBook, OrderBookSnapshot
+from serenity.db.api import TypeCodeCache, InstrumentCache, connect_serenity_db
+from serenity.marketdata.api import MarketdataService, OrderBook, OrderBookSnapshot
 from serenity.model.exchange import ExchangeInstrument
 from serenity.tickstore.journal import Journal
-from serenity.trading import Side
+from serenity.trading.api import Side
 from serenity.utils import init_logging, custom_asyncio_error_handler
 
 

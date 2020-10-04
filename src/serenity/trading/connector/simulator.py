@@ -2,9 +2,9 @@ from uuid import uuid1
 
 from tau.core import Signal, NetworkScheduler, Event
 
-from serenity.marketdata import MarketdataService
-from serenity.trading import OrderPlacer, Order, OrderFactory, Side, StopOrder, LimitOrder, MarketOrder, \
-    OrderManagerService
+from serenity.marketdata.api import MarketdataService
+from serenity.trading.api import OrderPlacer, Order, OrderFactory, Side, StopOrder, LimitOrder, MarketOrder
+from serenity.trading.oms import OrderManagerService
 
 
 class AutoFillOrderPlacer(OrderPlacer):

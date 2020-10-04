@@ -8,7 +8,7 @@ from tau.event import Do
 from tau.math import ExponentialMovingAverage
 from tau.signal import Filter, BufferWithTime, Map
 
-from serenity.algo import InvestmentStrategy, StrategyContext
+from serenity.algo.api import InvestmentStrategy, StrategyContext
 from serenity.model.exchange import ExchangeInstrument
 from serenity.signal.marketdata import ComputeOHLC
 

@@ -3,7 +3,7 @@ from datetime import datetime
 
 import fire
 
-from serenity.db import connect_serenity_db, TypeCodeCache, InstrumentCache
+from serenity.db.api import connect_serenity_db, TypeCodeCache, InstrumentCache
 from serenity.model.exchange import ExchangeInstrument
 from serenity.model.instrument import Instrument, Currency
 from serenity.model.order import Side

@@ -2,7 +2,7 @@ from datetime import datetime
 
 import fire
 
-from serenity.db import connect_serenity_db, ExchangeEntityService, TypeCodeCache, InstrumentCache
+from serenity.db.api import connect_serenity_db, ExchangeEntityService, TypeCodeCache, InstrumentCache
 from serenity.model.exchange import ExchangeAccount, ExchangeOrder, Exchange, ExchangeFill
 from serenity.model.instrument import InstrumentType
 from serenity.model.order import Side, OrderType, TimeInForce

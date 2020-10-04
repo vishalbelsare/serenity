@@ -7,6 +7,8 @@ Release History
 ++++++++++++++++++
 
 - Major upgrade to Tau reactive framework to address threading issues
+- refactored modules to use api.py rather than __init__.py
+- Fixed bug in extra outputs handling in live & backtest modes
 - Further strategy improvements
 
 0.5.1 (2020-09-28)

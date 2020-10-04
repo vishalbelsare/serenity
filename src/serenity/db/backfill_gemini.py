@@ -3,7 +3,7 @@ from datetime import datetime
 import gemini
 import fire
 
-from serenity.db import connect_serenity_db, TypeCodeCache, InstrumentCache, ExchangeEntityService
+from serenity.db.api import connect_serenity_db, TypeCodeCache, InstrumentCache, ExchangeEntityService
 from serenity.model.exchange import ExchangeOrder, Exchange, ExchangeFill, ExchangeAccount, \
     ExchangeTransferType, ExchangeTransferMethod, ExchangeTransfer
 from serenity.model.instrument import InstrumentType

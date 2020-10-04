@@ -11,12 +11,12 @@ from phemex import PhemexConnection
 from tau.core import MutableSignal, NetworkScheduler, Event, Signal
 from tau.signal import Filter, FlatMap, Map
 
-from serenity.db import InstrumentCache
+from serenity.db.api import InstrumentCache
 from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHandler, ws_fh_main, Feed, \
     OrderBookBuilder
-from serenity.marketdata import Trade, OrderBookEvent, OrderBookSnapshot, OrderBookUpdate, BookLevel
+from serenity.marketdata.api import Trade, OrderBookEvent, OrderBookSnapshot, OrderBookUpdate, BookLevel
 from serenity.model.exchange import ExchangeInstrument
-from serenity.trading import Side
+from serenity.trading.api import Side
 
 
 class PhemexFeedHandler(WebsocketFeedHandler):

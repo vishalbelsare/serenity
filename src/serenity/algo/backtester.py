@@ -9,12 +9,12 @@ import yaml
 from tau.core import HistoricNetworkScheduler
 from tau.event import Do
 
-from serenity.algo import StrategyContext
-from serenity.analytics import HDF5DataCaptureService, Mode
-from serenity.db import connect_serenity_db, InstrumentCache, TypeCodeCache
+from serenity.algo.api import StrategyContext
+from serenity.analytics.api import HDF5DataCaptureService, Mode
+from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.marketdata.historic import HistoricMarketdataService
-from serenity.position import PositionService, NullExchangePositionService
-from serenity.trading import OrderPlacerService, OrderManagerService
+from serenity.position.api import PositionService, NullExchangePositionService
+from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.simulator import AutoFillOrderPlacer
 from serenity.utils import init_logging, Environment
 
@@ -65,7 +65,11 @@ class AlgoBacktester:
 
             xps = NullExchangePositionService(self.scheduler)
 
-            extra_outputs = self.bt_env.getenv('EXTRA_OUTPUTS', '').split(',')
+            extra_outputs_txt = self.bt_env.getenv('EXTRA_OUTPUTS', None)
+            if extra_outputs_txt is None:
+                extra_outputs = []
+            else:
+                extra_outputs = extra_outputs_txt.split(',')
             self.dcs = HDF5DataCaptureService(Mode.BACKTEST, self.scheduler, extra_outputs)
 
             # wire up orders and fills from OMS

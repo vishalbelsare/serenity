@@ -5,10 +5,10 @@ from typing import List
 
 from tau.core import Signal, HistoricNetworkScheduler, MutableSignal
 
-from serenity.marketdata import MarketdataService, Trade, OrderBook, BookLevel
+from serenity.marketdata.api import MarketdataService, Trade, OrderBook, BookLevel
 from serenity.model.exchange import ExchangeInstrument
 from serenity.tickstore.tickstore import AzureBlobTickstore
-from serenity.trading import Side
+from serenity.trading.api import Side
 
 
 class HistoricMarketdataService(MarketdataService):

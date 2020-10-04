@@ -4,8 +4,8 @@ from enum import Enum, auto
 from tau.core import Event
 from tau.event import Do
 
-from serenity.algo import Strategy, StrategyContext
-from serenity.trading import Side
+from serenity.algo.api import Strategy, StrategyContext
+from serenity.trading.api import Side
 
 
 class PegType(Enum):

@@ -15,10 +15,11 @@ from phemex import PhemexConnection, AuthCredentials
 from tau.core import Signal, NetworkScheduler, MutableSignal, Event
 from tau.signal import Map, Filter
 
-from serenity.db import InstrumentCache
-from serenity.position import ExchangePositionService, ExchangePosition
-from serenity.trading import OrderPlacer, Order, OrderFactory, MarketOrder, LimitOrder, TimeInForce, ExecInst, \
-    StopOrder, OrderManagerService
+from serenity.db.api import InstrumentCache
+from serenity.position.api import ExchangePositionService, ExchangePosition
+from serenity.trading.api import OrderPlacer, Order, OrderFactory, MarketOrder, LimitOrder, TimeInForce, ExecInst, \
+    StopOrder
+from serenity.trading.oms import OrderManagerService
 
 
 def get_phemex_connection(credentials: AuthCredentials, instance_id: str = 'prod') -> Any:
