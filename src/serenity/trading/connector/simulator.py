@@ -47,10 +47,16 @@ class AutoFillOrderPlacer(OrderPlacer):
             def __apply_fill_at_market_px(self, order: Order):
                 if order.get_side() == Side.BUY:
                     fill_px = self.order_books.get_value().get_best_ask().get_px()
+                    fill_qty_at_touch = self.order_books.get_value().get_best_ask().get_qty()
                 else:
                     fill_px = self.order_books.get_value().get_best_bid().get_px()
+                    fill_qty_at_touch = self.order_books.get_value().get_best_bid().get_qty()
 
-                self.order_placer.oms.apply_fill(order, order.get_qty(), fill_px, str(uuid1()))
+                if order.get_qty() > fill_qty_at_touch:
+                    self.order_placer.oms.apply_fill(order, fill_qty_at_touch, fill_px, str(uuid1()))
+                    self.order_placer.oms.apply_fill(order, order.get_qty() - fill_qty_at_touch, fill_px, str(uuid1()))
+                else:
+                    self.order_placer.oms.apply_fill(order, order.get_qty(), fill_px, str(uuid1()))
                 self.fired = True
 
         trades = self.mds.get_trades(order.get_instrument())

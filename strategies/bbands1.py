@@ -93,6 +93,7 @@ class BollingerBandsStrategy1(Strategy):
         class TraderState(Enum):
             GOING_LONG = auto()
             LONG = auto()
+            FLATTENING = auto()
             FLAT = auto()
 
         # order placement logic
@@ -121,24 +122,25 @@ class BollingerBandsStrategy1(Strategy):
                         order_type = 'stop order' if order_event.get_order_id() == self.stop.order_id \
                             else 'market order'
                         self.strategy.logger.info(f'Received fill event for {order_type}: {order_event}')
-                        if self.trader_state == TraderState.LONG:
+                        if self.trader_state == TraderState.FLATTENING:
                             trade_pnl = (order_event.get_last_px() - self.last_entry) * \
-                                        (position.get_value().get_qty() / self.last_entry)
+                                        (contract_qty / self.last_entry)
                             self.cum_pnl = self.cum_pnl + trade_pnl
                             self.strategy.logger.info(f'Trade P&L={trade_pnl}; cumulative P&L={self.cum_pnl}')
 
                             dcs.capture('PnL', {
                                 'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
                                 'trade_pnl': trade_pnl,
-                                'cum_pnk': self.cum_pnl
+                                'cum_pnl': self.cum_pnl
                             })
 
                             if order_event.get_order_status() == OrderStatus.FILLED:
                                 self.trader_state = TraderState.FLAT
                         elif self.trader_state == TraderState.GOING_LONG:
                             self.last_entry = order_event.get_last_px()
-                            self.strategy.logger.info(f'Entered long position: entry price={self.last_entry}')
-                            self.trader_state = TraderState.LONG
+                            if order_event.get_order_status() == OrderStatus.FILLED:
+                                self.strategy.logger.info(f'Entered long position: entry price={self.last_entry}')
+                                self.trader_state = TraderState.LONG
                     elif isinstance(order_event, Reject):
                         self.strategy.logger.error(f'Order rejected: {order_event.get_message()}')
                 elif self.scheduler.get_network().has_activated(trade_flow):
@@ -162,18 +164,21 @@ class BollingerBandsStrategy1(Strategy):
 
                     stop_px = close_prices.get_value() - ((bbands.get_value().sma - bbands.get_value().lower) *
                                                           (stop_std / num_std))
-                    order = self.op.get_order_factory().create_market_order(Side.BUY, contract_qty, instrument)
-                    self.stop = self.op.get_order_factory().create_stop_order(Side.SELL, contract_qty, stop_px,
-                                                                              instrument)
 
                     self.strategy.logger.info(f'Submitting orders: last_px = {close_prices.get_value()}, '
                                               f'stop_px = {stop_px}')
 
+                    order = self.op.get_order_factory().create_market_order(Side.BUY, contract_qty, instrument)
+                    self.stop = self.op.get_order_factory().create_stop_order(Side.SELL, contract_qty, stop_px,
+                                                                              instrument)
+
                     self.op.submit(order)
                     self.op.submit(self.stop)
-                elif position.get_value().get_qty() > 0 and close_prices.get_value() > bbands.get_value().upper:
+                elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+
+                    self.trader_state = TraderState.FLATTENING
 
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)
                     self.op.submit(order)

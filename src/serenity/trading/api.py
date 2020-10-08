@@ -226,7 +226,7 @@ class ExecutionReport(OrderEvent):
 
     def __str__(self) -> str:
         return f'ExecutionReport[exec_type={self.exec_type}, order_status={self.order_status}, ' \
-               f'leaves_qty={self.leaves_qty}, last_px={self.last_px}]'
+               f'leaves_qty={self.leaves_qty}, last_qty={self.last_qty}, last_px={self.last_px}]'
 
 
 class OrderPlacer(ABC):
