@@ -11,6 +11,7 @@ class Side(Enum):
     """
     BUY = auto()
     SELL = auto()
+    UNKNOWN = auto()
 
 
 class TimeInForce(Enum):

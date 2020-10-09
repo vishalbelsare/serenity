@@ -74,7 +74,11 @@ class BollingerBandsStrategy1(Strategy):
         exch_position = ctx.get_exchange_position_service().get_exchange_positions()
         Do(scheduler.get_network(), exch_position, lambda: self.logger.info(exch_position.get_value()))
 
-        # capture trade flow and Bollinger Band data
+        # capture position, trade flow and Bollinger Band data
+        Do(scheduler.get_network(), position, lambda: dcs.capture('Position', {
+            'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
+            'position': position.get_value().get_qty()
+        }))
         Do(scheduler.get_network(), trade_flow, lambda: dcs.capture('TradeFlows', {
             'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
             'trade_flow': trade_flow.get_value()

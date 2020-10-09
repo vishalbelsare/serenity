@@ -12,7 +12,7 @@ from tau.event import Do
 from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
-from serenity.marketdata.historic import HistoricMarketdataService
+from serenity.marketdata.historic import AzureHistoricMarketdataService
 from serenity.position.api import PositionService, NullExchangePositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.simulator import AutoFillOrderPlacer
@@ -57,8 +57,8 @@ class AlgoBacktester:
                 exchange, symbol = instrument.split('/')
                 instruments_to_cache.append(instrument_cache.get_exchange_instrument(exchange, symbol))
             oms = OrderManagerService(self.scheduler)
-            md_service = HistoricMarketdataService(self.scheduler, instruments_to_cache,
-                                                   self.bt_env.getenv('AZURE_CONNECT_STR'))
+            md_service = AzureHistoricMarketdataService(self.scheduler, instruments_to_cache,
+                                                        self.bt_env.getenv('AZURE_CONNECT_STR'))
             op_service = OrderPlacerService(self.scheduler, oms)
             op_service.register_order_placer(f'{exchange_id}:{instance_id}',
                                              AutoFillOrderPlacer(self.scheduler, oms, md_service, account))
