@@ -311,9 +311,6 @@ class PhemexOrderPlacer(OrderPlacer):
 
         response = self.trading_conn.send_message('POST', '/orders', data=json.dumps(params))
         error_code = int(response.get('code', 200))
-        order_id = response['data']['orderID']
-        order.set_order_id(order_id)
-        self.oms.pending_new(order)
 
         if error_code > 200:
             if error_code == 10500:
@@ -322,6 +319,12 @@ class PhemexOrderPlacer(OrderPlacer):
                 self.oms.reject(order, 'Credential error')
             else:
                 self.oms.reject(order, f'Trading error: {error_code}')
+        elif 'data' in response:
+            order_id = response['data']['orderID']
+            order.set_order_id(order_id)
+            self.oms.pending_new(order)
+        else:
+            self.oms.reject(order, f'Unknown error: {response}')
 
     def cancel(self, order: Order):
         symbol = order.get_instrument().get_exchange_instrument_code()

@@ -147,6 +147,7 @@ class BollingerBandsStrategy1(Strategy):
                                 self.trader_state = TraderState.LONG
                     elif isinstance(order_event, Reject):
                         self.strategy.logger.error(f'Order rejected: {order_event.get_message()}')
+                        self.trader_state = TraderState.FLAT
                 elif self.scheduler.get_network().has_activated(trade_flow):
                     if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
                         self.volatility_pause = True
@@ -164,7 +165,6 @@ class BollingerBandsStrategy1(Strategy):
 
                     self.strategy.logger.info(f'Close below lower Bollinger band while rallying, enter long position '
                                               f'at {datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
-                    self.trader_state = TraderState.GOING_LONG
 
                     stop_px = close_prices.get_value() - ((bbands.get_value().sma - bbands.get_value().lower) *
                                                           (stop_std / num_std))
@@ -178,16 +178,17 @@ class BollingerBandsStrategy1(Strategy):
 
                     self.op.submit(order)
                     self.op.submit(self.stop)
+
+                    self.trader_state = TraderState.GOING_LONG
                 elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
-
-                    self.trader_state = TraderState.FLATTENING
 
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)
                     self.op.submit(order)
                     self.op.cancel(self.stop)
 
+                    self.trader_state = TraderState.FLATTENING
                 return False
 
         network.connect(bbands, BollingerTrader(scheduler, op_service, self))
