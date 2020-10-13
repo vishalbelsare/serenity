@@ -26,9 +26,9 @@ class ComputeTradeFlowImbalanceSignal(Function):
     def _call(self):
         last_trade = self.trades.get_value()
         if last_trade.get_side() == Side.BUY:
-            self.cum_buy_volume = last_trade.get_qty()
+            self.cum_buy_volume = self.cum_buy_volume + last_trade.get_qty()
         else:
-            self.cum_sell_volume = last_trade.get_qty()
+            self.cum_sell_volume = self.cum_sell_volume + last_trade.get_qty()
         self._update(self.cum_buy_volume - self.cum_sell_volume)
 
 

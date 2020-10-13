@@ -13,7 +13,7 @@ from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.marketdata.api import CompositeRoutingRule, ExchangeRoutingRule, RoutingMarketdataService
-from serenity.marketdata.historic import AzureHistoricMarketdataService, PolygonHistoricMarketdataService
+from serenity.marketdata.historic import AzureHistoricMarketdataService, PolygonHistoricEquityMarketdataService
 from serenity.position.api import PositionService, NullExchangePositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.simulator import AutoFillOrderPlacer
@@ -55,7 +55,7 @@ class AlgoBacktester:
             oms = OrderManagerService(self.scheduler)
 
             mds1 = AzureHistoricMarketdataService(self.scheduler, self.bt_env.getenv('AZURE_CONNECT_STR'))
-            mds2 = PolygonHistoricMarketdataService(self.scheduler, self.bt_env.getenv('POLYGON_API_KEY'))
+            mds2 = PolygonHistoricEquityMarketdataService(self.scheduler, self.bt_env.getenv('POLYGON_API_KEY'))
             rules = CompositeRoutingRule([ExchangeRoutingRule('PHEMEX', mds1),
                                           ExchangeRoutingRule('POLYGON', mds2)])
             md_service = RoutingMarketdataService(self.scheduler.get_network(), rules)
