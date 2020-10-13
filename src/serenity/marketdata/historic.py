@@ -117,7 +117,7 @@ class AzureHistoricMarketdataService(MarketdataService):
             self.all_subscribed.add(instrument)
 
 
-class PolygonHistoricMarketdataService(MarketdataService):
+class PolygonHistoricEquityMarketdataService(MarketdataService):
     """
     A historical replay service based off of Polygon.io's REST API.
     """
@@ -154,45 +154,40 @@ class PolygonHistoricMarketdataService(MarketdataService):
             self.scheduler.network.attach(trades)
             self.trade_signal_by_symbol[trade_symbol] = trades
 
-            calendar = pandas_market_calendars.get_calendar(instrument.get_exchange().get_exchange_calendar())
-            tz = instrument.get_exchange().get_exchange_tz()
-            exch_schedule_df = calendar.schedule(self.start_date, self.end_date, tz)
-            for row in exch_schedule_df.itertuples():
-                load_date = row[0].to_pydatetime().date()
-                market_open = int(row[1].to_pydatetime().timestamp() * 1000 * 1000 * 1000)
-                market_close = int(row[2].to_pydatetime().timestamp() * 1000 * 1000 * 1000)
+            class TradeGenerator(SignalGenerator):
+                def __init__(self, mds):
+                    self.mds = mds
 
-                timestamp = market_open
-                while timestamp < market_close:
-                    self.logger.info(f'Starting historic trade download from timestamp={timestamp}')
-                    symbol = instrument.get_exchange_instrument_code()
-                    if instrument.get_instrument().get_instrument_type() == 'CryptoCurrencyPair':
-                        ccy_pair = instrument.get_instrument().get_economics()
-                        base_ccy = ccy_pair.get_base_ccy().get_currency_code()
-                        quote_ccy = ccy_pair.get_quote_ccy().get_currency_code()
-                        resp = self.client.crypto_historic_crypto_trades(base_ccy, quote_ccy, load_date,
-                                                                         timestamp=timestamp)
-                    elif instrument.get_instrument().get_instrument_type() == 'FX':
-                        ccy_pair = instrument.get_instrument().get_economics()
-                        base_ccy = ccy_pair.get_base_ccy().get_currency_code()
-                        quote_ccy = ccy_pair.get_quote_ccy().get_currency_code()
-                        resp = self.client.forex_currencies_historic_forex_ticks(base_ccy, quote_ccy, load_date,
-                                                                                 timestamp=timestamp)
-                    else:
-                        resp = self.client.historic_trades_v2(symbol, load_date, timestamp=timestamp)
+                def generate(self, scheduler: HistoricNetworkScheduler):
+                    calendar = pandas_market_calendars.get_calendar(
+                        instrument.get_exchange().get_exchange_calendar())
+                    tz = instrument.get_exchange().get_exchange_tz()
+                    exch_schedule_df = calendar.schedule(self.mds.start_date, self.mds.end_date, tz)
+                    for row in exch_schedule_df.itertuples():
+                        load_date = row[0].to_pydatetime().date()
+                        market_open = int(row[1].to_pydatetime().timestamp() * 1000 * 1000 * 1000)
+                        market_close = int(row[2].to_pydatetime().timestamp() * 1000 * 1000 * 1000)
 
-                        for v2_trade in resp.results:
-                            at_time = int(v2_trade['t'] / 1000 / 1000)
-                            sequence = v2_trade['q']
-                            trade_id = v2_trade['i']
-                            qty = v2_trade['s']
-                            price = v2_trade['p']
+                        timestamp = market_open
+                        self.mds.logger.info(f'Starting historic trade download from timestamp={timestamp}')
+                        while timestamp < market_close:
+                            resp = self.mds.client.historic_trades_v2(trade_symbol, load_date, timestamp=timestamp)
 
-                            trade = Trade(instrument, sequence, trade_id, Side.UNKNOWN, qty, price)
-                            self.scheduler.schedule_update_at(trades, trade, at_time)
+                            for v2_trade in resp.results:
+                                at_time = int(v2_trade['t'] / 1000 / 1000)
+                                sequence = v2_trade['q']
+                                trade_id = v2_trade['i']
+                                qty = v2_trade['s']
+                                price = v2_trade['p']
 
-                        last_trade = resp.results[-1]
-                        timestamp = last_trade['t']
+                                trade = Trade(instrument, sequence, trade_id, Side.UNKNOWN, qty, price)
+                                self.mds.scheduler.schedule_update_at(trades, trade, at_time)
+
+                            last_trade = resp.results[-1]
+                            timestamp = last_trade['t']
+
+            self.scheduler.add_generator(TradeGenerator(self))
+
         return trades
 
     def _maybe_notify_subscription(self, instrument: ExchangeInstrument):
