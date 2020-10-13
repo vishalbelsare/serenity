@@ -2,7 +2,7 @@ Serenity: A Trading System
 ==========================
 
 .. image:: https://dev.azure.com/cloudwall/Serenity/_apis/build/status/cloudwall.serenity?branchName=master
-    :target: https://dev.azure.com/cloudwall/Serenity/_build/latest?definitionId=3
+    :target: https://dev.azure.com/cloudwall/Serenity/_build/latest?definitionId=7&branchName=master
 
 .. image:: https://img.shields.io/pypi/v/serenity-trading.svg
     :target: https://pypi.org/project/serenity-trading/
