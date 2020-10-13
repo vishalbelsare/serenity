@@ -21,7 +21,7 @@ strategies:
     strategy-class: BollingerBandsStrategy1
     environment:
       - key: TRADING_INSTRUMENT
-        value: Phemex/BTCUSD
+        value: PHEMEX:BTCUSD
       - key: BBANDS_BIN_MINUTES
         value: 5
       - key: BBANDS_WINDOW

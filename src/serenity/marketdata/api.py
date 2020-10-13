@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from tau.core import Signal
+from tau.core import Signal, Network
+from tau.signal import Function
 
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
@@ -107,7 +108,7 @@ class OrderBook:
         self.bid_px_map = {x.get_px(): x for x in bids}
         self.ask_px_map = {x.get_px(): x for x in asks}
 
-    def get_mid(self) -> float:
+    def get_mid(self) -> Optional[float]:
         best_bid = self.get_best_bid()
         best_ask = self.get_best_ask()
         if best_bid is not None and best_ask is not None:
@@ -162,6 +163,10 @@ class OrderBook:
 
 
 class MarketdataService(ABC):
+    """
+    Base service interface for getting access to live or historical marketdata
+    """
+
     @abstractmethod
     def get_subscribed_instruments(self) -> Signal:
         pass
@@ -177,3 +182,113 @@ class MarketdataService(ABC):
     @abstractmethod
     def get_trades(self, instrument: ExchangeInstrument) -> Signal:
         pass
+
+
+class RoutingRule(ABC):
+    def __init__(self, targets: List[MarketdataService]):
+        self.targets = targets
+
+    def get_targets(self):
+        """
+        Gets the routed MarketdataService(s)
+        """
+        return self.targets
+
+    @abstractmethod
+    def route(self, instrument: ExchangeInstrument) -> Optional[MarketdataService]:
+        """
+        Returns the target MDS instance or None if not routeable.
+        """
+        pass
+
+
+class ExchangeRoutingRule(RoutingRule):
+    """
+    Routing rule based on exchange code.
+    """
+
+    def __init__(self, exchange_code, mds: MarketdataService):
+        super().__init__([mds])
+        self.exchange_code = exchange_code
+        self.mds = mds
+
+    def route(self, instrument: ExchangeInstrument) -> Optional[MarketdataService]:
+        if instrument.get_exchange().get_exchange_code() == self.exchange_code:
+            return self.mds
+        else:
+            return None
+
+
+class CompositeRoutingRule(RoutingRule):
+    """
+    Routing rule based on a Chain of Responsibility: it checks each
+    of the configured rules until it finds a match.
+    """
+
+    def __init__(self, rules: List[RoutingRule]):
+        targets = set()
+        for rule in rules:
+            for target in rule.get_targets():
+                targets.add(target)
+
+        super().__init__(list(targets))
+        self.rules = rules
+
+    def route(self, instrument: ExchangeInstrument) -> Optional[MarketdataService]:
+        for rule in self.rules:
+            route = rule.route(instrument)
+            if route is not None:
+                return route
+        return None
+
+
+class RoutingMarketdataService(MarketdataService):
+    """
+    Convenience implementation of MarketdataService which routes requests
+    to N other MarketdataService instances according to a ruleset.
+    """
+
+    def __init__(self, network: Network, rules: RoutingRule):
+        self.rules = rules
+
+        class SubscribedInstruments(Function):
+            def __init__(self, signals: List[Signal]):
+                super().__init__(network, signals)
+                self.network = network
+
+            def _call(self):
+                for parameter in self.parameters:
+                    if self.network.has_activated(parameter):
+                        self._update(parameter.get_value())
+
+        subs = []
+        for target in rules.get_targets():
+            target_subs = target.get_subscribed_instruments()
+            subs.append(target_subs)
+
+        self.subscribed_instruments = SubscribedInstruments(subs)
+        network.attach(self.subscribed_instruments)
+
+    def get_subscribed_instruments(self) -> Signal:
+        return self.subscribed_instruments
+
+    def get_order_book_events(self, instrument: ExchangeInstrument) -> Optional[Signal]:
+        route = self.rules.route(instrument)
+        if route is not None:
+            return route.get_order_book_events(instrument)
+        else:
+            return None
+
+    def get_order_books(self, instrument: ExchangeInstrument) -> Optional[Signal]:
+        route = self.rules.route(instrument)
+        if route is not None:
+            return route.get_order_books(instrument)
+        else:
+            return None
+
+    def get_trades(self, instrument: ExchangeInstrument) -> Optional[Signal]:
+        route = self.rules.route(instrument)
+        if route is not None:
+            return route.get_trades(instrument)
+        else:
+            return None

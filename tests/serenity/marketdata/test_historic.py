@@ -5,7 +5,7 @@ from pytest_mock import MockFixture
 from tau.core import HistoricNetworkScheduler
 
 from serenity.marketdata.historic import PolygonHistoricMarketdataService
-from serenity.model.exchange import ExchangeInstrument, Exchange
+from serenity.model.exchange import ExchangeInstrument, Exchange, VenueType
 from serenity.model.instrument import Instrument, InstrumentType
 from serenity.utils import init_logging
 
@@ -18,7 +18,9 @@ def test_polygon_historic_marketdata_service(mocker: MockFixture):
 
     scheduler = HistoricNetworkScheduler(start_millis, end_millis)
 
-    exch = Exchange(-1, 'Polygon.io')
+    # noinspection DuplicatedCode
+    venue_type = VenueType(-1, 'EequityExchange')
+    exch = Exchange(-1, venue_type, 'NGS', 'Nasdaq Global Select', 'NYSE', 'America/New_York')
     instr_type = InstrumentType(-1, 'ETF')
     instr = Instrument(-1, instr_type, 'SPY')
     xinstr = ExchangeInstrument(-1, exch, instr, 'SPY')
@@ -33,7 +35,7 @@ def test_polygon_historic_marketdata_service(mocker: MockFixture):
         trade_print2
     ]
     mock_rest_client.historic_trades_v2.return_value = hist_response
-    pmds = PolygonHistoricMarketdataService(scheduler, [xinstr], 'NYSE', 'America/New_York', '********')
+    pmds = PolygonHistoricMarketdataService(scheduler, '********')
 
     scheduler.run()
 

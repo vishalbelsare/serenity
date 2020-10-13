@@ -48,9 +48,9 @@ class BollingerBandsStrategy1(Strategy):
         num_std = int(ctx.getenv('BBANDS_NUM_STD'))
         stop_std = int(ctx.getenv('BBANDS_STOP_STD'))
         bin_minutes = int(ctx.getenv('BBANDS_BIN_MINUTES', 5))
-        exchange_code, instrument_code = ctx.getenv('TRADING_INSTRUMENT').split('/')
+        exchange_code, instrument_code = ctx.getenv('TRADING_INSTRUMENT').split(':')
         trade_flow_qty = int(ctx.getenv('TRADE_FLOW_REVERSAL_QTY', 10_000))
-        instrument = ctx.get_instrument_cache().get_exchange_instrument(exchange_code, instrument_code)
+        instrument = ctx.get_instrument_cache().get_crypto_exchange_instrument(exchange_code, instrument_code)
         trades = ctx.get_marketdata_service().get_trades(instrument)
         trades_5m = BufferWithTime(scheduler, trades, timedelta(minutes=bin_minutes))
         prices = ComputeOHLC(network, trades_5m)
@@ -90,9 +90,8 @@ class BollingerBandsStrategy1(Strategy):
             'lower': bbands.get_value().lower
         }))
 
-        # log basic marketdata
-        Do(scheduler.get_network(), trades, lambda: self.logger.info(trades.get_value()))
-        Do(scheduler.get_network(), prices, lambda: self.logger.info(prices.get_value()))
+        # debug log basic marketdata
+        Do(scheduler.get_network(), prices, lambda: self.logger.debug(prices.get_value()))
 
         class TraderState(Enum):
             GOING_LONG = auto()
@@ -123,10 +122,20 @@ class BollingerBandsStrategy1(Strategy):
                 if self.scheduler.get_network().has_activated(oms.get_order_events()):
                     order_event = oms.get_order_events().get_value()
                     if isinstance(order_event, ExecutionReport) and order_event.is_fill():
-                        order_type = 'stop order' if order_event.get_order_id() == self.stop.order_id \
-                            else 'market order'
+                        order_type = 'stop order' if self.stop is not None and order_event.get_order_id() == \
+                                                     self.stop.order_id else 'market order'
                         self.strategy.logger.info(f'Received fill event for {order_type}: {order_event}')
-                        if self.trader_state == TraderState.FLATTENING:
+                        if self.trader_state == TraderState.GOING_LONG:
+                            self.last_entry = order_event.get_last_px()
+                            if order_event.get_order_status() == OrderStatus.FILLED:
+                                self.strategy.logger.info(f'Entered long position: entry price={self.last_entry}')
+                                self.trader_state = TraderState.LONG
+                        elif self.trader_state in (TraderState.FLATTENING, TraderState.LONG) and \
+                                order_event.get_order_status() == OrderStatus.FILLED:
+                            if order_type == 'stop order':
+                                self.strategy.logger.info(f'stop loss filled at {order_event.get_last_px()}')
+                                self.stop = None
+
                             trade_pnl = (order_event.get_last_px() - self.last_entry) * \
                                         (contract_qty / self.last_entry)
                             self.cum_pnl = self.cum_pnl + trade_pnl
@@ -137,14 +146,7 @@ class BollingerBandsStrategy1(Strategy):
                                 'trade_pnl': trade_pnl,
                                 'cum_pnl': self.cum_pnl
                             })
-
-                            if order_event.get_order_status() == OrderStatus.FILLED:
-                                self.trader_state = TraderState.FLAT
-                        elif self.trader_state == TraderState.GOING_LONG:
-                            self.last_entry = order_event.get_last_px()
-                            if order_event.get_order_status() == OrderStatus.FILLED:
-                                self.strategy.logger.info(f'Entered long position: entry price={self.last_entry}')
-                                self.trader_state = TraderState.LONG
+                            self.trader_state = TraderState.FLAT
                     elif isinstance(order_event, Reject):
                         self.strategy.logger.error(f'Order rejected: {order_event.get_message()}')
                         self.trader_state = TraderState.FLAT
@@ -180,13 +182,15 @@ class BollingerBandsStrategy1(Strategy):
                     self.op.submit(self.stop)
 
                     self.trader_state = TraderState.GOING_LONG
-                elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper:
+                elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper and \
+                        self.stop is not None:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
 
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)
                     self.op.submit(order)
                     self.op.cancel(self.stop)
+                    self.stop = None
 
                     self.trader_state = TraderState.FLATTENING
                 return False

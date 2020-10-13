@@ -52,16 +52,23 @@ class PhemexFeedHandler(WebsocketFeedHandler):
     def _load_instruments(self):
         self.logger.info("Downloading supported products")
         products = self.phemex.get_products()
+        exchange_code = 'PHEMEX'
         for product in products['data']:
             symbol = product['symbol']
             base_ccy = product['baseCurrency']
             quote_ccy = product['quoteCurrency']
             price_scale = product['priceScale']
+            ul_symbol = f'.M{base_ccy}'
 
-            ccy_pair = self.instrument_cache.get_or_create_currency_pair(base_ccy, quote_ccy)
-            instr = ccy_pair.get_instrument()
-            exch_instrument = self.instrument_cache.get_or_create_exchange_instrument(symbol, instr, "Phemex")
-            self.logger.info(f'\t{symbol} - {base_ccy}/{quote_ccy} [ID #{instr.get_instrument_id()}]')
+            ccy_pair = self.instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
+            ul_instr = ccy_pair.get_instrument()
+            exchange = self.instrument_cache.get_crypto_exchange(exchange_code)
+            self.instrument_cache.get_or_create_exchange_instrument(ul_symbol, ul_instr, exchange)
+            future = self.instrument_cache.get_or_create_perpetual_future(ul_instr)
+            instr = future.get_instrument()
+            exch_instrument = self.instrument_cache.get_or_create_exchange_instrument(symbol, instr, exchange)
+
+            self.logger.info(f'\t{symbol} - [ID #{instr.get_instrument_id()}]')
             self.known_instrument_ids[symbol] = exch_instrument
             self.instruments.append(exch_instrument)
             self.price_scaling[symbol] = price_scale

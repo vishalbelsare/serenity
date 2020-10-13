@@ -268,7 +268,7 @@ class FeedHandlerMarketdataService(MarketdataService):
             self.notified_instruments.add(instrument)
             self.scheduler.schedule_update(self.subscribed_instruments, instrument)
         symbol = instrument.get_exchange_instrument_code()
-        return f'{instrument.get_exchange().get_type_code().lower()}:{self.instance_id}:{symbol}'
+        return f'{instrument.get_exchange().get_exchange_code().lower()}:{self.instance_id}:{symbol}'
 
 
 def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, db: str, journal_books: bool = True,

@@ -4,8 +4,8 @@ from typing import List
 import psycopg2
 
 from serenity.model.exchange import Exchange, ExchangeTransferMethod, ExchangeTransferType, \
-    ExchangeInstrument, ExchangeOrder, ExchangeAccount, ExchangeFill, ExchangeTransfer
-from serenity.model.instrument import InstrumentType, Instrument, Currency, CurrencyPair, CashInstrument
+    ExchangeInstrument, ExchangeOrder, ExchangeAccount, ExchangeFill, ExchangeTransfer, VenueType
+from serenity.model.instrument import InstrumentType, Instrument, Currency, CurrencyPair, CashInstrument, FutureContract
 from serenity.model.mark import MarkType
 from serenity.model.order import Side, OrderType, DestinationType, TimeInForce
 
@@ -24,7 +24,7 @@ class TypeCodeCache:
     def __init__(self, cur):
         self.cur = cur
         self.type_code_map = {
-            Exchange: self._load("exchange", Exchange),
+            VenueType: self._load("venue_type", VenueType),
             InstrumentType: self._load("instrument_type", InstrumentType),
             Side: self._load("side", Side),
             OrderType: self._load("order_type", OrderType),
@@ -61,19 +61,31 @@ class InstrumentCache:
         self.type_code_cache = type_code_cache
 
         self.entity_by_id = {
+            Exchange: {},
             Currency: {},
             Instrument: {},
             CashInstrument: {},
             CurrencyPair: {},
+            FutureContract: {},
             ExchangeInstrument: {}
         }
         self.entity_by_ak = {
+            Exchange: {},
             Currency: {},
             Instrument: {},
             CashInstrument: {},
             CurrencyPair: {},
+            FutureContract: {},
             ExchangeInstrument: {}
         }
+
+        self.cur.execute("SELECT exchange_id, venue_type_id, exchange_code, exchange_name, "
+                         "exchange_calendar, exchange_tz FROM serenity.exchange")
+        for row in self.cur.fetchall():
+            venue_type = type_code_cache.get_by_id(VenueType, row[1])
+            exchange = Exchange(row[0], venue_type, row[2], row[3], row[4], row[5])
+            self.entity_by_id[Exchange][row[0]] = exchange
+            self.entity_by_ak[Exchange][(row[2], venue_type)] = exchange
 
         self.cur.execute("SELECT currency_id, currency_code FROM serenity.currency")
         for row in self.cur.fetchall():
@@ -94,6 +106,7 @@ class InstrumentCache:
             instrument = self.entity_by_id[Instrument][row[1]]
             ccy = self.entity_by_id[Currency][row[2]]
             cash_instrument = CashInstrument(cash_instrument_id, instrument, ccy)
+            instrument.set_economics(cash_instrument)
             self.entity_by_id[CashInstrument][row[0]] = cash_instrument
             self.entity_by_ak[CashInstrument][ccy.get_currency_code()] = cash_instrument
 
@@ -105,22 +118,40 @@ class InstrumentCache:
             base_ccy = self.entity_by_id[Currency][row[2]]
             quote_ccy = self.entity_by_id[Currency][row[3]]
             ccy_pair = CurrencyPair(currency_pair_id, instrument, base_ccy, quote_ccy)
+            instrument.set_economics(ccy_pair)
             self.entity_by_id[CurrencyPair][currency_pair_id] = ccy_pair
             self.entity_by_ak[CurrencyPair][(base_ccy, quote_ccy)] = ccy_pair
+
+        self.cur.execute("SELECT future_contract_id, instrument_id, underlier_instrument_id, contract_size, expiry "
+                         "FROM serenity.future_contract")
+        for row in self.cur.fetchall():
+            future_contract_id = row[0]
+            instrument = self.entity_by_id[Instrument][row[1]]
+            underlier = self.entity_by_id[Instrument][row[2]]
+            contract_size = row[3]
+            expiry = row[4]
+            future = FutureContract(future_contract_id, instrument, underlier, contract_size, expiry)
+            instrument.set_economics(future)
+            self.entity_by_id[FutureContract][future_contract_id] = future
+            self.entity_by_ak[FutureContract][(underlier.get_instrument_code(), contract_size, expiry)] = future
 
         self.cur.execute("SELECT exchange_instrument_id, instrument_id, exchange_id, exchange_instrument_code "
                          "FROM serenity.exchange_instrument")
         for row in self.cur.fetchall():
             exchange_instrument_id = row[0]
             instrument = self.entity_by_id[Instrument][row[1]]
-            exchange = self.type_code_cache.get_by_id(Exchange, row[2])
+            exchange = self.entity_by_id[Exchange][row[2]]
             exchange_instrument_code = row[3]
             exch_instr = ExchangeInstrument(exchange_instrument_id, exchange, instrument, exchange_instrument_code)
             self.entity_by_id[ExchangeInstrument][exchange_instrument_id] = exch_instr
-            self.entity_by_ak[ExchangeInstrument][(exchange.get_type_code(), exchange_instrument_code)] = exch_instr
+            self.entity_by_ak[ExchangeInstrument][(exchange, exchange_instrument_code)] = exch_instr
 
     def get_type_code_cache(self) -> TypeCodeCache:
         return self.type_code_cache
+
+    def get_crypto_exchange(self, exchange_code: str):
+        venue_type = self.type_code_cache.get_by_code(VenueType, 'CryptoExchange')
+        return self.entity_by_ak[Exchange][(exchange_code, venue_type)]
 
     def get_or_create_instrument(self, code: str, instrument_type: InstrumentType) -> Instrument:
         if code in self.entity_by_ak[Instrument]:
@@ -163,11 +194,13 @@ class InstrumentCache:
                                                                               instrument.get_instrument_id()))
             cash_instrument_id = self.cur.fetchone()[0]
             cash_instrument = CashInstrument(cash_instrument_id, instrument, currency)
+            instrument.set_economics(cash_instrument)
             self.entity_by_id[CashInstrument][cash_instrument_id] = cash_instrument
             self.entity_by_ak[CashInstrument][currency_code] = cash_instrument
             return cash_instrument
 
-    def get_or_create_currency_pair(self, base_ccy_code, quote_ccy_code) -> CurrencyPair:
+    def get_or_create_currency_pair(self, base_ccy_code: str, quote_ccy_code: str, currency_pair_type: str) \
+            -> CurrencyPair:
         base_ccy = self.get_or_create_currency(base_ccy_code)
         quote_ccy = self.get_or_create_currency(quote_ccy_code)
         pair = (base_ccy, quote_ccy)
@@ -175,7 +208,7 @@ class InstrumentCache:
             return self.entity_by_ak[CurrencyPair][pair]
         else:
             instrument_code = "{}-{}".format(base_ccy_code, quote_ccy_code)
-            instrument_type = self.type_code_cache.get_by_code(InstrumentType, "CurrencyPair")
+            instrument_type = self.type_code_cache.get_by_code(InstrumentType, currency_pair_type)
             instrument = self.get_or_create_instrument(instrument_code, instrument_type)
             self.cur.execute("INSERT INTO serenity.currency_pair (base_currency_id, quote_currency_id, instrument_id) "
                              "VALUES (%s, %s, %s) RETURNING currency_pair_id", (base_ccy.get_currency_id(),
@@ -183,19 +216,45 @@ class InstrumentCache:
                                                                                 instrument.get_instrument_id()))
             currency_pair_id = self.cur.fetchone()[0]
             ccy_pair = CurrencyPair(currency_pair_id, instrument, base_ccy, quote_ccy)
+            instrument.set_economics(ccy_pair)
             self.entity_by_id[CurrencyPair][currency_pair_id] = ccy_pair
             self.entity_by_ak[CurrencyPair][pair] = ccy_pair
             return ccy_pair
 
-    def get_or_create_exchange_instrument(self, exchange_symbol, instrument, exchange_code) -> ExchangeInstrument:
-        ak = (exchange_code, exchange_symbol)
+    def get_or_create_fx(self, base_ccy_code: str, quote_ccy_code: str) -> CurrencyPair:
+        return self.get_or_create_currency_pair(base_ccy_code, quote_ccy_code, 'FX')
+
+    def get_or_create_cryptocurrency_pair(self, base_ccy_code: str, quote_ccy_code: str) -> CurrencyPair:
+        return self.get_or_create_currency_pair(base_ccy_code, quote_ccy_code, 'CryptoCurrencyPair')
+
+    def get_or_create_perpetual_future(self, underlier: Instrument, contract_size: int = 1):
+        ak = (underlier.get_instrument_code(), contract_size, None)
+        if ak in self.entity_by_ak[FutureContract]:
+            return self.entity_by_ak[FutureContract][ak]
+        else:
+            instrument_code = f'{underlier.get_instrument_code()}-{contract_size}-Perpetual-Contract'
+            instrument_type = self.type_code_cache.get_by_code(InstrumentType, 'PerpetualFuture')
+            instrument = self.get_or_create_instrument(instrument_code, instrument_type)
+            self.cur.execute("INSERT INTO serenity.future_contract (instrument_id, "
+                             "underlier_instrument_id, contract_size, expiry) "
+                             "VALUES (%s, %s, %s, %s) RETURNING future_contract_id", (instrument.get_instrument_id(),
+                                                                                      underlier.get_instrument_id(),
+                                                                                      contract_size, None))
+            future_contract_id = self.cur.fetchone()[0]
+            future = FutureContract(future_contract_id, instrument, underlier, contract_size, None)
+            instrument.set_economics(future)
+            self.entity_by_id[FutureContract][future_contract_id] = future
+            self.entity_by_ak[FutureContract][ak] = future
+            return future
+
+    def get_or_create_exchange_instrument(self, exchange_symbol, instrument, exchange: Exchange) -> ExchangeInstrument:
+        ak = (exchange, exchange_symbol)
         if ak in self.entity_by_ak[ExchangeInstrument]:
             return self.entity_by_ak[ExchangeInstrument][ak]
         else:
-            exchange = self.type_code_cache.get_by_code(Exchange, exchange_code)
             self.cur.execute("INSERT INTO serenity.exchange_instrument (exchange_instrument_code, instrument_id, "
                              "exchange_id) VALUES (%s, %s, %s) RETURNING exchange_instrument_id",
-                             (exchange_symbol, instrument.get_instrument_id(), exchange.get_type_id()))
+                             (exchange_symbol, instrument.get_instrument_id(), exchange.get_exchange_id()))
             exchange_instrument_id = self.cur.fetchone()[0]
             exchange_instrument = ExchangeInstrument(exchange_instrument_id, exchange, instrument, exchange_symbol)
             self.entity_by_id[ExchangeInstrument][exchange_instrument_id] = exchange_instrument
@@ -210,10 +269,11 @@ class InstrumentCache:
                 instruments.append(instrument)
         return instruments
 
-    def get_exchange_instrument(self, exchange_code, exchange_symbol):
-        return self.get_entity_by_ak(ExchangeInstrument, (exchange_code, exchange_symbol))
+    def get_crypto_exchange_instrument(self, exchange_code: str, exchange_symbol: str):
+        exchange = self.get_crypto_exchange(exchange_code)
+        return self.get_entity_by_ak(ExchangeInstrument, (exchange, exchange_symbol))
 
-    def get_entity_by_id(self, klass, entity_id):
+    def get_entity_by_id(self, klass, entity_id: int):
         return self.entity_by_id[klass][entity_id]
 
     def get_entity_by_ak(self, klass, ak):

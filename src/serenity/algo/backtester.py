@@ -12,7 +12,8 @@ from tau.event import Do
 from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
-from serenity.marketdata.historic import AzureHistoricMarketdataService
+from serenity.marketdata.api import CompositeRoutingRule, ExchangeRoutingRule, RoutingMarketdataService
+from serenity.marketdata.historic import AzureHistoricMarketdataService, PolygonHistoricMarketdataService
 from serenity.position.api import PositionService, NullExchangePositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.simulator import AutoFillOrderPlacer
@@ -50,15 +51,15 @@ class AlgoBacktester:
 
             self.scheduler = HistoricNetworkScheduler(start_time_millis, end_time_millis)
             instrument_cache = InstrumentCache(cur, TypeCodeCache(cur))
-            instruments_to_cache_txt = self.bt_env.getenv('INSTRUMENTS_TO_CACHE')
-            instruments_to_cache_list = instruments_to_cache_txt.split(',')
-            instruments_to_cache = []
-            for instrument in instruments_to_cache_list:
-                exchange, symbol = instrument.split('/')
-                instruments_to_cache.append(instrument_cache.get_exchange_instrument(exchange, symbol))
+
             oms = OrderManagerService(self.scheduler)
-            md_service = AzureHistoricMarketdataService(self.scheduler, instruments_to_cache,
-                                                        self.bt_env.getenv('AZURE_CONNECT_STR'))
+
+            mds1 = AzureHistoricMarketdataService(self.scheduler, self.bt_env.getenv('AZURE_CONNECT_STR'))
+            mds2 = PolygonHistoricMarketdataService(self.scheduler, self.bt_env.getenv('POLYGON_API_KEY'))
+            rules = CompositeRoutingRule([ExchangeRoutingRule('PHEMEX', mds1),
+                                          ExchangeRoutingRule('POLYGON', mds2)])
+            md_service = RoutingMarketdataService(self.scheduler.get_network(), rules)
+
             op_service = OrderPlacerService(self.scheduler, oms)
             op_service.register_order_placer(f'{exchange_id}:{instance_id}',
                                              AutoFillOrderPlacer(self.scheduler, oms, md_service, account))

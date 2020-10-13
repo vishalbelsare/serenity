@@ -46,9 +46,9 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
             symbol = product['id']
             base_ccy = product['base_currency']
             quote_ccy = product['quote_currency']
-            currency_pair = self.instrument_cache.get_or_create_currency_pair(base_ccy, quote_ccy)
+            currency_pair = self.instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
             instrument = currency_pair.get_instrument()
-            exch_instr = self.instrument_cache.get_or_create_exchange_instrument(symbol, instrument, "CoinbasePro")
+            exch_instr = self.instrument_cache.get_or_create_exchange_instrument(symbol, instrument, 'CoinbasePro')
 
             self.logger.info(f'\t{symbol} - {base_ccy}/{quote_ccy} [ID #{instrument.get_instrument_id()}]')
             self.known_instrument_ids[symbol] = exch_instr
