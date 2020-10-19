@@ -5,31 +5,15 @@ import pandas as pd
 
 from datetime import timedelta, datetime
 
-from tau.core import Event, NetworkScheduler, Signal, Network
+from tau.core import Event, NetworkScheduler
 from tau.event import Do
-from tau.signal import Map, BufferWithTime, Function
+from tau.signal import Map, BufferWithTime
 
 from serenity.algo.api import Strategy, StrategyContext
 from serenity.signal.indicators import ComputeBollingerBands
 from serenity.signal.marketdata import ComputeOHLC
 from serenity.trading.api import Side, OrderStatus, ExecutionReport, Reject
 from serenity.trading.oms import OrderPlacerService
-
-
-class ComputeTradeFlowImbalanceSignal(Function):
-    def __init__(self, network: Network, trades: Signal):
-        super().__init__(network, [trades])
-        self.trades = trades
-        self.cum_buy_volume = 0
-        self.cum_sell_volume = 0
-
-    def _call(self):
-        last_trade = self.trades.get_value()
-        if last_trade.get_side() == Side.BUY:
-            self.cum_buy_volume = self.cum_buy_volume + last_trade.get_qty()
-        else:
-            self.cum_sell_volume = self.cum_sell_volume + last_trade.get_qty()
-        self._update(self.cum_buy_volume - self.cum_sell_volume)
 
 
 class BollingerBandsStrategy1(Strategy):
@@ -49,14 +33,12 @@ class BollingerBandsStrategy1(Strategy):
         stop_std = int(ctx.getenv('BBANDS_STOP_STD'))
         bin_minutes = int(ctx.getenv('BBANDS_BIN_MINUTES', 5))
         exchange_code, instrument_code = ctx.getenv('TRADING_INSTRUMENT').split(':')
-        trade_flow_qty = int(ctx.getenv('TRADE_FLOW_REVERSAL_QTY', 10_000))
         instrument = ctx.get_instrument_cache().get_crypto_exchange_instrument(exchange_code, instrument_code)
         trades = ctx.get_marketdata_service().get_trades(instrument)
         trades_5m = BufferWithTime(scheduler, trades, timedelta(minutes=bin_minutes))
         prices = ComputeOHLC(network, trades_5m)
         close_prices = Map(network, prices, lambda x: x.close_px)
         bbands = ComputeBollingerBands(network, close_prices, window, num_std)
-        trade_flow = ComputeTradeFlowImbalanceSignal(network, trades)
 
         op_service = ctx.get_order_placer_service()
         oms = op_service.get_order_manager_service()
@@ -78,10 +60,6 @@ class BollingerBandsStrategy1(Strategy):
         Do(scheduler.get_network(), position, lambda: dcs.capture('Position', {
             'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
             'position': position.get_value().get_qty()
-        }))
-        Do(scheduler.get_network(), trade_flow, lambda: dcs.capture('TradeFlows', {
-            'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
-            'trade_flow': trade_flow.get_value()
         }))
         Do(scheduler.get_network(), bbands, lambda: dcs.capture('BollingerBands', {
             'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
@@ -116,7 +94,6 @@ class BollingerBandsStrategy1(Strategy):
 
                 self.scheduler.get_network().connect(oms.get_order_events(), self)
                 self.scheduler.get_network().connect(position, self)
-                self.scheduler.get_network().connect(trade_flow, self)
 
             def on_activate(self) -> bool:
                 if self.scheduler.get_network().has_activated(oms.get_order_events()):
@@ -150,15 +127,6 @@ class BollingerBandsStrategy1(Strategy):
                     elif isinstance(order_event, Reject):
                         self.strategy.logger.error(f'Order rejected: {order_event.get_message()}')
                         self.trader_state = TraderState.FLAT
-                elif self.scheduler.get_network().has_activated(trade_flow):
-                    if trade_flow.get_value() < (-1 * trade_flow_qty) and not self.volatility_pause:
-                        self.volatility_pause = True
-                        self.strategy.logger.info(f'Toggled volatility pause ON: {trade_flow.get_value()}')
-                        return False
-                    elif trade_flow.get_value() > trade_flow_qty and self.volatility_pause:
-                        self.volatility_pause = False
-                        self.strategy.logger.info(f'Toggled volatility pause OFF: {trade_flow.get_value()}')
-                        return False
                 elif self.trader_state == TraderState.FLAT and close_prices.get_value() < bbands.get_value().lower:
                     if self.volatility_pause:
                         self.strategy.logger.info(f'Net selling pressure while below BB lower bound; paused trading at '

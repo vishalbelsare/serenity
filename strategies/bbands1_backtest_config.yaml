@@ -11,7 +11,7 @@ environment:
   - key: POLYGON_API_KEY
     value-source: SYSTEM_ENV
   - key: EXTRA_OUTPUTS
-    value: Position,TradeFlows,BollingerBands,PnL
+    value: Position,BollingerBands,PnL
 strategies:
   - name: BollingerBands
     module: bbands1
