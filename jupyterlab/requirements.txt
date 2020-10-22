@@ -1,7 +1,7 @@
 Cython==0.29.17
 arch==4.15
 cufflinks==0.17.3
-dask==2.30.0
+dask[complete]==2.30.0
 hmmlearn==0.2.4
 ipywidgets==7.5.1
 jupyterlab-git==0.22.1
