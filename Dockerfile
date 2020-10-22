@@ -8,8 +8,8 @@ COPY $PWD/strategies /strategies
 COPY $PWD/requirements.txt /app
 WORKDIR /app
 
-RUN /bin/sh -c virtualenv venv-py3 --python=python3
-RUN /app/venv-py3/pip install --upgrade pip
-RUN /app/venv-py3/pip install -r requirements.txt
+RUN virtualenv venv-py3 --python=/usr/local/bin/python3
+RUN /app/venv-py3/bin/pip install --upgrade pip
+RUN /app/venv-py3/bin/pip install -r requirements.txt
 
 ENV PYTHONPATH "${PYTHONPATH}:/app"
