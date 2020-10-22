@@ -7,11 +7,12 @@ from typing import List
 
 import fire
 import websockets
-from phemex import PhemexConnection
+from phemex import PublicCredentials
 from tau.core import MutableSignal, NetworkScheduler, Event, Signal
 from tau.signal import Filter, FlatMap, Map
 
 from serenity.db.api import InstrumentCache
+from serenity.exchange.phemex import get_phemex_connection
 from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHandler, ws_fh_main, Feed, \
     OrderBookBuilder
 from serenity.marketdata.api import Trade, OrderBookEvent, OrderBookSnapshot, OrderBookUpdate, BookLevel
@@ -24,14 +25,7 @@ class PhemexFeedHandler(WebsocketFeedHandler):
 
     def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, include_symbol: str = '*',
                  instance_id: str = 'prod'):
-        if instance_id == 'prod':
-            self.ws_uri = 'wss://phemex.com/ws'
-            self.phemex = PhemexConnection()
-        elif instance_id == 'test':
-            self.ws_uri = 'wss://testnet.phemex.com/ws'
-            self.phemex = PhemexConnection(api_url='https://testnet-api.phemex.com')
-        else:
-            raise ValueError(f'Unknown instance_id: {instance_id}')
+        (self.phemex, self.ws_uri) = get_phemex_connection(PublicCredentials(), instance_id)
 
         # ensure we've initialized PhemexConnection before loading instruments in super()
         super().__init__(scheduler, instrument_cache, instance_id)
@@ -87,7 +81,8 @@ class PhemexFeedHandler(WebsocketFeedHandler):
             if symbol == self.include_symbol or self.include_symbol == '*':
                 self.instrument_trades[symbol] = MutableSignal()
                 self.instrument_order_book_events[symbol] = MutableSignal()
-                self.instrument_order_books[symbol] = OrderBookBuilder(network, self.instrument_order_book_events[symbol])
+                self.instrument_order_books[symbol] = OrderBookBuilder(network,
+                                                                       self.instrument_order_book_events[symbol])
 
                 # magic: inject the bare Signal into the graph so we can
                 # fire events on it without any downstream connections

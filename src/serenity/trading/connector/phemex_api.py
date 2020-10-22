@@ -1,66 +1,19 @@
 import asyncio
-import base64
-import hashlib
-import hmac
 import json
 import logging
 import socket
-import time
-
-from math import trunc
-from typing import Any
 
 import websockets
-from phemex import PhemexConnection, AuthCredentials
+from phemex import AuthCredentials
 from tau.core import Signal, NetworkScheduler, MutableSignal, Event
 from tau.signal import Map, Filter
 
 from serenity.db.api import InstrumentCache
+from serenity.exchange.phemex import get_phemex_connection, PhemexWebsocketAuthenticator
 from serenity.position.api import ExchangePositionService, ExchangePosition
 from serenity.trading.api import OrderPlacer, Order, OrderFactory, MarketOrder, LimitOrder, TimeInForce, ExecInst, \
     StopOrder
 from serenity.trading.oms import OrderManagerService
-
-
-def get_phemex_connection(credentials: AuthCredentials, instance_id: str = 'prod') -> Any:
-    if instance_id == 'prod':
-        ws_uri = 'wss://phemex.com/ws'
-        return PhemexConnection(credentials), ws_uri
-    elif instance_id == 'test':
-        ws_uri = 'wss://testnet.phemex.com/ws'
-        return PhemexConnection(credentials, api_url='https://testnet-api.phemex.com'), ws_uri
-    else:
-        raise ValueError(f'Unknown instance_id: {instance_id}')
-
-
-class WebsocketAuthenticator:
-    """
-    Authentication mechanism for Phemex private WS API.
-    """
-
-    def __init__(self, credentials: AuthCredentials):
-        self.api_key = credentials.api_key
-        self.secret_key = credentials.secret_key
-
-    def get_user_auth_message(self, auth_id: int = 1) -> str:
-        expiry = trunc(time.time()) + 60
-        token = self.api_key + str(expiry)
-        token = token.encode('utf-8')
-        hmac_key = base64.urlsafe_b64decode(self.secret_key)
-        signature = hmac.new(hmac_key, token, hashlib.sha256)
-        signature_b64 = signature.hexdigest()
-
-        user_auth = {
-            "method": "user.auth",
-            "params": [
-                "API",
-                self.api_key,
-                signature_b64,
-                expiry
-            ],
-            "id": auth_id
-        }
-        return json.dumps(user_auth)
 
 
 # noinspection DuplicatedCode
@@ -69,7 +22,7 @@ class OrderEventSubscriber:
 
     def __init__(self, credentials: AuthCredentials, scheduler: NetworkScheduler, oms: OrderManagerService,
                  instance_id: str = 'prod'):
-        self.auth = WebsocketAuthenticator(credentials)
+        self.auth = PhemexWebsocketAuthenticator(credentials)
         self.scheduler = scheduler
         self.oms = oms
 
@@ -183,7 +136,7 @@ class PhemexExchangePositionService(ExchangePositionService):
     def __init__(self, credentials: AuthCredentials, scheduler: NetworkScheduler, instrument_cache: InstrumentCache,
                  account: str, instance_id: str = 'prod'):
         super().__init__(scheduler)
-        self.auth = WebsocketAuthenticator(credentials)
+        self.auth = PhemexWebsocketAuthenticator(credentials)
         self.scheduler = scheduler
         self.instrument_cache = instrument_cache
         self.account = account
