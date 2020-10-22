@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: daskd-scheduler
+  labels:
+    app: daskd
+    role: scheduler
+spec:
+  ports:
+  - port: 8786
+    targetPort: 8786
+    name: scheduler
+  - port: 8787
+    targetPort: 8787
+    name: bokeh
+  - port: 9786
+    targetPort: 9786
+    name: http
+  selector:
+    app: daskd
+    role: scheduler
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daskd-scheduler
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: daskd
+        role: scheduler
+    spec:
+      containers:
+      - name: scheduler
+        image: hammerlab/mhcflurry-misc:dev1  # CHANGE THIS TO BE YOUR DOCKER HUB IMAGE
+        imagePullPolicy: Always
+        command: ["/app/venv-py3/bin/dask-scheduler"]
+        resources:
+          requests:
+            cpu: 1
+            memory: 10000Mi # set aside some extra resources for the scheduler
+        ports:
+        - containerPort: 8786
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daskd-worker
+spec:
+  replicas: 9
+  template:
+    metadata:
+      labels:
+        app: daskd
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: hammerlab/mhcflurry-misc:dev1  # CHANGE THIS TO BE YOUR DOCKER HUB IMAGE
+        imagePullPolicy: Always
+        command: [
+          "/bin/bash",
+          "-cx",
+          "env && /app/venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT_SCHEDULER --nthreads 1",
+        ]
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: database-secret-config
+                key: password
+          - name: AZURE_CONNECT_STR
+            valueFrom:
+              secretKeyRef:
+                name: azure-secret-config
+                key: connect-str
+        resources:
+          requests:
+            cpu: 1
+            memory: 6000Mi

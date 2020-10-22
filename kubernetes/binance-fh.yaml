@@ -17,7 +17,7 @@ spec:
       containers:
         - name: binance-fh
           image: cloudwallcapital/serenity:2020.09.11-b15
-          command: ["python"]
+          command: ["/app/venv-py3/python"]
           args: ["serenity/marketdata/fh/binance_fh.py"]
           env:
             - name: POSTGRES_PASSWORD
