@@ -8,13 +8,13 @@ metadata:
 spec:
   ports:
   - port: 8786
-    nodePort: 8786
+    nodePort: 30786
     name: scheduler
   - port: 8787
-    nodePort: 8787
+    nodePort: 30787
     name: bokeh
   - port: 9786
-    nodePort: 9786
+    nodePort: 31786
     name: http
   selector:
     app: daskd
@@ -45,7 +45,7 @@ spec:
         resources:
           requests:
             cpu: 1
-            memory: 10000Mi # set aside some extra resources for the scheduler
+            memory: 10000Mi
         ports:
         - containerPort: 8786
 ---
@@ -69,8 +69,10 @@ spec:
       - name: worker
         image: cloudwallcapital/serenity:2020.10.23-b47
         imagePullPolicy: Always
-        command: [
-          /app/venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT_SCHEDULER --nthreads 1,
+        command: [ 
+          "/bin/bash",
+          "-cx",
+          "/app/venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT_SCHEDULER --nthreads 1"
         ]
         env:
           - name: POSTGRES_PASSWORD
