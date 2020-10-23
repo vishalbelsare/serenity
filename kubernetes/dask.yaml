@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: scheduler
-        image: cloudwallcapital/serenity:2020.10.22-b45
+        image: cloudwallcapital/serenity:2020.10.23-b47
         imagePullPolicy: Always
         command: ["/app/venv-py3/bin/dask-scheduler"]
         resources:
@@ -67,12 +67,10 @@ spec:
     spec:
       containers:
       - name: worker
-        image: cloudwallcapital/serenity:2020.10.22-b45
+        image: cloudwallcapital/serenity:2020.10.23-b47
         imagePullPolicy: Always
         command: [
-          "/bin/bash",
-          "-cx",
-          "env && /app/venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT_SCHEDULER --nthreads 1",
+          /app/venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT_SCHEDULER --nthreads 1,
         ]
         env:
           - name: POSTGRES_PASSWORD
