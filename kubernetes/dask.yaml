@@ -8,13 +8,13 @@ metadata:
 spec:
   ports:
   - port: 8786
-    targetPort: 8786
+    nodePort: 8786
     name: scheduler
   - port: 8787
-    targetPort: 8787
+    nodePort: 8787
     name: bokeh
   - port: 9786
-    targetPort: 9786
+    nodePort: 9786
     name: http
   selector:
     app: daskd
