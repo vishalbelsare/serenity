@@ -4,7 +4,7 @@ from polygon.rest.models import HistoricTradesV2ApiResponse
 from pytest_mock import MockFixture
 from tau.core import HistoricNetworkScheduler
 
-from serenity.marketdata.historic import PolygonHistoricEquityMarketdataService
+from serenity.marketdata.polygon import PolygonHistoricEquityMarketdataService
 from serenity.model.exchange import ExchangeInstrument, Exchange, VenueType
 from serenity.model.instrument import Instrument, InstrumentType
 from serenity.utils import init_logging
