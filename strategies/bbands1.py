@@ -32,6 +32,7 @@ class BollingerBandsStrategy1(Strategy):
         num_std = int(ctx.getenv('BBANDS_NUM_STD'))
         stop_std = int(ctx.getenv('BBANDS_STOP_STD'))
         bin_minutes = int(ctx.getenv('BBANDS_BIN_MINUTES', 5))
+        cooling_period_seconds = int(ctx.getenv('BBANDS_COOL_SECONDS', 15))
         exchange_code, instrument_code = ctx.getenv('TRADING_INSTRUMENT').split(':')
         instrument = ctx.get_instrument_cache().get_crypto_exchange_instrument(exchange_code, instrument_code)
         trades = ctx.get_marketdata_service().get_trades(instrument)
@@ -89,8 +90,8 @@ class BollingerBandsStrategy1(Strategy):
                 self.last_exit = 0
                 self.cum_pnl = 0
                 self.stop = None
-                self.volatility_pause = False
                 self.trader_state = TraderState.FLAT
+                self.last_trade_time = 0
 
                 self.scheduler.get_network().connect(oms.get_order_events(), self)
                 self.scheduler.get_network().connect(position, self)
@@ -128,9 +129,9 @@ class BollingerBandsStrategy1(Strategy):
                         self.strategy.logger.error(f'Order rejected: {order_event.get_message()}')
                         self.trader_state = TraderState.FLAT
                 elif self.trader_state == TraderState.FLAT and close_prices.get_value() < bbands.get_value().lower:
-                    if self.volatility_pause:
-                        self.strategy.logger.info(f'Net selling pressure while below BB lower bound; paused trading at '
-                                                  f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                    if self.last_trade_time != 0 and (scheduler.get_time() - self.last_trade_time) < \
+                            cooling_period_seconds * 1000:
+                        self.strategy.logger.info(f'Cooling off -- not trading again on rapidly repeated signal')
                         return False
 
                     self.strategy.logger.info(f'Close below lower Bollinger band while rallying, enter long position '
@@ -149,6 +150,7 @@ class BollingerBandsStrategy1(Strategy):
                     self.op.submit(order)
                     self.op.submit(self.stop)
 
+                    self.last_trade_time = scheduler.get_time()
                     self.trader_state = TraderState.GOING_LONG
                 elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper and \
                         self.stop is not None:

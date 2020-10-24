@@ -32,5 +32,5 @@ strategies:
         value: 1
       - key: BBANDS_QTY
         value: 100000
-      - key: TRADE_FLOW_REVERSAL_QTY
-        value: 10000
+      - key: BBANDS_COOL_SECONDS
+        value: 15
