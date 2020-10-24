@@ -72,7 +72,7 @@ spec:
         command: [ 
           "/bin/bash",
           "-cx",
-          "/app/venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT_SCHEDULER --nthreads 1"
+          "/app/venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT_SCHEDULER --nthreads 1 --memory-limit 0"
         ]
         env:
           - name: POSTGRES_PASSWORD
@@ -88,4 +88,4 @@ spec:
         resources:
           requests:
             cpu: 1
-            memory: 6000Mi
+            memory: 24G
