@@ -14,7 +14,6 @@ from serenity.utils import init_logging
 
 # noinspection DuplicatedCode
 def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
-    init_logging()
     logger = logging.getLogger(__name__)
     upload_date = datetime.datetime.utcnow().date() - datetime.timedelta(days_back)
 
@@ -24,8 +23,8 @@ def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
     instr_cache = InstrumentCache(cur, TypeCodeCache(cur))
 
     exchanges = {
-        'Phemex': 'PHEMEX',
-        'CoinbasePro': 'COINBASE'
+        'PHEMEX': 'PHEMEX',
+        'COINBASE_PRO': 'COINBASE'
     }
     for exchange, db_prefix in exchanges.items():
         for instrument in instr_cache.get_all_exchange_instruments(exchange):

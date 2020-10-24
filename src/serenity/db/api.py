@@ -265,7 +265,7 @@ class InstrumentCache:
         instruments = []
         instrument_map = self.entity_by_ak[ExchangeInstrument]
         for instrument in instrument_map.values():
-            if instrument.get_exchange().get_type_code() == exchange_code:
+            if instrument.get_exchange().get_exchange_code() == exchange_code:
                 instruments.append(instrument)
         return instruments
 
@@ -340,7 +340,7 @@ class ExchangeEntityService:
             fees = row[4]
             trade_id = row[5]
             create_time = row[6]
-            ak = (order.get_exchange().get_type_code(), trade_id)
+            ak = (order.get_exchange().get_exchange_code(), trade_id)
 
             exchange_fill = ExchangeFill(exchange_fill_id, fill_price, quantity, fees, trade_id, create_time)
             exchange_fill.set_order(order)
@@ -368,12 +368,12 @@ class ExchangeEntityService:
             self.entity_by_ak[ExchangeTransfer][ak] = exchange_transfer
 
     def get_or_create_account(self, account: ExchangeAccount):
-        ak = (account.get_exchange().get_type_code(), account.get_exchange_account_num())
+        ak = (account.get_exchange().get_exchange_code(), account.get_exchange_account_num())
         if ak in self.entity_by_ak[ExchangeAccount]:
             return self.entity_by_ak[ExchangeAccount][ak]
         else:
             self.cur.execute("INSERT INTO serenity.exchange_account (exchange_id, exchange_account_num) "
-                             "VALUES (%s, %s) RETURNING exchange_account_id", (account.get_exchange().get_type_id(),
+                             "VALUES (%s, %s) RETURNING exchange_account_id", (account.get_exchange().get_exchange_id(),
                                                                                account.get_exchange_account_num()))
             exchange_account_id = self.cur.fetchone()[0]
             account.set_exchange_account_id(exchange_account_id)
@@ -382,14 +382,14 @@ class ExchangeEntityService:
             return account
 
     def get_or_create_exchange_order(self, order: ExchangeOrder):
-        ak = (order.get_exchange().get_type_code(), order.get_exchange_order_uuid())
+        ak = (order.get_exchange().get_exchange_code(), order.get_exchange_order_uuid())
         if ak in self.entity_by_ak[ExchangeOrder]:
             return self.entity_by_ak[ExchangeOrder][ak]
         else:
             self.cur.execute("INSERT INTO serenity.exchange_order (exchange_id, exchange_instrument_id, order_type_id, "
                              "exchange_account_id, side_id, time_in_force_id, exchange_order_uuid, price, quantity, "
                              "create_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING exchange_order_id",
-                             (order.get_exchange().get_type_id(), order.get_instrument().get_exchange_instrument_id(),
+                             (order.get_exchange().get_exchange_id(), order.get_instrument().get_exchange_instrument_id(),
                               order.get_order_type().get_type_id(),
                               order.get_exchange_account().get_exchange_account_id(),
                               order.get_side().get_type_id(), order.get_time_in_force().get_type_id(),
@@ -402,7 +402,7 @@ class ExchangeEntityService:
             return order
 
     def get_or_create_exchange_fill(self, fill: ExchangeFill):
-        ak = (fill.get_order().get_exchange().get_type_code(), fill.get_trade_id())
+        ak = (fill.get_order().get_exchange().get_exchange_code(), fill.get_trade_id())
         if ak in self.entity_by_ak[ExchangeFill]:
             return self.entity_by_ak[ExchangeFill][ak]
         else:
@@ -417,14 +417,14 @@ class ExchangeEntityService:
             return fill
 
     def get_or_create_exchange_transfer(self, transfer: ExchangeTransfer):
-        ak = (transfer.get_exchange().get_type_code(), transfer.get_transfer_ref())
+        ak = (transfer.get_exchange().get_exchange_code(), transfer.get_transfer_ref())
         if ak in self.entity_by_ak[ExchangeTransfer]:
             return self.entity_by_ak[ExchangeTransfer][ak]
         else:
             self.cur.execute("INSERT INTO serenity.exchange_transfer (exchange_id, exchange_transfer_method_id, "
                              "exchange_transfer_type_id, currency_id, quantity, transfer_ref, transfer_time) "
                              "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING exchange_transfer_id",
-                             (transfer.get_exchange().get_type_id(),
+                             (transfer.get_exchange().get_exchange_id(),
                               transfer.get_exchange_transfer_method().get_type_id(),
                               transfer.get_exchange_transfer_type().get_type_id(),
                               transfer.get_currency().get_currency_id(), transfer.get_quantity(),
