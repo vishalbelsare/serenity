@@ -508,13 +508,13 @@ class AzureBlobTickstore(Tickstore):
     # noinspection PyTypeChecker
     def read(self, logical_path: str) -> pd.DataFrame:
         logical_prefix = f'azure:{self.container_name}'
-        key = logical_path[len(logical_prefix) + 1:]
+        blob_path = logical_path[len(logical_prefix) + 1:]
         cached_data = self.cache.get(logical_path)
         if cached_data is not None:
             self.logger.info(f'reading ticks from cache: {logical_path}')
             return pd.read_parquet(io.BytesIO(cached_data))
         else:
-            blob_client = self.storage.get_blob_client(container=self.container_name, blob=key)
+            blob_client = self.storage.get_blob_client(container=self.container_name, blob=blob_path)
             tick_blob = blob_client.download_blob()
             tick_data = tick_blob.readall()
             self.cache.set(key, tick_data)
@@ -535,8 +535,7 @@ class AzureBlobTickstore(Tickstore):
         as_at_date = ts.as_at()
 
         def create_write_path(version: int):
-            path = f'azure:{self.container_name}/{as_at_date.year}/{as_at_date.month:02d}/{as_at_date.day:02d}/' \
-                   f'{symbol}_{version:04d}.h5'
+            path = f'{as_at_date.year}/{as_at_date.month:02d}/{as_at_date.day:02d}/{symbol}_{version:04d}.h5'
             return path
 
         # insert into local copy of index
@@ -544,7 +543,7 @@ class AzureBlobTickstore(Tickstore):
 
         # update cache
         data_bytes = bytes(buf.getvalue())
-        self.cache.set(data_path, data_bytes)
+        self.cache.set(f'azure:{self.container_name}/{data_path}', data_bytes)
 
         # upload to Azure
         self.logger.info(f'uploading to Azure: {data_path}')
