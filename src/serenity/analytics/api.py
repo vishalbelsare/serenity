@@ -215,4 +215,3 @@ class HDF5DataCaptureService(DataCaptureService):
             extra_output_df.to_hdf(f'{snapshot_path}/{extra_output}.h5', key=extra_output)
 
         return snapshot_id
-

@@ -12,7 +12,6 @@ from tau.event import Do
 from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
-from serenity.marketdata.api import CompositeRoutingRule, ExchangeRoutingRule, RoutingMarketdataService
 from serenity.marketdata.azure import AzureHistoricMarketdataService
 from serenity.position.api import PositionService, NullExchangePositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService

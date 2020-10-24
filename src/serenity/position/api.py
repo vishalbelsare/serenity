@@ -104,5 +104,5 @@ class PositionService(Event):
                 if order.get_side() == Side.SELL:
                     last_qty = last_qty * -1
                 position = self.get_position(account, order.get_instrument())
-                self.scheduler.schedule_update(position, position.get_value().apply_qty(last_qty))
+                self.scheduler.schedule_update(position, lambda: position.get_value().apply_qty(last_qty))
         return False
