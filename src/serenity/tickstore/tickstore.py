@@ -517,7 +517,7 @@ class AzureBlobTickstore(Tickstore):
             blob_client = self.storage.get_blob_client(container=self.container_name, blob=blob_path)
             tick_blob = blob_client.download_blob()
             tick_data = tick_blob.readall()
-            self.cache.set(key, tick_data)
+            self.cache.set(logical_path, tick_data)
             return pd.read_parquet(io.BytesIO(tick_data))
 
     # noinspection PyArgumentList
