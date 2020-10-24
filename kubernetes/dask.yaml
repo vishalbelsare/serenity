@@ -39,13 +39,13 @@ spec:
     spec:
       containers:
       - name: scheduler
-        image: cloudwallcapital/serenity:2020.10.23-b47
+        image: cloudwallcapital/serenity:2020.10.24-b49
         imagePullPolicy: Always
         command: ["/app/venv-py3/bin/dask-scheduler"]
         resources:
           requests:
             cpu: 1
-            memory: 10000Mi
+            memory: 10G
         ports:
         - containerPort: 8786
 ---
@@ -67,7 +67,7 @@ spec:
     spec:
       containers:
       - name: worker
-        image: cloudwallcapital/serenity:2020.10.23-b47
+        image: cloudwallcapital/serenity:2020.10.24-b49
         imagePullPolicy: Always
         command: [ 
           "/bin/bash",
@@ -88,4 +88,4 @@ spec:
         resources:
           requests:
             cpu: 1
-            memory: 24G
+            memory: 5G
