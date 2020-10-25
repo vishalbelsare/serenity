@@ -50,14 +50,17 @@ class BollingerBandsStrategy1(Strategy):
         account = ctx.getenv('EXCHANGE_ACCOUNT')
         op_uri = f'{exchange_id}:{exchange_instance}'
 
-        # subscribe to position updates and exchange position updates
+        # subscribe to marks, position updates and exchange position updates
+        marks = ctx.get_mark_service().get_marks(instrument)
+        Do(scheduler.get_network(), marks, lambda: self.logger.debug(marks.get_value()))
+
         position = ctx.get_position_service().get_position(account, instrument)
         Do(scheduler.get_network(), position, lambda: self.logger.info(position.get_value()))
 
         exch_position = ctx.get_exchange_position_service().get_exchange_positions()
         Do(scheduler.get_network(), exch_position, lambda: self.logger.info(exch_position.get_value()))
 
-        # capture position, trade flow and Bollinger Band data
+        # capture position and Bollinger Band data
         Do(scheduler.get_network(), position, lambda: dcs.capture('Position', {
             'time': pd.to_datetime(scheduler.get_time(), unit='ms'),
             'position': position.get_value().get_qty()

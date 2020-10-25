@@ -1,12 +1,10 @@
 import asyncio
 import json
 import logging
-import socket
 
 from typing import List
 
 import fire
-import websockets
 from phemex import PublicCredentials
 from tau.core import MutableSignal, NetworkScheduler, Event, Signal
 from tau.signal import Filter, FlatMap, Map
@@ -18,6 +16,7 @@ from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHa
 from serenity.marketdata.api import Trade, OrderBookEvent, OrderBookSnapshot, OrderBookUpdate, BookLevel
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
+from serenity.utils import websocket_subscribe_with_retry
 
 
 class PhemexFeedHandler(WebsocketFeedHandler):
@@ -151,43 +150,12 @@ class PhemexFeedHandler(WebsocketFeedHandler):
 
                 network.connect(order_book_events, OrderBookEventScheduler(self, order_book_events))
 
-                # noinspection PyShadowingNames,PyBroadException
-                async def do_subscribe(instrument, subscribe_msg, messages, msg_type):
-                    while True:
-                        try:
-                            async with websockets.connect(self.ws_uri) as sock:
-                                subscribe_msg_txt = json.dumps(subscribe_msg)
-                                self.logger.info(f'sending {msg_type} subscription request for '
-                                                 f'{instrument.get_exchange_instrument_code()}')
-                                await sock.send(subscribe_msg_txt)
-                                while True:
-                                    try:
-                                        self.scheduler.schedule_update(messages, await sock.recv())
-                                    except BaseException as error:
-                                        self.logger.error(f'disconnected; attempting to reconnect after {self.timeout} '
-                                                          f'seconds: {error}')
-                                        await asyncio.sleep(self.timeout)
-
-                                        # exit inner loop
-                                        break
-                        except socket.gaierror as error:
-                            self.logger.error(f'failed with socket error; attempting to reconnect after {self.timeout} '
-                                              f'seconds: {error}')
-                            await asyncio.sleep(self.timeout)
-                            continue
-                        except ConnectionRefusedError as error:
-                            self.logger.error(f'connection refused; attempting to reconnect after {self.timeout} '
-                                              f'seconds: {error}')
-                            await asyncio.sleep(self.timeout)
-                            continue
-                        except BaseException as error:
-                            self.logger.error(f'unknown connection error; attempting to reconnect after {self.timeout} '
-                                              f'seconds: {error}')
-                            await asyncio.sleep(self.timeout)
-                            continue
-
-                asyncio.ensure_future(do_subscribe(instrument, trade_subscribe_msg, trade_messages, 'trade'))
-                asyncio.ensure_future(do_subscribe(instrument, orderbook_subscribe_msg, obe_messages, 'order book'))
+                asyncio.ensure_future(websocket_subscribe_with_retry(self.ws_uri, self.timeout, self.logger,
+                                                                     trade_subscribe_msg, self.scheduler,
+                                                                     trade_messages, symbol, 'trade'))
+                asyncio.ensure_future(websocket_subscribe_with_retry(self.ws_uri, self.timeout, self.logger,
+                                                                     orderbook_subscribe_msg, self.scheduler,
+                                                                     obe_messages, symbol, 'order book'))
 
         # we are now live
         self.scheduler.schedule_update(self.state, FeedHandlerState.LIVE)

@@ -13,6 +13,7 @@ from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.marketdata.azure import AzureHistoricMarketdataService
+from serenity.pnl.api import MarketdataMarkService
 from serenity.position.api import PositionService, NullExchangePositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.simulator import AutoFillOrderPlacer
@@ -54,6 +55,7 @@ class AlgoBacktester:
             oms = OrderManagerService(self.scheduler)
 
             md_service = AzureHistoricMarketdataService(self.scheduler, self.bt_env.getenv('AZURE_CONNECT_STR'))
+            mark_service = MarketdataMarkService(self.scheduler.get_network(), md_service)
             op_service = OrderPlacerService(self.scheduler, oms)
             op_service.register_order_placer(f'{exchange_id}:{instance_id}',
                                              AutoFillOrderPlacer(self.scheduler, oms, md_service, account))
@@ -86,7 +88,7 @@ class AlgoBacktester:
                 module = importlib.import_module(module)
                 klass = getattr(module, strategy_class)
                 strategy_instance = klass()
-                ctx = StrategyContext(self.scheduler, instrument_cache, md_service, op_service,
+                ctx = StrategyContext(self.scheduler, instrument_cache, md_service, mark_service, op_service,
                                       PositionService(self.scheduler, oms), xps, self.dcs, env.values)
                 strategy_instance.init(ctx)
                 strategy_instance.start()

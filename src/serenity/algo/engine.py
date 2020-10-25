@@ -17,6 +17,7 @@ from serenity.marketdata.fh.binance_fh import BinanceFeedHandler
 from serenity.marketdata.fh.coinbasepro_fh import CoinbaseProFeedHandler
 from serenity.marketdata.fh.feedhandler import FeedHandlerRegistry, FeedHandlerMarketdataService
 from serenity.marketdata.fh.phemex_fh import PhemexFeedHandler
+from serenity.pnl.phemex import PhemexMarkService
 from serenity.position.api import PositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.phemex_api import PhemexOrderPlacer, PhemexExchangePositionService
@@ -73,6 +74,7 @@ class AlgoEngine:
             oms = OrderManagerService(scheduler, TimescaleDbTradeBookingService())
             op_service = OrderPlacerService(scheduler, oms)
             md_service = FeedHandlerMarketdataService(scheduler, self.fh_registry, instance_id)
+            mark_service = PhemexMarkService(scheduler, instrument_cache, instance_id)
             self.xps = None
 
             extra_outputs_txt = self.engine_env.getenv('EXTRA_OUTPUTS', None)
@@ -118,8 +120,8 @@ class AlgoEngine:
                 module = importlib.import_module(module)
                 klass = getattr(module, strategy_class)
                 strategy_instance = klass()
-                ctx = StrategyContext(scheduler, instrument_cache, md_service, op_service, self.ps, self.xps, self.dcs,
-                                      env.values)
+                ctx = StrategyContext(scheduler, instrument_cache, md_service, mark_service, op_service, self.ps,
+                                      self.xps, self.dcs, env.values)
                 self.strategies.append((strategy_instance, ctx))
 
     def start(self):

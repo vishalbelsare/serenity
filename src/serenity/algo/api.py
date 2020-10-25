@@ -6,6 +6,7 @@ from tau.core import Signal, NetworkScheduler, Network
 from serenity.analytics.api import DataCaptureService
 from serenity.db.api import InstrumentCache, TypeCodeCache
 from serenity.marketdata.api import MarketdataService
+from serenity.pnl.api import MarkService
 from serenity.position.api import PositionService, ExchangePositionService
 from serenity.trading.api import OrderPlacer
 from serenity.trading.oms import OrderPlacerService
@@ -24,11 +25,13 @@ class StrategyContext:
     """
 
     def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache,
-                 md_service: MarketdataService, op_service: OrderPlacerService, position_service: PositionService,
-                 xps: ExchangePositionService, dcs: DataCaptureService, env_vars: dict):
+                 md_service: MarketdataService, mark_service: MarkService, op_service: OrderPlacerService,
+                 position_service: PositionService, xps: ExchangePositionService, dcs: DataCaptureService,
+                 env_vars: dict):
         self.scheduler = scheduler
         self.instrument_cache = instrument_cache
         self.md_service = md_service
+        self.mark_service = mark_service
         self.op_service = op_service
         self.position_service = position_service
         self.xps = xps
@@ -49,6 +52,9 @@ class StrategyContext:
 
     def get_marketdata_service(self) -> MarketdataService:
         return self.md_service
+
+    def get_mark_service(self) -> MarkService:
+        return self.mark_service
 
     def get_order_placer_service(self) -> OrderPlacerService:
         return self.op_service

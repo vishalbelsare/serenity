@@ -29,7 +29,7 @@ strategies:
       - key: BBANDS_NUM_STD
         value: 3
       - key: BBANDS_STOP_STD
-        value: 1
+        value: 2
       - key: BBANDS_QTY
         value: 100000
       - key: BBANDS_COOL_SECONDS
