@@ -16,7 +16,7 @@ strategies:
     strategy-class: Peg
     environment:
       - key: PEG_INSTRUMENT
-        value: BTCUSD
+        value: PHEMEX:BTCUSD
       - key: PEG_TYPE
         value: Near
       - key: PEG_SIDE

@@ -78,8 +78,8 @@ class Peg(Strategy):
         if account is None:
             raise ValueError('Missing EXCHANGE_ACCOUNT')
 
-        peg_symbol = ctx.getenv('PEG_INSTRUMENT', 'BTCUSD')
-        self.peg_instrument = self.ctx.get_instrument_cache().get_exchange_instrument('Phemex', peg_symbol)
+        exchange_code, peg_symbol = ctx.getenv('PEG_INSTRUMENT').split(':')
+        self.peg_instrument = ctx.get_instrument_cache().get_crypto_exchange_instrument(exchange_code, peg_symbol)
 
         peg_type = ctx.getenv('PEG_TYPE', 'Near')
         if peg_type == 'Near':
