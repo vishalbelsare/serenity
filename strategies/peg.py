@@ -112,6 +112,10 @@ class Peg(Strategy):
         exch_position = self.ctx.get_exchange_position_service().get_exchange_positions()
         Do(ctx.get_scheduler().get_network(), exch_position, lambda: self.logger.info(exch_position.get_value()))
 
+        # subscribe to order events from the OMS, and log them
+        order_events = self.ctx.get_order_placer_service().get_order_manager_service().get_order_events()
+        Do(ctx.get_scheduler().get_network(), order_events, lambda: self.logger.info(order_events.get_value()))
+
     def start(self):
         super().start()
 

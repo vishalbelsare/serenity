@@ -56,14 +56,22 @@ class OrderEventSubscriber:
                     orders = msg['orders']
                     for order_msg in orders:
                         order_id = order_msg['orderID']
+                        cl_ord_id = order_msg['clOrdID']
                         exec_id = order_msg['execID']
                         last_px = order_msg['execPriceEp'] / 10000
                         last_qty = order_msg['execQty']
 
                         order = self.sub.oms.get_order_by_order_id(order_id)
                         if order is None:
-                            self.sub.logger.warning(f'Ignored unknown orderID={order_id}')
-                            continue
+                            order = self.sub.oms.get_order_by_cl_ord_id(cl_ord_id)
+                            if order is None:
+                                self.sub.logger.warning(f'Received from exchange unknown clOrdID={cl_ord_id}')
+                                return False
+                            else:
+                                # deferred pending new state -- this usually happens because we had an immediate
+                                # reject of the order without an orderID returned in the payload
+                                order.set_order_id(order_id)
+                                self.sub.oms.pending_new(order)
 
                         if order_msg['ordStatus'] == 'New':
                             self.sub.oms.new(order, exec_id)
@@ -266,6 +274,7 @@ class PhemexOrderPlacer(OrderPlacer):
         error_code = int(response.get('code', 200))
 
         if error_code > 200:
+            self.oms.track_order(order)
             if error_code == 10500:
                 self.oms.reject(order, 'Authentiation error')
             elif error_code == 401:
@@ -277,12 +286,16 @@ class PhemexOrderPlacer(OrderPlacer):
             order.set_order_id(order_id)
             self.oms.pending_new(order)
         else:
+            self.oms.track_order(order)
             self.oms.reject(order, f'Unknown error: {response}')
 
     def cancel(self, order: Order):
         symbol = order.get_instrument().get_exchange_instrument_code()
         cl_ord_id = order.get_cl_ord_id()
         order_id = order.get_order_id()
+        if order_id is None:
+            self.oms.reject(order, f'Missing order ID; cannot cancel')
+            return
         response = self.trading_conn.send_message('DELETE', '/orders', {
             'symbol': symbol,
             'orderID': order_id

@@ -49,18 +49,21 @@ class OrderManagerService:
     def get_order_by_cl_ord_id(self, cl_ord_id) -> Order:
         return self.order_by_cl_ord_id.get(cl_ord_id, None)
 
+    def track_order(self, order: Order):
+        pending_state = OrderState(order)
+        if order.get_order_id() is not None:
+            self.order_state_by_order_id[order.get_order_id()] = pending_state
+        if order.get_cl_ord_id() is not None:
+            self.order_by_cl_ord_id[order.get_cl_ord_id()] = order
+        return pending_state
+
     def pending_new(self, order: Order):
         order_id = order.get_order_id()
         if order_id is None:
             self.scheduler.schedule_update(self.order_events, Reject('Order missing order_id'))
             return
-        elif order.get_cl_ord_id() in self.order_by_cl_ord_id:
-            self.scheduler.schedule_update(self.order_events, Reject('Duplicate cl_ord_id'))
-            return
 
-        pending_state = OrderState(order, OrderStatus.PENDING_NEW, ExecType.PENDING_NEW)
-        self.order_state_by_order_id[order_id] = pending_state
-        self.order_by_cl_ord_id[order.get_cl_ord_id()] = order
+        pending_state = self.track_order(order)
         self.scheduler.schedule_update(self.order_events, pending_state.create_execution_report(str(uuid1())))
         self.scheduler.schedule_update(self.orders, order)
 
@@ -81,10 +84,13 @@ class OrderManagerService:
             self.scheduler.schedule_update(self.order_events, Reject('Order missing order_id'))
             return
 
-        order_state = self.order_state_by_order_id[order_id]
+        order_state = self.order_state_by_order_id.get(order_id, None)
         cl_ord_id = order.get_cl_ord_id()
 
-        if order_state.is_terminal():
+        if order_state is None:
+            self.scheduler.schedule_update(self.order_events, CancelReject(cl_ord_id, cl_ord_id,
+                                                                           'Attempt to pending cancel unknown order'))
+        elif order_state.is_terminal():
             self.scheduler.schedule_update(self.order_events, CancelReject(cl_ord_id, cl_ord_id,
                                                                            'Attempt to pending cancel terminal order'))
         else:

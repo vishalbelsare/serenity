@@ -1,7 +1,8 @@
-import datetime
 import logging
 import pandas_market_calendars
 import polygon
+
+from datetime import datetime
 
 from tau.core import Signal, HistoricNetworkScheduler, MutableSignal, SignalGenerator
 
