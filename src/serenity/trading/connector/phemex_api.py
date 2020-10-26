@@ -63,10 +63,12 @@ class OrderEventSubscriber:
 
                         order = self.sub.oms.get_order_by_cl_ord_id(cl_ord_id)
                         if order is None:
-                            if cl_ord_id is None:
-                                self.sub.logger.warning(f'Received from exchange missing clOrdID')
+                            if cl_ord_id is None or cl_ord_id == '':
+                                self.sub.logger.warning(f'Received message from exchange with missing clOrdID, '
+                                                        f'orderID={order_id}')
                             else:
-                                self.sub.logger.warning(f'Received from exchange unknown clOrdID={cl_ord_id}')
+                                self.sub.logger.warning(f'Received message from exchange for unknown '
+                                                        f'clOrdID={cl_ord_id}, orderID={order_id}')
                             return False
                         elif order.get_order_id() is None:
                             self.sub.logger.info(f'OMS order missing orderID; patching from clOrdID={cl_ord_id}')
