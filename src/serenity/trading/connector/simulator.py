@@ -28,7 +28,7 @@ class AutoFillOrderPlacer(OrderPlacer):
                 self.fired = False
 
             def on_activate(self) -> bool:
-                if self.fired or self.order_placer.oms.is_terminal(order.get_order_id()):
+                if self.fired or self.order_placer.oms.is_terminal(order.get_cl_ord_id()):
                     return False
 
                 if self.order_placer.scheduler.get_network().has_activated(self.trades):

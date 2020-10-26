@@ -61,17 +61,13 @@ class OrderEventSubscriber:
                         last_px = order_msg['execPriceEp'] / 10000
                         last_qty = order_msg['execQty']
 
-                        order = self.sub.oms.get_order_by_order_id(order_id)
+                        order = self.sub.oms.get_order_by_cl_ord_id(cl_ord_id)
                         if order is None:
-                            order = self.sub.oms.get_order_by_cl_ord_id(cl_ord_id)
-                            if order is None:
-                                self.sub.logger.warning(f'Received from exchange unknown clOrdID={cl_ord_id}')
-                                return False
-                            else:
-                                # deferred pending new state -- this usually happens because we had an immediate
-                                # reject of the order without an orderID returned in the payload
-                                order.set_order_id(order_id)
-                                self.sub.oms.pending_new(order)
+                            self.sub.logger.warning(f'Received from exchange unknown clOrdID={cl_ord_id}')
+                            return False
+                        elif order.get_order_id() is None:
+                            self.sub.logger.info(f'Order missing orderID; patching clOrdID={cl_ord_id}')
+                            order.set_order_id(order_id)
 
                         if order_msg['ordStatus'] == 'New':
                             self.sub.oms.new(order, exec_id)

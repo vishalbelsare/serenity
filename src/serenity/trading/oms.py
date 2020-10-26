@@ -10,7 +10,7 @@ from serenity.trading.api import ExecutionReport, Order, Reject, OrderState, Ord
 class OrderManagerService:
     def __init__(self, scheduler: NetworkScheduler, booker: TradeBookingService = NullTradeBookingService()):
         self.scheduler = scheduler
-        self.order_state_by_order_id = {}
+        self.order_state_by_cl_ord_id = {}
         self.order_by_cl_ord_id = {}
         self.order_events = MutableSignal()
         self.orders = MutableSignal()
@@ -18,7 +18,7 @@ class OrderManagerService:
         self.scheduler.get_network().attach(self.orders)
         self.scheduler.get_network().attach(self.order_events)
 
-        class BookingEvent(Event):
+        class OnBookingEvent(Event):
             def __init__(self, oms: OrderManagerService):
                 self.oms = oms
 
@@ -26,12 +26,12 @@ class OrderManagerService:
                 if self.oms.order_events.is_valid():
                     order_event = self.oms.order_events.get_value()
                     if isinstance(order_event, ExecutionReport):
-                        order_id = order_event.get_order_id()
-                        order = self.oms.get_order_by_order_id(order_id)
+                        cl_ord_id = order_event.get_cl_ord_id()
+                        order = self.oms.get_order_by_cl_ord_id(cl_ord_id)
                         booker.book(order, order_event)
                 return False
 
-        self.scheduler.get_network().connect(self.order_events, BookingEvent(self))
+        self.scheduler.get_network().connect(self.order_events, OnBookingEvent(self))
 
     def get_order_events(self) -> Signal:
         return self.order_events
@@ -39,54 +39,40 @@ class OrderManagerService:
     def get_orders(self) -> Signal:
         return self.orders
 
-    # noinspection PyTypeChecker
-    def get_order_by_order_id(self, order_id) -> Order:
-        order_state = self.order_state_by_order_id.get(order_id, None)
-        if order_state is None:
-            return None
-        return order_state.get_order()
-
     def get_order_by_cl_ord_id(self, cl_ord_id) -> Order:
         return self.order_by_cl_ord_id.get(cl_ord_id, None)
 
     def track_order(self, order: Order):
+        cl_ord_id = order.get_cl_ord_id()
         pending_state = OrderState(order)
-        if order.get_order_id() is not None:
-            self.order_state_by_order_id[order.get_order_id()] = pending_state
-        if order.get_cl_ord_id() is not None:
-            self.order_by_cl_ord_id[order.get_cl_ord_id()] = order
+        if cl_ord_id is not None:
+            self.order_by_cl_ord_id[cl_ord_id] = order
+            self.order_state_by_cl_ord_id[cl_ord_id] = pending_state
         return pending_state
 
     def pending_new(self, order: Order):
-        order_id = order.get_order_id()
-        if order_id is None:
-            self.scheduler.schedule_update(self.order_events, Reject('Order missing order_id'))
-            return
-
         pending_state = self.track_order(order)
         self.scheduler.schedule_update(self.order_events, pending_state.create_execution_report(str(uuid1())))
         self.scheduler.schedule_update(self.orders, order)
 
     def new(self, order: Order, exec_id: str):
-        order_id = order.get_order_id()
-        if order_id is None:
-            self.scheduler.schedule_update(self.order_events, Reject('Order missing order_id'))
+        cl_ord_id = order.get_cl_ord_id()
+        if cl_ord_id is None:
+            self.scheduler.schedule_update(self.order_events, Reject('Order missing cl_ord_id'))
             return
 
-        order_state = self.order_state_by_order_id[order_id]
+        order_state = self.order_state_by_cl_ord_id[cl_ord_id]
         new_state = order_state.transition(OrderStatus.NEW, ExecType.NEW)
-        self.order_state_by_order_id[order_id] = new_state
+        self.order_state_by_cl_ord_id[cl_ord_id] = new_state
         self.scheduler.schedule_update(self.order_events, new_state.create_execution_report(exec_id))
 
     def pending_cancel(self, order: Order):
-        order_id = order.get_order_id()
-        if order_id is None:
-            self.scheduler.schedule_update(self.order_events, Reject('Order missing order_id'))
+        cl_ord_id = order.get_cl_ord_id()
+        if cl_ord_id is None:
+            self.scheduler.schedule_update(self.order_events, Reject('Order missing cl_ord_id'))
             return
 
-        order_state = self.order_state_by_order_id.get(order_id, None)
-        cl_ord_id = order.get_cl_ord_id()
-
+        order_state = self.order_state_by_cl_ord_id[cl_ord_id]
         if order_state is None:
             self.scheduler.schedule_update(self.order_events, CancelReject(cl_ord_id, cl_ord_id,
                                                                            'Attempt to pending cancel unknown order'))
@@ -95,38 +81,36 @@ class OrderManagerService:
                                                                            'Attempt to pending cancel terminal order'))
         else:
             pending_state = order_state.transition(OrderStatus.PENDING_CANCEL, ExecType.PENDING_CANCEL)
-            self.order_state_by_order_id[order_id] = pending_state
+            self.order_state_by_cl_ord_id[cl_ord_id] = pending_state
             self.scheduler.schedule_update(self.order_events, pending_state.create_execution_report(str(uuid1())))
 
     def apply_cancel(self, order: Order, exec_id: str):
-        order_id = order.get_order_id()
-        if order_id is None:
-            self.scheduler.schedule_update(self.order_events, Reject('Order missing order_id'))
+        cl_ord_id = order.get_cl_ord_id()
+        if cl_ord_id is None:
+            self.scheduler.schedule_update(self.order_events, Reject('Order missing cl_ord_id'))
             return
 
-        order_state = self.order_state_by_order_id[order_id]
+        order_state = self.order_state_by_cl_ord_id[cl_ord_id]
         ord_status = order_state.get_ord_status()
-        cl_ord_id = order.get_cl_ord_id()
         if order_state.is_terminal():
             self.scheduler.schedule_update(self.order_events, CancelReject(cl_ord_id, cl_ord_id,
                                                                            'Attempt to apply cancel to terminal order'))
         elif ord_status == OrderStatus.PENDING_CANCEL:
             cancel_state = order_state.transition(OrderStatus.CANCELED, ExecType.CANCELED)
-            self.order_state_by_order_id[order_id] = cancel_state
+            self.order_state_by_cl_ord_id[cl_ord_id] = cancel_state
             self.scheduler.schedule_update(self.order_events, cancel_state.create_execution_report(exec_id))
         else:
             self.scheduler.schedule_update(self.order_events, CancelReject(cl_ord_id, cl_ord_id,
                                                                            'Attempt to apply cancel when not pending'))
 
     def apply_fill(self, order: Order, fill_qty: float, fill_px: float, exec_id: str):
-        order_id = order.get_order_id()
-        if order_id is None:
-            self.scheduler.schedule_update(self.order_events, Reject('Order missing order_id'))
+        cl_ord_id = order.get_cl_ord_id()
+        if cl_ord_id is None:
+            self.scheduler.schedule_update(self.order_events, Reject('Order missing cl_ord_id'))
             return
 
-        order_state = self.order_state_by_order_id[order_id]
+        order_state = self.order_state_by_cl_ord_id[cl_ord_id]
         ord_status = order_state.get_ord_status()
-        order_id = order.get_order_id()
         if ord_status in [OrderStatus.FILLED]:
             self.scheduler.schedule_update(self.order_events, Reject('Order fully filled'))
         elif ord_status in [OrderStatus.CANCELED]:
@@ -142,22 +126,22 @@ class OrderManagerService:
                 fill_state = order_state.transition(OrderStatus.FILLED, ExecType.TRADE)
             else:
                 fill_state = order_state.transition(OrderStatus.PARTIALLY_FILLED, ExecType.TRADE)
-            self.order_state_by_order_id[order_id] = fill_state
+            self.order_state_by_cl_ord_id[cl_ord_id] = fill_state
             self.scheduler.schedule_update(self.order_events, fill_state.create_execution_report(exec_id))
 
     def reject(self, order, msg: str):
-        order_id = order.get_order_id()
-        if order_id is not None:
-            order_state = self.order_state_by_order_id[order_id]
+        cl_ord_id = order.get_cl_ord_id()
+        if cl_ord_id is not None:
+            order_state = self.order_state_by_cl_ord_id[cl_ord_id]
             order_state = order_state.transition(OrderStatus.REJECTED, ExecType.REJECTED)
-            self.order_state_by_order_id[order.get_order_id()] = order_state
+            self.order_state_by_cl_ord_id[cl_ord_id] = order_state
         else:
             msg = f'{msg}; WARNING: missing order_id'
 
         self.scheduler.schedule_update(self.order_events, Reject(msg))
 
-    def is_terminal(self, order_id) -> bool:
-        return self.order_state_by_order_id[order_id].is_terminal()
+    def is_terminal(self, cl_ord_id) -> bool:
+        return self.order_state_by_cl_ord_id[cl_ord_id].is_terminal()
 
 
 class OrderPlacerService:
