@@ -3,6 +3,11 @@
 Release History
 ---------------
 
+0.7.0 (2020-10-31)
+++++++++++++++++++
+
+- Support for distributed backtests with Dask
+
 0.6.0 (2020-10-03)
 ++++++++++++++++++
 

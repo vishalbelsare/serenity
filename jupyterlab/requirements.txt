@@ -11,7 +11,7 @@ pandas==1.1.4
 pmdarima==1.7.1
 pytz==2020.1
 quandl==3.5.3
-serenity-trading==0.5.1
+serenity-trading==0.7.0
 scipy==1.5.3
 tables==3.6.1
 yfinance==0.1.55
