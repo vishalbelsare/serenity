@@ -54,7 +54,7 @@ kind: Deployment
 metadata:
   name: daskd-worker
 spec:
-  replicas: 9
+  replicas: 3
   selector:
     matchLabels:
       app: daskd
@@ -88,4 +88,4 @@ spec:
         resources:
           requests:
             cpu: 1
-            memory: 5G
+            memory: 24G
