@@ -90,11 +90,15 @@ class DataCaptureService(ABC):
         pass
 
     @abstractmethod
+    def create_snapshot(self, strategy_id: str) -> Snapshot:
+        pass
+
+    @abstractmethod
     def load_snapshot(self, snapshot_id: SnapshotId) -> Snapshot:
         pass
 
     @abstractmethod
-    def store_snapshot(self, strategy_id: str) -> SnapshotId:
+    def store_snapshot(self, strategy_id: str) -> Snapshot:
         pass
 
 
@@ -166,6 +170,35 @@ class HDF5DataCaptureService(DataCaptureService):
     def capture(self, output_name: str, data: Dict):
         self.dataframes[output_name].append(data)
 
+    def create_snapshot(self, strategy_id: str) -> Snapshot:
+        ts = datetime.datetime.now()
+        snapshot_id = SnapshotId(self.mode, strategy_id, ts)
+
+        orders = pd.DataFrame(self.dataframes['Orders'])
+        if not orders.empty:
+            orders.set_index('time', inplace=True)
+
+        fills = pd.DataFrame(self.dataframes['Fills'])
+        if not fills.empty:
+            fills.set_index('time', inplace=True)
+
+        daily_positions = pd.DataFrame(self.dataframes['DailyPositions'])
+        if not daily_positions.empty:
+            daily_positions.set_index('date', inplace=True)
+
+        daily_returns = pd.DataFrame(self.dataframes['DailyReturns'])
+        if not daily_returns.empty:
+            daily_returns.set_index('date', inplace=True)
+
+        extra_output_dfs = {}
+        for extra_output in self.extra_outputs:
+            extra_output_df = pd.DataFrame(self.dataframes[extra_output])
+            if not extra_output_df.empty:
+                extra_output_df.set_index('time', inplace=True)
+            extra_output_dfs[extra_output] = extra_output_df
+
+        return Snapshot(snapshot_id, orders, fills, daily_positions, daily_returns, extra_output_dfs)
+
     def load_snapshot(self, snapshot_id: SnapshotId) -> Snapshot:
         snapshot_path = f'{os.getenv("HOME")}/.serenity/snapshots/{str(snapshot_id)}'
 
@@ -181,37 +214,20 @@ class HDF5DataCaptureService(DataCaptureService):
         # noinspection PyTypeChecker
         return Snapshot(snapshot_id, orders, fills, daily_positions, daily_returns, extra_output_dfs)
 
-    def store_snapshot(self, strategy_id: str) -> SnapshotId:
-        ts = datetime.datetime.now()
-        snapshot_id = SnapshotId(self.mode, strategy_id, ts)
+    def store_snapshot(self, strategy_id: str) -> Snapshot:
+        snapshot = self.create_snapshot(strategy_id)
+        snapshot_id = snapshot.get_id()
         snapshot_path = f'{os.getenv("HOME")}/.serenity/snapshots/{snapshot_id}'
         Path(snapshot_path).mkdir(parents=True, exist_ok=True)
         self.logger.info(f'storing snapshots in {snapshot_path}')
 
-        orders = pd.DataFrame(self.dataframes['Orders'])
-        if not orders.empty:
-            orders.set_index('time', inplace=True)
-        orders.to_hdf(f'{snapshot_path}/Orders.h5', key='Orders')
-
-        fills = pd.DataFrame(self.dataframes['Fills'])
-        if not fills.empty:
-            fills.set_index('time', inplace=True)
-        fills.to_hdf(f'{snapshot_path}/Fills.h5', key='Fills')
-
-        daily_positions = pd.DataFrame(self.dataframes['DailyPositions'])
-        if not daily_positions.empty:
-            daily_positions.set_index('date', inplace=True)
-        daily_positions.to_hdf(f'{snapshot_path}/DailyPositions.h5', key='DailyPositions')
-
-        daily_returns = pd.DataFrame(self.dataframes['DailyReturns'])
-        if not daily_returns.empty:
-            daily_returns.set_index('date', inplace=True)
-        daily_returns.to_hdf(f'{snapshot_path}/DailyReturns.h5', key='DailyReturns')
+        snapshot.get_orders().to_hdf(f'{snapshot_path}/Orders.h5', key='Orders')
+        snapshot.get_fills().to_hdf(f'{snapshot_path}/Fills.h5', key='Fills')
+        snapshot.get_daily_positions().to_hdf(f'{snapshot_path}/DailyPositions.h5', key='DailyPositions')
+        snapshot.get_daily_returns().to_hdf(f'{snapshot_path}/DailyReturns.h5', key='DailyReturns')
 
         for extra_output in self.extra_outputs:
-            extra_output_df = pd.DataFrame(self.dataframes[extra_output])
-            if not extra_output_df.empty:
-                extra_output_df.set_index('time', inplace=True)
+            extra_output_df = snapshot.get_extra_output(extra_output)
             extra_output_df.to_hdf(f'{snapshot_path}/{extra_output}.h5', key=extra_output)
 
-        return snapshot_id
+        return snapshot

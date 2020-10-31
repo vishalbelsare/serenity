@@ -52,7 +52,7 @@ class MarketdataMarkService(MarkService):
     def get_marks(self, instrument: ExchangeInstrument) -> Signal:
         if self.mark_type == MarkType.LAST:
             trades = self.mds.get_trades(instrument)
-            return Map(self.network, trades, lambda x: Mark(instrument.get_instrument(), x.get_value().get_price()))
+            return Map(self.network, trades, lambda x: Mark(instrument.get_instrument(), x.get_price()))
         else:
             books = self.mds.get_order_books(instrument)
-            return Map(self.network, books, lambda x: Mark(instrument.get_instrument(), x.get_value().get_mid()))
+            return Map(self.network, books, lambda x: Mark(instrument.get_instrument(), x.get_mid()))
