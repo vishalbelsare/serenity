@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+
 from pathlib import Path
 
 import fire
@@ -9,13 +10,30 @@ import pandas as pd
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.tickstore.journal import Journal, NoSuchJournalException
 from serenity.tickstore.tickstore import LocalTickstore, BiTimestamp, AzureBlobTickstore
+from serenity.utils import init_logging
+
+init_logging()
+logger = logging.getLogger(__name__)
 
 
 # noinspection DuplicatedCode
-def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
-    logger = logging.getLogger(__name__)
-    upload_date = datetime.datetime.utcnow().date() - datetime.timedelta(days_back)
+def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1, upload_start_date: str = None,
+                upload_end_date: str = None):
+    if upload_start_date is not None and upload_end_date is not None:
+        upload_start_date = datetime.datetime.strptime(upload_start_date, '%Y-%m-%d').date()
+        upload_end_date = datetime.datetime.strptime(upload_end_date, '%Y-%m-%d').date()
+        delta = upload_end_date - upload_start_date
 
+        for i in range(delta.days + 1):
+            upload_date = upload_start_date + datetime.timedelta(days=i)
+            do_upload(behemoth_path, upload_date)
+    else:
+        upload_date = datetime.datetime.utcnow().date() - datetime.timedelta(days_back)
+        do_upload(behemoth_path, upload_date)
+
+
+def do_upload(behemoth_path: str, upload_date: datetime.date):
+    logger.info(f'uploading into Behemoth for upload date = {upload_date}')
     conn = connect_serenity_db()
     conn.autocommit = True
     cur = conn.cursor()
@@ -29,12 +47,12 @@ def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
         for instrument in instr_cache.get_all_exchange_instruments(exchange):
             symbol = instrument.get_exchange_instrument_code()
 
-            upload_trades(behemoth_path, db_prefix, exchange, logger, symbol, upload_date)
-            upload_order_books(behemoth_path, db_prefix, exchange, logger, symbol, upload_date)
+            upload_trades(behemoth_path, db_prefix, exchange, symbol, upload_date)
+            upload_order_books(behemoth_path, db_prefix, exchange, symbol, upload_date)
 
 
 # noinspection DuplicatedCode
-def upload_order_books(behemoth_path, db_prefix, exchange, logger, symbol, upload_date):
+def upload_order_books(behemoth_path, db_prefix, exchange, symbol, upload_date):
     books_db = f'{db_prefix}_BOOKS'
     books_path = Path(f'{behemoth_path}/journals/{books_db}/{symbol}')
     books_journal = Journal(books_path)
@@ -84,7 +102,7 @@ def upload_order_books(behemoth_path, db_prefix, exchange, logger, symbol, uploa
 
 
 # noinspection DuplicatedCode
-def upload_trades(behemoth_path, db_prefix, exchange, logger, symbol, upload_date):
+def upload_trades(behemoth_path, db_prefix, exchange, symbol, upload_date):
     trades_db = f'{db_prefix}_TRADES'
     trades_path = Path(f'{behemoth_path}/journals/{trades_db}/{symbol}')
     trades_journal = Journal(trades_path)
@@ -142,6 +160,8 @@ def upload_trades(behemoth_path, db_prefix, exchange, logger, symbol, upload_dat
 
 def connect_azure_blob_tickstore(db: str):
     connect_str = os.getenv('AZURE_CONNECT_STR', None)
+    if connect_str is None:
+        raise ValueError('AZURE_CONNECT_STR not set')
     return AzureBlobTickstore(connect_str, db)
 
 

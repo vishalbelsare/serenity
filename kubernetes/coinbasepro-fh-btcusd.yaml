@@ -18,7 +18,7 @@ spec:
         - name: phemex-fh
           image: cloudwallcapital/serenity:2020.10.22-b45
           command: ["/app/venv-py3/bin/python"]
-          args: ["serenity/marketdata/fh/coinbasepro_fh.py"]
+          args: ["serenity/marketdata/fh/coinbasepro_fh.py", "--include_symbol=BTC-USD"]
           env:
             - name: POSTGRES_PASSWORD
               valueFrom:

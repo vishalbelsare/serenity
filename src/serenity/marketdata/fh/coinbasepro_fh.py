@@ -130,8 +130,9 @@ def create_fh(scheduler: NetworkScheduler, instrument_cache: InstrumentCache, in
     return CoinbaseProFeedHandler(scheduler, instrument_cache, instance_id)
 
 
-def main(instance_id: str = 'prod', journal_path: str = '/behemoth/journals/'):
-    ws_fh_main(create_fh, CoinbaseProFeedHandler.get_uri_scheme(), instance_id, journal_path, 'COINBASE_PRO')
+def main(instance_id: str = 'prod', journal_path: str = '/behemoth/journals/', include_symbol: str = '*'):
+    ws_fh_main(create_fh, CoinbaseProFeedHandler.get_uri_scheme(), instance_id, journal_path, 'COINBASE_PRO',
+               include_symbol=include_symbol)
 
 
 if __name__ == '__main__':
