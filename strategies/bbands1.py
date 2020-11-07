@@ -137,7 +137,7 @@ class BollingerBandsStrategy1(Strategy):
                         self.strategy.logger.info(f'Cooling off -- not trading again on rapidly repeated signal')
                         return False
 
-                    self.strategy.logger.info(f'Close below lower Bollinger band while rallying, enter long position '
+                    self.strategy.logger.info(f'Close below lower Bollinger band, enter long position '
                                               f'at {datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
 
                     stop_px = close_prices.get_value() - ((bbands.get_value().sma - bbands.get_value().lower) *
@@ -155,15 +155,15 @@ class BollingerBandsStrategy1(Strategy):
 
                     self.last_trade_time = scheduler.get_time()
                     self.trader_state = TraderState.GOING_LONG
-                elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper and \
-                        self.stop is not None:
+                elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
                                               f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
 
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)
                     self.op.submit(order)
-                    self.op.cancel(self.stop)
-                    self.stop = None
+                    if self.stop is not None:
+                        self.op.cancel(self.stop)
+                        self.stop = None
 
                     self.trader_state = TraderState.FLATTENING
                 return False
