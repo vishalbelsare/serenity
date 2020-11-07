@@ -6,12 +6,12 @@ ipywidgets==7.5.1
 jupyterlab-git==0.22.3
 jupyterlab==2.2.9
 matplotlib==3.3.2
-numpy==1.19.3
+numpy==1.19.4
 pandas==1.1.4
 pmdarima==1.7.1
-pytz==2020.1
+pytz==2020.4
 quandl==3.5.3
 serenity-trading==0.7.0
-scipy==1.5.3
+scipy==1.5.4
 tables==3.6.1
 yfinance==0.1.55

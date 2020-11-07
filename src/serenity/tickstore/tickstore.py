@@ -201,7 +201,7 @@ class DataFrameIndex:
                         version], ['start_time', 'end_time', 'path']] = [start_time, end_time, path]
 
         # dirty the index
-        self._mark_dirty(True)
+        self._mark_dirty()
 
         return write_path
 
@@ -226,7 +226,7 @@ class DataFrameIndex:
             self.df.loc[idx[symbol, as_at_datetime, prev_version], 'end_time'] = start_time
 
             # dirty the index
-            self._mark_dirty(True)
+            self._mark_dirty()
 
     def reindex(self):
         self.index_path.unlink()
@@ -243,12 +243,12 @@ class DataFrameIndex:
                     self.df.loc[idx[symbol, entry.ts.as_at(), entry.version], 'path'] = new_path
 
         # dirty the index
-        self._mark_dirty(True)
+        self._mark_dirty()
 
     def flush(self):
         if self.dirty:
             self.logger.info(f'flushing index to {self.index_path}')
-            self.df.to_hdf(str(self.index_path), self.table_name, mode='w', append=False, complevel=9, complib='blosc')
+            self.df.to_hdf(str(self.index_path), self.table_name, mode='w', complevel=9, complib='blosc')
             self._mark_dirty(False)
 
     def _build_index(self):
@@ -411,7 +411,7 @@ class LocalTickstore(Tickstore):
 
         # do the tick write, with blosc compression
         write_path.parent.mkdir(parents=True, exist_ok=True)
-        ticks.to_hdf(str(write_path), 'ticks', mode='w', append=False, complevel=9, complib='blosc')
+        ticks.to_hdf(str(write_path), 'ticks', mode='w', complevel=9, complib='blosc')
 
     def delete(self, symbol: str, ts: BiTimestamp):
         self._check_closed('delete')
@@ -508,7 +508,13 @@ class AzureBlobTickstore(Tickstore):
     # noinspection PyTypeChecker
     def read(self, logical_path: str) -> pd.DataFrame:
         logical_prefix = f'azure:{self.container_name}'
-        blob_path = logical_path[len(logical_prefix) + 1:]
+        if logical_path.startswith(logical_prefix):
+            blob_path = logical_path[len(logical_prefix) + 1:]
+        else:
+            # correction for bad data in index history
+            blob_path = logical_path
+            logical_path = f'{logical_prefix}/{logical_path}'
+
         cached_data = self.cache.get(logical_path)
         if cached_data is not None:
             self.logger.info(f'reading ticks from cache: {logical_path}')
@@ -533,21 +539,23 @@ class AzureBlobTickstore(Tickstore):
         # compose a splay path based on YYYY/MM/DD, symbol and version and pass in as a functor
         # so it can be populated with the bitemporal version
         as_at_date = ts.as_at()
+        logical_prefix = f'azure:{self.container_name}'
 
         def create_write_path(version: int):
             path = f'{as_at_date.year}/{as_at_date.month:02d}/{as_at_date.day:02d}/{symbol}_{version:04d}.h5'
-            return path
+            return f'{logical_prefix}/{path}'
 
         # insert into local copy of index
         data_path = self.index.insert(symbol, as_at_date, create_write_path)
+        base_path = data_path[len(logical_prefix) + 1:]
 
         # update cache
         data_bytes = bytes(buf.getvalue())
-        self.cache.set(f'azure:{self.container_name}/{data_path}', data_bytes)
+        self.cache.set(data_path, data_bytes)
 
         # upload to Azure
-        self.logger.info(f'uploading to Azure: {data_path}')
-        blob_client = self.storage.get_blob_client(container=self.container_name, blob=str(data_path))
+        self.logger.info(f'uploading to Azure: {base_path}')
+        blob_client = self.storage.get_blob_client(container=self.container_name, blob=str(base_path))
         try:
             blob_client.upload_blob(io.BytesIO(data_bytes), overwrite=False)
         except ResourceExistsError:

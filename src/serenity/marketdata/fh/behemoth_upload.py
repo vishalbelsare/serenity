@@ -9,7 +9,6 @@ import pandas as pd
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.tickstore.journal import Journal, NoSuchJournalException
 from serenity.tickstore.tickstore import LocalTickstore, BiTimestamp, AzureBlobTickstore
-from serenity.utils import init_logging
 
 
 # noinspection DuplicatedCode
@@ -24,7 +23,7 @@ def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1):
 
     exchanges = {
         'PHEMEX': 'PHEMEX',
-        'COINBASE_PRO': 'COINBASE'
+        'COINBASE_PRO': 'COINBASE_PRO'
     }
     for exchange, db_prefix in exchanges.items():
         for instrument in instr_cache.get_all_exchange_instruments(exchange):
