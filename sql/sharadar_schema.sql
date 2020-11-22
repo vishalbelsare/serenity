@@ -1,0 +1,945 @@
+-- Database generated with pgModeler (PostgreSQL Database Modeler).
+-- pgModeler  version: 0.9.3-beta
+-- PostgreSQL version: 12.0
+-- Project Site: pgmodeler.io
+-- Model Author: ---
+
+
+-- Database creation must be done outside a multicommand file.
+-- These commands were put in this file only as a convenience.
+-- -- object: new_database | type: DATABASE --
+-- -- DROP DATABASE IF EXISTS new_database;
+-- CREATE DATABASE new_database;
+-- -- ddl-end --
+-- 
+
+-- object: sharadar | type: SCHEMA --
+-- DROP SCHEMA IF EXISTS sharadar CASCADE;
+CREATE SCHEMA sharadar;
+-- ddl-end --
+ALTER SCHEMA sharadar OWNER TO postgres;
+-- ddl-end --
+
+SET search_path TO pg_catalog,public,sharadar;
+-- ddl-end --
+
+-- object: sharadar.indicator_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.indicator_seq CASCADE;
+CREATE SEQUENCE sharadar.indicator_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.indicator_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.unit_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.unit_type_seq CASCADE;
+CREATE SEQUENCE sharadar.unit_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.unit_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.corporate_actions | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.corporate_actions CASCADE;
+CREATE TABLE sharadar.corporate_actions (
+	corp_action_date date,
+	ticker_id integer NOT NULL,
+	corp_action_type_id smallint NOT NULL,
+	name varchar(128),
+	value decimal(10,8),
+	contra_ticker varchar(16),
+	contra_name varchar(128)
+);
+-- ddl-end --
+ALTER TABLE sharadar.corporate_actions OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.ticker | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.ticker CASCADE;
+CREATE TABLE sharadar.ticker (
+	ticker_id integer NOT NULL,
+	table_name varchar(32) NOT NULL,
+	perma_ticker_id integer NOT NULL,
+	ticker varchar(16) NOT NULL,
+	name varchar(64) NOT NULL,
+	exchange_id smallint NOT NULL,
+	is_delisted char(1) NOT NULL,
+	ticker_category_id smallint NOT NULL,
+	sic_sector_id integer NOT NULL,
+	fama_sector_id integer NOT NULL,
+	sector_id integer NOT NULL,
+	market_cap_scale_id smallint NOT NULL,
+	revenue_scale_id smallint NOT NULL,
+	related_tickers varchar(64) NOT NULL,
+	currency_id smallint NOT NULL,
+	location varchar(64) NOT NULL,
+	last_updated date NOT NULL,
+	first_added date NOT NULL,
+	first_price_date date NOT NULL,
+	last_price_date date NOT NULL,
+	first_quarter date NOT NULL,
+	last_quarter date NOT NULL,
+	secfilings varchar(64) NOT NULL,
+	company_site varchar(64) NOT NULL,
+	CONSTRAINT tickers_pk PRIMARY KEY (ticker_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.ticker OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.fundamentals | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.fundamentals CASCADE;
+CREATE TABLE sharadar.fundamentals (
+	ticker_id integer NOT NULL,
+	dimension_type_id smallint NOT NULL,
+	calendar_date date NOT NULL,
+	date_key date NOT NULL,
+	report_period date NOT NULL,
+	last_updated date NOT NULL,
+	accoci money,
+	assets money,
+	assets_avg money,
+	assets_c money,
+	asset_nc money,
+	asset_turnover decimal(10,8),
+	bvps decimal(10,8),
+	capex money,
+	cash_neq money,
+	cash_neq_usd money,
+	cor money,
+	consol_inc money,
+	current_ratio decimal(10,8),
+	de decimal(10,8),
+	debt money,
+	debt_c money,
+	debt_nc money,
+	debt_usd money,
+	deferred_rev money,
+	dep_amor money,
+	deposits money,
+	div_yield decimal(10,8),
+	dps money,
+	ebit money,
+	ebitda money,
+	ebitda_margin decimal(10,8),
+	ebitda_usd money,
+	ebit_usd money,
+	ebt money,
+	eps money,
+	eps_dil money,
+	eps_usd money,
+	equity money,
+	equity_avg money,
+	equity_usd money,
+	ev decimal(10,8),
+	ev_ebit decimal(10,8),
+	ev_ebitda decimal(10,8),
+	fcf money,
+	fcf_ps money,
+	fx_usd money,
+	gp money,
+	gross_margin decimal(10,8),
+	intangibles money,
+	int_exp money,
+	inv_cap money,
+	inv_cap_avg money,
+	inventory money,
+	investments money,
+	investments_c money,
+	investments_nc money,
+	liabilities money,
+	liabilities_c money,
+	liabilities_nc money,
+	market_cap money,
+	ncf money,
+	ncf_bus money,
+	ncf_common money,
+	ncf_debt money,
+	ncf_div money,
+	ncf_f money,
+	ncf_i money,
+	ncf_inv money,
+	ncf_o money,
+	ncf_x money,
+	net_inc money,
+	net_inc_cmn money,
+	net_inc_cmn_usd money,
+	net_inc_dis money,
+	net_inc_nci money,
+	net_margin decimal(10,8),
+	op_ex money,
+	op_inc money,
+	payables money,
+	payout_ratio decimal(10,8),
+	pb decimal(10,8),
+	pe decimal(10,8),
+	pe1 decimal(10,8),
+	ppne_net money,
+	pref_divis money,
+	price money,
+	ps decimal(10,8),
+	ps1 decimal(10,8),
+	receivables money,
+	ret_earn money,
+	revenue money,
+	revenue_usd money,
+	rnd money,
+	roa decimal(10,8),
+	roe decimal(10,8),
+	roic decimal(10,8),
+	ros decimal(10,8),
+	sb_comp money,
+	sgna money,
+	share_factor decimal(10,8),
+	shares_bas integer,
+	shares_wa integer,
+	shares_wa_dil integer,
+	sps decimal(10,8),
+	tangibles money,
+	tax_assets money,
+	tax_exp money,
+	tax_liabilities money,
+	tvbps decimal(10,8),
+	working_capital money
+);
+-- ddl-end --
+ALTER TABLE sharadar.fundamentals OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.institutional_holdings | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.institutional_holdings CASCADE;
+CREATE TABLE sharadar.institutional_holdings (
+	ticker_id integer NOT NULL,
+	institutional_investor_id integer NOT NULL,
+	security_type_id integer NOT NULL,
+	calendar_date date NOT NULL,
+	value money NOT NULL,
+	units integer NOT NULL,
+	price money NOT NULL
+);
+-- ddl-end --
+ALTER TABLE sharadar.institutional_holdings OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.events | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.events CASCADE;
+CREATE TABLE sharadar.events (
+	ticker_id integer NOT NULL,
+	event_date date NOT NULL,
+	event_code_id integer NOT NULL
+);
+-- ddl-end --
+ALTER TABLE sharadar.events OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.equity_prices | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.equity_prices CASCADE;
+CREATE TABLE sharadar.equity_prices (
+	ticker_id integer NOT NULL,
+	price_date date NOT NULL,
+	open money NOT NULL,
+	high money NOT NULL,
+	low money NOT NULL,
+	close money NOT NULL,
+	volume integer NOT NULL,
+	dividends money NOT NULL,
+	close_unadj money NOT NULL,
+	last_updated date NOT NULL,
+	CONSTRAINT ticker_price_date_uq UNIQUE (ticker_id,price_date)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.equity_prices OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.indicators | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.indicators CASCADE;
+CREATE TABLE sharadar.indicators (
+	indicator_id integer NOT NULL DEFAULT nextval('sharadar.indicator_seq'::regclass),
+	table_name varchar(32) NOT NULL,
+	indicator varchar(32) NOT NULL,
+	is_filter bool NOT NULL,
+	is_primary_key bool NOT NULL,
+	title varchar(256) NOT NULL,
+	description varchar(2048),
+	unit_type_id integer NOT NULL,
+	CONSTRAINT indicators_pk PRIMARY KEY (indicator_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.indicators OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.unit_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.unit_type CASCADE;
+CREATE TABLE sharadar.unit_type (
+	unit_type_id integer NOT NULL DEFAULT nextval('sharadar.unit_type_seq'::regclass),
+	unit_type_code varchar(32) NOT NULL,
+	CONSTRAINT unit_type_pk PRIMARY KEY (unit_type_id),
+	CONSTRAINT unit_type_code_uq UNIQUE (unit_type_code)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.unit_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.event_code | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.event_code CASCADE;
+CREATE TABLE sharadar.event_code (
+	event_code_id integer NOT NULL,
+	event_code varchar(64) NOT NULL,
+	event_description varchar(256) NOT NULL,
+	CONSTRAINT event_code_pk PRIMARY KEY (event_code_id),
+	CONSTRAINT event_code_uq UNIQUE (event_code)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.event_code OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.insider_holdings | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.insider_holdings CASCADE;
+CREATE TABLE sharadar.insider_holdings (
+	ticker_id integer NOT NULL,
+	filing_date date NOT NULL,
+	form_type_id smallint NOT NULL,
+	issuer_name varchar(128) NOT NULL,
+	owner_name varchar(64) NOT NULL,
+	officer_title varchar(64),
+	is_director bool NOT NULL,
+	is_officer bool NOT NULL,
+	is_ten_percent_owner bool NOT NULL,
+	security_ad_type_id smallint NOT NULL,
+	transaction_type_id smallint,
+	shares_owned_before_transaction integer NOT NULL,
+	transaction_shares integer,
+	shares_owned_following_transaction integer NOT NULL,
+	transaction_price_per_share money,
+	transaction_value money,
+	security_title_type_id smallint NOT NULL,
+	direct_or_indirect char(1) NOT NULL,
+	nature_of_ownership varchar(128),
+	date_exercisable date,
+	price_exercisable money,
+	expiration_date date
+);
+-- ddl-end --
+ALTER TABLE sharadar.insider_holdings OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.scale_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.scale_seq CASCADE;
+CREATE SEQUENCE sharadar.scale_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.scale_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.sector_map_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.sector_map_seq CASCADE;
+CREATE SEQUENCE sharadar.sector_map_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.sector_map_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.sector_code_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.sector_code_type_seq CASCADE;
+CREATE SEQUENCE sharadar.sector_code_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.sector_code_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.sector_map | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.sector_map CASCADE;
+CREATE TABLE sharadar.sector_map (
+	sector_map_id integer NOT NULL DEFAULT nextval('sharadar.sector_map_seq'::regclass),
+	sector_code_type_id smallint NOT NULL,
+	sector_code integer,
+	sector varchar(64),
+	industry varchar(64),
+	CONSTRAINT sector_map_pk PRIMARY KEY (sector_map_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.sector_map OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.ticker_category_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.ticker_category_seq CASCADE;
+CREATE SEQUENCE sharadar.ticker_category_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.ticker_category_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.scale | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.scale CASCADE;
+CREATE TABLE sharadar.scale (
+	scale_id smallint NOT NULL DEFAULT nextval('sharadar.scale_seq'::regclass),
+	scale_code varchar(32) NOT NULL,
+	CONSTRAINT scale_pk PRIMARY KEY (scale_id),
+	CONSTRAINT scale_code_uq UNIQUE (scale_code)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.scale OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.cusip_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.cusip_seq CASCADE;
+CREATE SEQUENCE sharadar.cusip_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.cusip_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.ticker_cusip | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.ticker_cusip CASCADE;
+CREATE TABLE sharadar.ticker_cusip (
+	cusip_id integer NOT NULL DEFAULT nextval('sharadar.cusip_seq'::regclass),
+	ticker_id integer NOT NULL,
+	cusip varchar(16) NOT NULL,
+	CONSTRAINT cusip_pk PRIMARY KEY (cusip_id),
+	CONSTRAINT cusip_uq UNIQUE (cusip)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.ticker_cusip OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.ticker_category | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.ticker_category CASCADE;
+CREATE TABLE sharadar.ticker_category (
+	ticker_category_id smallint NOT NULL DEFAULT nextval('sharadar.ticker_category_seq'::regclass),
+	ticker_category_code varchar(32),
+	CONSTRAINT ticker_category_pk PRIMARY KEY (ticker_category_id),
+	CONSTRAINT ticker_category_code_uq UNIQUE (ticker_category_code)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.ticker_category OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.exchange_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.exchange_seq CASCADE;
+CREATE SEQUENCE sharadar.exchange_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.exchange_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.exchange | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.exchange CASCADE;
+CREATE TABLE sharadar.exchange (
+	exchange_id smallint NOT NULL DEFAULT nextval('sharadar.exchange_seq'::regclass),
+	exchange_code varchar(32) NOT NULL,
+	CONSTRAINT exchange_pk PRIMARY KEY (exchange_id),
+	CONSTRAINT exchange_code_uq UNIQUE (exchange_code)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.exchange OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.currency_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.currency_seq CASCADE;
+CREATE SEQUENCE sharadar.currency_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.currency_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.currency | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.currency CASCADE;
+CREATE TABLE sharadar.currency (
+	currency_id smallint NOT NULL DEFAULT nextval('sharadar.currency_seq'::regclass),
+	currency_code varchar(8) NOT NULL,
+	CONSTRAINT currency_pk PRIMARY KEY (currency_id),
+	CONSTRAINT currency_code_uq UNIQUE (currency_code)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.currency OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.sector_code_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.sector_code_type CASCADE;
+CREATE TABLE sharadar.sector_code_type (
+	sector_code_type_id smallint NOT NULL DEFAULT nextval('sharadar.sector_code_type_seq'::regclass),
+	sector_code_type_code varchar(32) NOT NULL,
+	CONSTRAINT sector_code_type_pk PRIMARY KEY (sector_code_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.sector_code_type OWNER TO postgres;
+-- ddl-end --
+
+INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_code) VALUES (E'1', E'sic');
+-- ddl-end --
+INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_code) VALUES (E'2', E'fama');
+-- ddl-end --
+INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_code) VALUES (E'3', E'other');
+-- ddl-end --
+
+-- object: sharadar.event_code_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.event_code_seq CASCADE;
+CREATE SEQUENCE sharadar.event_code_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.event_code_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.institutional_investor_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.institutional_investor_seq CASCADE;
+CREATE SEQUENCE sharadar.institutional_investor_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.institutional_investor_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.institutional_investor | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.institutional_investor CASCADE;
+CREATE TABLE sharadar.institutional_investor (
+	institutional_investor_id integer NOT NULL DEFAULT nextval('sharadar.institutional_investor_seq'::regclass),
+	institutional_investor_name varchar(128) NOT NULL,
+	CONSTRAINT institutional_investor_pk PRIMARY KEY (institutional_investor_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.institutional_investor OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.security_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.security_type_seq CASCADE;
+CREATE SEQUENCE sharadar.security_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.security_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.security_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.security_type CASCADE;
+CREATE TABLE sharadar.security_type (
+	security_type_id integer NOT NULL DEFAULT nextval('sharadar.security_type_seq'::regclass),
+	security_type_code varchar(8) NOT NULL,
+	CONSTRAINT security_type_pk PRIMARY KEY (security_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.security_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.form_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.form_type_seq CASCADE;
+CREATE SEQUENCE sharadar.form_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.form_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.form_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.form_type CASCADE;
+CREATE TABLE sharadar.form_type (
+	form_type_id smallint NOT NULL DEFAULT nextval('sharadar.form_type_seq'::regclass),
+	form_type_code varchar(8) NOT NULL,
+	CONSTRAINT form_type_pk PRIMARY KEY (form_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.form_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.security_ad_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.security_ad_seq CASCADE;
+CREATE SEQUENCE sharadar.security_ad_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.security_ad_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.security_ad_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.security_ad_type CASCADE;
+CREATE TABLE sharadar.security_ad_type (
+	security_ad_type_id smallint NOT NULL DEFAULT nextval('sharadar.security_ad_seq'::regclass),
+	security_ad_type_code varchar(8) NOT NULL,
+	CONSTRAINT security_ad_pk PRIMARY KEY (security_ad_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.security_ad_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.tranaction_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.tranaction_type_seq CASCADE;
+CREATE SEQUENCE sharadar.tranaction_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.tranaction_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.transaction_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.transaction_type CASCADE;
+CREATE TABLE sharadar.transaction_type (
+	transaction_type_id smallint NOT NULL DEFAULT nextval('sharadar.tranaction_type_seq'::regclass),
+	transaction_type_code varchar(8) NOT NULL,
+	CONSTRAINT transaction_type_pk PRIMARY KEY (transaction_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.transaction_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.security_title_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.security_title_type_seq CASCADE;
+CREATE SEQUENCE sharadar.security_title_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.security_title_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.security_title_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.security_title_type CASCADE;
+CREATE TABLE sharadar.security_title_type (
+	security_title_type_id smallint NOT NULL DEFAULT nextval('sharadar.security_title_type_seq'::regclass),
+	security_title_type_code varchar(32) NOT NULL,
+	CONSTRAINT security_title_type_pk PRIMARY KEY (security_title_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.security_title_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.dimension_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.dimension_type_seq CASCADE;
+CREATE SEQUENCE sharadar.dimension_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.dimension_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.dimension_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.dimension_type CASCADE;
+CREATE TABLE sharadar.dimension_type (
+	dimension_type_id smallint NOT NULL DEFAULT nextval('sharadar.dimension_type_seq'::regclass),
+	dimension_type_code varchar(8) NOT NULL,
+	CONSTRAINT dimension_type_pk PRIMARY KEY (dimension_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.dimension_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.corp_action_type_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.corp_action_type_seq CASCADE;
+CREATE SEQUENCE sharadar.corp_action_type_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.corp_action_type_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.corp_action_type | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.corp_action_type CASCADE;
+CREATE TABLE sharadar.corp_action_type (
+	corp_action_type_id smallint NOT NULL DEFAULT nextval('sharadar.corp_action_type_seq'::regclass),
+	corp_action_type_code varchar(8),
+	CONSTRAINT corp_action_type_pk PRIMARY KEY (corp_action_type_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.corp_action_type OWNER TO postgres;
+-- ddl-end --
+
+-- object: unit_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.indicators DROP CONSTRAINT IF EXISTS unit_type_fk CASCADE;
+ALTER TABLE sharadar.indicators ADD CONSTRAINT unit_type_fk FOREIGN KEY (unit_type_id)
+REFERENCES sharadar.unit_type (unit_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.corporate_actions DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
+ALTER TABLE sharadar.corporate_actions ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
+REFERENCES sharadar.ticker (ticker_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: corp_action_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.corporate_actions DROP CONSTRAINT IF EXISTS corp_action_type_fk CASCADE;
+ALTER TABLE sharadar.corporate_actions ADD CONSTRAINT corp_action_type_fk FOREIGN KEY (corp_action_type_id)
+REFERENCES sharadar.corp_action_type (corp_action_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: exchange_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS exchange_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT exchange_fk FOREIGN KEY (exchange_id)
+REFERENCES sharadar.exchange (exchange_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_category_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS ticker_category_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT ticker_category_fk FOREIGN KEY (ticker_category_id)
+REFERENCES sharadar.ticker_category (ticker_category_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: sic_sector_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS sic_sector_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT sic_sector_fk FOREIGN KEY (sic_sector_id)
+REFERENCES sharadar.sector_map (sector_map_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: fama_sector_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS fama_sector_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT fama_sector_fk FOREIGN KEY (fama_sector_id)
+REFERENCES sharadar.sector_map (sector_map_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: sector_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS sector_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT sector_fk FOREIGN KEY (sector_id)
+REFERENCES sharadar.sector_map (sector_map_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: market_cap_scale_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS market_cap_scale_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT market_cap_scale_fk FOREIGN KEY (market_cap_scale_id)
+REFERENCES sharadar.scale (scale_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: revenue_scale_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS revenue_scale_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT revenue_scale_fk FOREIGN KEY (revenue_scale_id)
+REFERENCES sharadar.scale (scale_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: currency_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker DROP CONSTRAINT IF EXISTS currency_fk CASCADE;
+ALTER TABLE sharadar.ticker ADD CONSTRAINT currency_fk FOREIGN KEY (currency_id)
+REFERENCES sharadar.currency (currency_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.fundamentals DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
+ALTER TABLE sharadar.fundamentals ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
+REFERENCES sharadar.ticker (ticker_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: dimension_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.fundamentals DROP CONSTRAINT IF EXISTS dimension_type_fk CASCADE;
+ALTER TABLE sharadar.fundamentals ADD CONSTRAINT dimension_type_fk FOREIGN KEY (dimension_type_id)
+REFERENCES sharadar.dimension_type (dimension_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.institutional_holdings DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
+ALTER TABLE sharadar.institutional_holdings ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
+REFERENCES sharadar.ticker (ticker_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: institutional_investor_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.institutional_holdings DROP CONSTRAINT IF EXISTS institutional_investor_fk CASCADE;
+ALTER TABLE sharadar.institutional_holdings ADD CONSTRAINT institutional_investor_fk FOREIGN KEY (institutional_investor_id)
+REFERENCES sharadar.institutional_investor (institutional_investor_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: security_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.institutional_holdings DROP CONSTRAINT IF EXISTS security_type_fk CASCADE;
+ALTER TABLE sharadar.institutional_holdings ADD CONSTRAINT security_type_fk FOREIGN KEY (security_type_id)
+REFERENCES sharadar.security_type (security_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: event_code_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.events DROP CONSTRAINT IF EXISTS event_code_fk CASCADE;
+ALTER TABLE sharadar.events ADD CONSTRAINT event_code_fk FOREIGN KEY (event_code_id)
+REFERENCES sharadar.event_code (event_code_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.events DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
+ALTER TABLE sharadar.events ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
+REFERENCES sharadar.ticker (ticker_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.equity_prices DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
+ALTER TABLE sharadar.equity_prices ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
+REFERENCES sharadar.ticker (ticker_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.insider_holdings DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
+ALTER TABLE sharadar.insider_holdings ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
+REFERENCES sharadar.ticker (ticker_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: form_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.insider_holdings DROP CONSTRAINT IF EXISTS form_type_fk CASCADE;
+ALTER TABLE sharadar.insider_holdings ADD CONSTRAINT form_type_fk FOREIGN KEY (form_type_id)
+REFERENCES sharadar.form_type (form_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: security_ad_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.insider_holdings DROP CONSTRAINT IF EXISTS security_ad_fk CASCADE;
+ALTER TABLE sharadar.insider_holdings ADD CONSTRAINT security_ad_fk FOREIGN KEY (security_ad_type_id)
+REFERENCES sharadar.security_ad_type (security_ad_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: transaction_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.insider_holdings DROP CONSTRAINT IF EXISTS transaction_type_fk CASCADE;
+ALTER TABLE sharadar.insider_holdings ADD CONSTRAINT transaction_type_fk FOREIGN KEY (transaction_type_id)
+REFERENCES sharadar.transaction_type (transaction_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: security_title_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.insider_holdings DROP CONSTRAINT IF EXISTS security_title_type_fk CASCADE;
+ALTER TABLE sharadar.insider_holdings ADD CONSTRAINT security_title_type_fk FOREIGN KEY (security_title_type_id)
+REFERENCES sharadar.security_title_type (security_title_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: sector_code_type_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.sector_map DROP CONSTRAINT IF EXISTS sector_code_type_fk CASCADE;
+ALTER TABLE sharadar.sector_map ADD CONSTRAINT sector_code_type_fk FOREIGN KEY (sector_code_type_id)
+REFERENCES sharadar.sector_code_type (sector_code_type_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: ticker_fk | type: CONSTRAINT --
+-- ALTER TABLE sharadar.ticker_cusip DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
+ALTER TABLE sharadar.ticker_cusip ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
+REFERENCES sharadar.ticker (ticker_id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+
