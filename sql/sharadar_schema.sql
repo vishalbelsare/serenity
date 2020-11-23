@@ -66,38 +66,18 @@ CREATE TABLE sharadar.corporate_actions (
 ALTER TABLE sharadar.corporate_actions OWNER TO postgres;
 -- ddl-end --
 
--- object: sharadar.ticker | type: TABLE --
--- DROP TABLE IF EXISTS sharadar.ticker CASCADE;
-CREATE TABLE sharadar.ticker (
-	ticker_id integer NOT NULL,
-	table_name varchar(32) NOT NULL,
-	perma_ticker_id integer NOT NULL,
-	ticker varchar(16) NOT NULL,
-	name varchar(64) NOT NULL,
-	exchange_id smallint NOT NULL,
-	is_delisted char(1) NOT NULL,
-	ticker_category_id smallint NOT NULL,
-	sic_sector_id integer NOT NULL,
-	fama_sector_id integer NOT NULL,
-	sector_id integer NOT NULL,
-	market_cap_scale_id smallint NOT NULL,
-	revenue_scale_id smallint NOT NULL,
-	related_tickers varchar(64) NOT NULL,
-	currency_id smallint NOT NULL,
-	location varchar(64) NOT NULL,
-	last_updated date NOT NULL,
-	first_added date NOT NULL,
-	first_price_date date NOT NULL,
-	last_price_date date NOT NULL,
-	first_quarter date NOT NULL,
-	last_quarter date NOT NULL,
-	secfilings varchar(64) NOT NULL,
-	company_site varchar(64) NOT NULL,
-	CONSTRAINT tickers_pk PRIMARY KEY (ticker_id)
-
-);
+-- object: sharadar.ticker_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.ticker_seq CASCADE;
+CREATE SEQUENCE sharadar.ticker_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
 -- ddl-end --
-ALTER TABLE sharadar.ticker OWNER TO postgres;
+ALTER SEQUENCE sharadar.ticker_seq OWNER TO postgres;
 -- ddl-end --
 
 -- object: sharadar.fundamentals | type: TABLE --
@@ -411,6 +391,41 @@ CREATE SEQUENCE sharadar.ticker_category_seq
 ALTER SEQUENCE sharadar.ticker_category_seq OWNER TO postgres;
 -- ddl-end --
 
+-- object: sharadar.ticker | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.ticker CASCADE;
+CREATE TABLE sharadar.ticker (
+	ticker_id integer NOT NULL DEFAULT nextval('sharadar.ticker_seq'::regclass),
+	table_name varchar(32) NOT NULL,
+	perma_ticker_id integer NOT NULL,
+	ticker varchar(16),
+	name varchar(256) NOT NULL,
+	exchange_id smallint,
+	is_delisted bool NOT NULL,
+	ticker_category_id smallint,
+	cusips varchar(256),
+	sic_sector_id integer,
+	fama_sector_id integer,
+	sector_id integer,
+	market_cap_scale_id smallint,
+	revenue_scale_id smallint,
+	related_tickers varchar(256),
+	currency_id smallint NOT NULL,
+	location varchar(64),
+	last_updated date,
+	first_added date,
+	first_price_date date,
+	last_price_date date,
+	first_quarter date,
+	last_quarter date,
+	secfilings varchar(256),
+	company_site varchar(256),
+	CONSTRAINT tickers_pk PRIMARY KEY (ticker_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.ticker OWNER TO postgres;
+-- ddl-end --
+
 -- object: sharadar.scale | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.scale CASCADE;
 CREATE TABLE sharadar.scale (
@@ -438,25 +453,11 @@ CREATE SEQUENCE sharadar.cusip_seq
 ALTER SEQUENCE sharadar.cusip_seq OWNER TO postgres;
 -- ddl-end --
 
--- object: sharadar.ticker_cusip | type: TABLE --
--- DROP TABLE IF EXISTS sharadar.ticker_cusip CASCADE;
-CREATE TABLE sharadar.ticker_cusip (
-	cusip_id integer NOT NULL DEFAULT nextval('sharadar.cusip_seq'::regclass),
-	ticker_id integer NOT NULL,
-	cusip varchar(16) NOT NULL,
-	CONSTRAINT cusip_pk PRIMARY KEY (cusip_id),
-	CONSTRAINT cusip_uq UNIQUE (cusip)
-
-);
--- ddl-end --
-ALTER TABLE sharadar.ticker_cusip OWNER TO postgres;
--- ddl-end --
-
 -- object: sharadar.ticker_category | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.ticker_category CASCADE;
 CREATE TABLE sharadar.ticker_category (
 	ticker_category_id smallint NOT NULL DEFAULT nextval('sharadar.ticker_category_seq'::regclass),
-	ticker_category_code varchar(32),
+	ticker_category_code varchar(64),
 	CONSTRAINT ticker_category_pk PRIMARY KEY (ticker_category_id),
 	CONSTRAINT ticker_category_code_uq UNIQUE (ticker_category_code)
 
@@ -760,6 +761,24 @@ CREATE TABLE sharadar.corp_action_type (
 ALTER TABLE sharadar.corp_action_type OWNER TO postgres;
 -- ddl-end --
 
+-- object: perma_ticker_idx | type: INDEX --
+-- DROP INDEX IF EXISTS sharadar.perma_ticker_idx CASCADE;
+CREATE INDEX perma_ticker_idx ON sharadar.ticker
+	USING btree
+	(
+	  perma_ticker_id
+	);
+-- ddl-end --
+
+-- object: ticker_idx | type: INDEX --
+-- DROP INDEX IF EXISTS sharadar.ticker_idx CASCADE;
+CREATE INDEX ticker_idx ON sharadar.ticker
+	USING btree
+	(
+	  ticker
+	);
+-- ddl-end --
+
 -- object: unit_type_fk | type: CONSTRAINT --
 -- ALTER TABLE sharadar.indicators DROP CONSTRAINT IF EXISTS unit_type_fk CASCADE;
 ALTER TABLE sharadar.indicators ADD CONSTRAINT unit_type_fk FOREIGN KEY (unit_type_id)
@@ -932,13 +951,6 @@ ON DELETE NO ACTION ON UPDATE NO ACTION;
 -- ALTER TABLE sharadar.sector_map DROP CONSTRAINT IF EXISTS sector_code_type_fk CASCADE;
 ALTER TABLE sharadar.sector_map ADD CONSTRAINT sector_code_type_fk FOREIGN KEY (sector_code_type_id)
 REFERENCES sharadar.sector_code_type (sector_code_type_id) MATCH FULL
-ON DELETE NO ACTION ON UPDATE NO ACTION;
--- ddl-end --
-
--- object: ticker_fk | type: CONSTRAINT --
--- ALTER TABLE sharadar.ticker_cusip DROP CONSTRAINT IF EXISTS ticker_fk CASCADE;
-ALTER TABLE sharadar.ticker_cusip ADD CONSTRAINT ticker_fk FOREIGN KEY (ticker_id)
-REFERENCES sharadar.ticker (ticker_id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
 -- ddl-end --
 

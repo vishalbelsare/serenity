@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1" max-obj-count="31"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="15,0" last-zoom="1" max-obj-count="30"
 	 default-schema="public" default-owner="postgres">
 <database name="new_database" is-template="false" allow-conns="true">
 </database>
@@ -28,7 +28,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="corporate_actions" layer="0" collapse-mode="2" max-obj-count="8" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="520" y="1400"/>
+	<position x="520" y="1460"/>
 	<column name="corp_action_date">
 		<type name="date" length="0"/>
 	</column>
@@ -52,91 +52,15 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 </table>
 
-<table name="ticker" layer="0" collapse-mode="2" max-obj-count="28" z-value="0">
+<sequence name="ticker_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="700" y="20"/>
-	<column name="ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="table_name" not-null="true">
-		<type name="varchar" length="32"/>
-	</column>
-	<column name="perma_ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="ticker" not-null="true">
-		<type name="varchar" length="16"/>
-	</column>
-	<column name="name" not-null="true">
-		<type name="varchar" length="64"/>
-	</column>
-	<column name="exchange_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="is_delisted" not-null="true">
-		<type name="char" length="1"/>
-	</column>
-	<column name="ticker_category_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="sic_sector_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="fama_sector_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="sector_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="market_cap_scale_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="revenue_scale_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="related_tickers" not-null="true">
-		<type name="varchar" length="64"/>
-	</column>
-	<column name="currency_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="location" not-null="true">
-		<type name="varchar" length="64"/>
-	</column>
-	<column name="last_updated" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="first_added" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="first_price_date" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="last_price_date" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="first_quarter" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="last_quarter" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="secfilings" not-null="true">
-		<type name="varchar" length="64"/>
-	</column>
-	<column name="company_site" not-null="true">
-		<type name="varchar" length="64"/>
-	</column>
-	<constraint name="tickers_pk" type="pk-constr" table="sharadar.ticker">
-		<columns names="ticker_id" ref-type="src-columns"/>
-	</constraint>
-</table>
+</sequence>
 
 <table name="fundamentals" layer="0" collapse-mode="2" max-obj-count="133" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="880" y="880"/>
+	<position x="880" y="940"/>
 	<column name="ticker_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -475,7 +399,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="institutional_holdings" layer="0" collapse-mode="2" max-obj-count="8" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1520" y="820"/>
+	<position x="1520" y="880"/>
 	<column name="ticker_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -502,7 +426,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="events" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="300" y="700"/>
+	<position x="300" y="760"/>
 	<column name="ticker_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -517,7 +441,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="equity_prices" layer="0" collapse-mode="2" max-obj-count="12" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="600" y="720"/>
+	<position x="600" y="780"/>
 	<column name="ticker_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -556,7 +480,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="indicators" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="280" y="440"/>
+	<position x="280" y="500"/>
 	<column name="indicator_id" not-null="true" sequence="sharadar.indicator_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -589,7 +513,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="unit_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="460" y="240"/>
+	<position x="460" y="300"/>
 	<column name="unit_type_id" not-null="true" sequence="sharadar.unit_type_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -607,7 +531,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="event_code" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="200" y="920"/>
+	<position x="200" y="980"/>
 	<column name="event_code_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -628,7 +552,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="26" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1640" y="360"/>
+	<position x="1640" y="420"/>
 	<column name="ticker_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -715,7 +639,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="sector_map" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="980" y="700"/>
+	<position x="980" y="760"/>
 	<column name="sector_map_id" not-null="true" sequence="sharadar.sector_map_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -741,10 +665,94 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 </sequence>
 
+<table name="ticker" layer="0" collapse-mode="2" max-obj-count="30" z-value="0">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+	<position x="700" y="80"/>
+	<column name="ticker_id" not-null="true" sequence="sharadar.ticker_seq">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="table_name" not-null="true">
+		<type name="varchar" length="32"/>
+	</column>
+	<column name="perma_ticker_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="ticker">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="name" not-null="true">
+		<type name="varchar" length="256"/>
+	</column>
+	<column name="exchange_id">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="is_delisted" not-null="true">
+		<type name="bool" length="1"/>
+	</column>
+	<column name="ticker_category_id">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="cusips">
+		<type name="varchar" length="256"/>
+	</column>
+	<column name="sic_sector_id">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="fama_sector_id">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="sector_id">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="market_cap_scale_id">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="revenue_scale_id">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="related_tickers">
+		<type name="varchar" length="256"/>
+	</column>
+	<column name="currency_id" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="location">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="last_updated">
+		<type name="date" length="0"/>
+	</column>
+	<column name="first_added">
+		<type name="date" length="0"/>
+	</column>
+	<column name="first_price_date">
+		<type name="date" length="0"/>
+	</column>
+	<column name="last_price_date">
+		<type name="date" length="0"/>
+	</column>
+	<column name="first_quarter">
+		<type name="date" length="0"/>
+	</column>
+	<column name="last_quarter">
+		<type name="date" length="0"/>
+	</column>
+	<column name="secfilings">
+		<type name="varchar" length="256"/>
+	</column>
+	<column name="company_site">
+		<type name="varchar" length="256"/>
+	</column>
+	<constraint name="tickers_pk" type="pk-constr" table="sharadar.ticker">
+		<columns names="ticker_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
 <table name="scale" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1080" y="60"/>
+	<position x="1080" y="120"/>
 	<column name="scale_id" not-null="true" sequence="sharadar.scale_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -764,36 +772,15 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 </sequence>
 
-<table name="ticker_cusip" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
-	<schema name="sharadar"/>
-	<role name="postgres"/>
-	<position x="1340" y="540"/>
-	<column name="cusip_id" not-null="true" sequence="sharadar.cusip_seq">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="cusip" not-null="true">
-		<type name="varchar" length="16"/>
-	</column>
-	<constraint name="cusip_pk" type="pk-constr" table="sharadar.ticker_cusip">
-		<columns names="cusip_id" ref-type="src-columns"/>
-	</constraint>
-	<constraint name="cusip_uq" type="uq-constr" table="sharadar.ticker_cusip">
-		<columns names="cusip" ref-type="src-columns"/>
-	</constraint>
-</table>
-
 <table name="ticker_category" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="400" y="40"/>
+	<position x="400" y="100"/>
 	<column name="ticker_category_id" not-null="true" sequence="sharadar.ticker_category_seq">
 		<type name="smallint" length="0"/>
 	</column>
 	<column name="ticker_category_code">
-		<type name="varchar" length="32"/>
+		<type name="varchar" length="64"/>
 	</column>
 	<constraint name="ticker_category_pk" type="pk-constr" table="sharadar.ticker_category">
 		<columns names="ticker_category_id" ref-type="src-columns"/>
@@ -811,7 +798,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="exchange" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1360" y="280"/>
+	<position x="1360" y="340"/>
 	<column name="exchange_id" not-null="true" sequence="sharadar.exchange_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -834,7 +821,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="currency" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1100" y="180"/>
+	<position x="1100" y="240"/>
 	<column name="currency_id" not-null="true" sequence="sharadar.currency_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -852,7 +839,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="sector_code_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1220" y="960"/>
+	<position x="1220" y="1020"/>
 	<column name="sector_code_type_id" not-null="true" sequence="sharadar.sector_code_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -883,7 +870,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="institutional_investor" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1960" y="900"/>
+	<position x="1960" y="960"/>
 	<column name="institutional_investor_id" not-null="true" sequence="sharadar.institutional_investor_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -903,7 +890,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1980" y="720"/>
+	<position x="1980" y="780"/>
 	<column name="security_type_id" not-null="true" sequence="sharadar.security_type_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -923,7 +910,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="form_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="2100" y="240"/>
+	<position x="2100" y="300"/>
 	<column name="form_type_id" not-null="true" sequence="sharadar.form_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -943,7 +930,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_ad_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1800" y="100"/>
+	<position x="1800" y="160"/>
 	<column name="security_ad_type_id" not-null="true" sequence="sharadar.security_ad_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -963,7 +950,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="transaction_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1520" y="100"/>
+	<position x="1520" y="160"/>
 	<column name="transaction_type_id" not-null="true" sequence="sharadar.tranaction_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -983,7 +970,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_title_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="2180" y="560"/>
+	<position x="2180" y="620"/>
 	<column name="security_title_type_id" not-null="true" sequence="sharadar.security_title_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -1003,7 +990,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="dimension_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1420" y="1980"/>
+	<position x="1420" y="2040"/>
 	<column name="dimension_type_id" not-null="true" sequence="sharadar.dimension_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -1023,7 +1010,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="corp_action_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="240" y="1120"/>
+	<position x="240" y="1180"/>
 	<column name="corp_action_type_id" not-null="true" sequence="sharadar.corp_action_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -1034,6 +1021,22 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<columns names="corp_action_type_id" ref-type="src-columns"/>
 	</constraint>
 </table>
+
+<index name="perma_ticker_idx" table="sharadar.ticker"
+	 concurrent="false" unique="false" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="perma_ticker_id"/>
+		</idxelement>
+</index>
+
+<index name="ticker_idx" table="sharadar.ticker"
+	 concurrent="false" unique="false" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="ticker"/>
+		</idxelement>
+</index>
 
 <constraint name="unit_type_fk" type="fk-constr" comparison-type="MATCH FULL"
 	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.unit_type" table="sharadar.indicators">
@@ -1185,12 +1188,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<columns names="sector_code_type_id" ref-type="dst-columns"/>
 </constraint>
 
-<constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.ticker_cusip">
-	<columns names="ticker_id" ref-type="src-columns"/>
-	<columns names="ticker_id" ref-type="dst-columns"/>
-</constraint>
-
 <relationship name="rel_indicators_unit_type" type="relfk" layer="0"
 	 src-table="sharadar.indicators"
 	 dst-table="sharadar.unit_type" reference-fk="unit_type_fk"
@@ -1221,7 +1218,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_tickers_sector_map" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
 	 dst-table="sharadar.sector_map" reference-fk="sic_sector_fk"
-	 src-required="false" dst-required="true">
+	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="-25.3438" y="-8.22656"/>
 	</label>
@@ -1230,7 +1227,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_tickers_sector_map1" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
 	 dst-table="sharadar.sector_map" reference-fk="fama_sector_fk"
-	 src-required="false" dst-required="true">
+	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="-42.148" y="-28.2266"/>
 	</label>
@@ -1239,7 +1236,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_tickers_scale" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
 	 dst-table="sharadar.scale" reference-fk="market_cap_scale_fk"
-	 src-required="false" dst-required="true">
+	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="2.88742" y="-13.4312"/>
 	</label>
@@ -1248,7 +1245,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_tickers_scale1" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
 	 dst-table="sharadar.scale" reference-fk="revenue_scale_fk"
-	 src-required="false" dst-required="true">
+	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="-15.6126" y="-18.8349"/>
 	</label>
@@ -1257,21 +1254,16 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_tickers_sector_map2" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
 	 dst-table="sharadar.sector_map" reference-fk="sector_fk"
-	 src-required="false" dst-required="true">
+	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="50.4911" y="-8.22656"/>
 	</label>
 </relationship>
 
-<relationship name="rel_cusip_tickers" type="relfk" layer="0"
-	 src-table="sharadar.ticker_cusip"
-	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true"/>
-
 <relationship name="rel_ticker_ticker_category" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
 	 dst-table="sharadar.ticker_category" reference-fk="ticker_category_fk"
-	 src-required="false" dst-required="true">
+	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="-0.775083" y="-41.5644"/>
 	</label>
@@ -1280,7 +1272,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_ticker_exchange" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
 	 dst-table="sharadar.exchange" reference-fk="exchange_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_ticker_currency" type="relfk" layer="0"
 	 src-table="sharadar.ticker"
