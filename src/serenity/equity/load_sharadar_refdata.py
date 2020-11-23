@@ -38,7 +38,7 @@ def load_indicators(session: Session):
 
 # noinspection DuplicatedCode
 def load_tickers(session: Session):
-    df = pd.read_pickle('tickers.pickle')
+    df = quandl.get_table("SHARADAR/TICKERS", paginate=True)
 
     for index, row in df.iterrows():
         table_name = row['table']
