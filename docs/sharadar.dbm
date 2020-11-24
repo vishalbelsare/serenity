@@ -3,9 +3,9 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="15,0" last-zoom="1" max-obj-count="30"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="16,0" last-zoom="1" max-obj-count="30"
 	 default-schema="public" default-owner="postgres">
-<database name="new_database" is-template="false" allow-conns="true">
+<database name="sharadar" is-template="false" allow-conns="true">
 </database>
 
 <schema name="public" layer="0" fill-color="#e1e1e1" sql-disabled="true">
@@ -25,462 +25,40 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 </sequence>
 
-<table name="corporate_actions" layer="0" collapse-mode="2" max-obj-count="8" z-value="0">
+<sequence name="corporate_action_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="520" y="1460"/>
-	<column name="corp_action_date">
-		<type name="date" length="0"/>
-	</column>
-	<column name="ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="corp_action_type_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="name">
-		<type name="varchar" length="128"/>
-	</column>
-	<column name="value">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="contra_ticker">
-		<type name="varchar" length="16"/>
-	</column>
-	<column name="contra_name">
-		<type name="varchar" length="128"/>
-	</column>
-</table>
+</sequence>
 
 <sequence name="ticker_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
 </sequence>
 
-<table name="fundamentals" layer="0" collapse-mode="2" max-obj-count="133" z-value="0">
+<sequence name="fundamentals_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="880" y="940"/>
-	<column name="ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="dimension_type_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="calendar_date" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="date_key" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="report_period" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="last_updated" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="accoci">
-		<type name="money" length="0"/>
-	</column>
-	<column name="assets">
-		<type name="money" length="0"/>
-	</column>
-	<column name="assets_avg">
-		<type name="money" length="0"/>
-	</column>
-	<column name="assets_c">
-		<type name="money" length="0"/>
-	</column>
-	<column name="asset_nc">
-		<type name="money" length="0"/>
-	</column>
-	<column name="asset_turnover">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="bvps">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="capex">
-		<type name="money" length="0"/>
-	</column>
-	<column name="cash_neq">
-		<type name="money" length="0"/>
-	</column>
-	<column name="cash_neq_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="cor">
-		<type name="money" length="0"/>
-	</column>
-	<column name="consol_inc">
-		<type name="money" length="0"/>
-	</column>
-	<column name="current_ratio">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="de">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="debt">
-		<type name="money" length="0"/>
-	</column>
-	<column name="debt_c">
-		<type name="money" length="0"/>
-	</column>
-	<column name="debt_nc">
-		<type name="money" length="0"/>
-	</column>
-	<column name="debt_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="deferred_rev">
-		<type name="money" length="0"/>
-	</column>
-	<column name="dep_amor">
-		<type name="money" length="0"/>
-	</column>
-	<column name="deposits">
-		<type name="money" length="0"/>
-	</column>
-	<column name="div_yield">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="dps">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ebit">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ebitda">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ebitda_margin">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="ebitda_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ebit_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ebt">
-		<type name="money" length="0"/>
-	</column>
-	<column name="eps">
-		<type name="money" length="0"/>
-	</column>
-	<column name="eps_dil">
-		<type name="money" length="0"/>
-	</column>
-	<column name="eps_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="equity">
-		<type name="money" length="0"/>
-	</column>
-	<column name="equity_avg">
-		<type name="money" length="0"/>
-	</column>
-	<column name="equity_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ev">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="ev_ebit">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="ev_ebitda">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="fcf">
-		<type name="money" length="0"/>
-	</column>
-	<column name="fcf_ps">
-		<type name="money" length="0"/>
-	</column>
-	<column name="fx_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="gp">
-		<type name="money" length="0"/>
-	</column>
-	<column name="gross_margin">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="intangibles">
-		<type name="money" length="0"/>
-	</column>
-	<column name="int_exp">
-		<type name="money" length="0"/>
-	</column>
-	<column name="inv_cap">
-		<type name="money" length="0"/>
-	</column>
-	<column name="inv_cap_avg">
-		<type name="money" length="0"/>
-	</column>
-	<column name="inventory">
-		<type name="money" length="0"/>
-	</column>
-	<column name="investments">
-		<type name="money" length="0"/>
-	</column>
-	<column name="investments_c">
-		<type name="money" length="0"/>
-	</column>
-	<column name="investments_nc">
-		<type name="money" length="0"/>
-	</column>
-	<column name="liabilities">
-		<type name="money" length="0"/>
-	</column>
-	<column name="liabilities_c">
-		<type name="money" length="0"/>
-	</column>
-	<column name="liabilities_nc">
-		<type name="money" length="0"/>
-	</column>
-	<column name="market_cap">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_bus">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_common">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_debt">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_div">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_f">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_i">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_inv">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_o">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ncf_x">
-		<type name="money" length="0"/>
-	</column>
-	<column name="net_inc">
-		<type name="money" length="0"/>
-	</column>
-	<column name="net_inc_cmn">
-		<type name="money" length="0"/>
-	</column>
-	<column name="net_inc_cmn_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="net_inc_dis">
-		<type name="money" length="0"/>
-	</column>
-	<column name="net_inc_nci">
-		<type name="money" length="0"/>
-	</column>
-	<column name="net_margin">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="op_ex">
-		<type name="money" length="0"/>
-	</column>
-	<column name="op_inc">
-		<type name="money" length="0"/>
-	</column>
-	<column name="payables">
-		<type name="money" length="0"/>
-	</column>
-	<column name="payout_ratio">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="pb">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="pe">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="pe1">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="ppne_net">
-		<type name="money" length="0"/>
-	</column>
-	<column name="pref_divis">
-		<type name="money" length="10" precision="8"/>
-	</column>
-	<column name="price">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ps">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="ps1">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="receivables">
-		<type name="money" length="0"/>
-	</column>
-	<column name="ret_earn">
-		<type name="money" length="0"/>
-	</column>
-	<column name="revenue">
-		<type name="money" length="0"/>
-	</column>
-	<column name="revenue_usd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="rnd">
-		<type name="money" length="0"/>
-	</column>
-	<column name="roa">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="roe">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="roic">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="ros">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="sb_comp">
-		<type name="money" length="0"/>
-	</column>
-	<column name="sgna">
-		<type name="money" length="0"/>
-	</column>
-	<column name="share_factor">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="shares_bas">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="shares_wa">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="shares_wa_dil">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="sps">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="tangibles">
-		<type name="money" length="0"/>
-	</column>
-	<column name="tax_assets">
-		<type name="money" length="0"/>
-	</column>
-	<column name="tax_exp">
-		<type name="money" length="0"/>
-	</column>
-	<column name="tax_liabilities">
-		<type name="money" length="0"/>
-	</column>
-	<column name="tvbps">
-		<type name="decimal" length="10" precision="8"/>
-	</column>
-	<column name="working_capital">
-		<type name="money" length="0"/>
-	</column>
-</table>
+</sequence>
 
-<table name="institutional_holdings" layer="0" collapse-mode="2" max-obj-count="8" z-value="0">
+<sequence name="institutional_holdings_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1520" y="880"/>
-	<column name="ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="institutional_investor_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="security_type_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="calendar_date" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="value" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-	<column name="units" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="price" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-</table>
+</sequence>
 
-<table name="events" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
+<sequence name="event_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="300" y="760"/>
-	<column name="ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="event_date" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="event_code_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-</table>
+</sequence>
 
-<table name="equity_prices" layer="0" collapse-mode="2" max-obj-count="12" z-value="0">
+<sequence name="equity_price_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="600" y="780"/>
-	<column name="ticker_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="price_date" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<column name="open" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-	<column name="high" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-	<column name="low" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-	<column name="close" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-	<column name="volume" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="dividends" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-	<column name="close_unadj" not-null="true">
-		<type name="money" length="0"/>
-	</column>
-	<column name="last_updated" not-null="true">
-		<type name="date" length="0"/>
-	</column>
-	<constraint name="ticker_price_date_uq" type="uq-constr" table="sharadar.equity_prices">
-		<columns names="ticker_id,price_date" ref-type="src-columns"/>
-	</constraint>
-</table>
+</sequence>
 
 <table name="indicators" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="280" y="500"/>
+	<position x="300" y="500"/>
 	<column name="indicator_id" not-null="true" sequence="sharadar.indicator_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -513,7 +91,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="unit_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="460" y="300"/>
+	<position x="480" y="300"/>
 	<column name="unit_type_id" not-null="true" sequence="sharadar.unit_type_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -531,7 +109,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="event_code" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="200" y="980"/>
+	<position x="220" y="980"/>
 	<column name="event_code_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -549,77 +127,31 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="26" z-value="0">
+<table name="event" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1640" y="420"/>
+	<position x="320" y="760"/>
+	<column name="event_id" not-null="true" sequence="sharadar.event_seq">
+		<type name="integer" length="0"/>
+	</column>
 	<column name="ticker_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="filing_date" not-null="true">
+	<column name="event_date" not-null="true">
 		<type name="date" length="0"/>
 	</column>
-	<column name="form_type_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="issuer_name" not-null="true">
-		<type name="varchar" length="128"/>
-	</column>
-	<column name="owner_name" not-null="true">
-		<type name="varchar" length="64"/>
-	</column>
-	<column name="officer_title">
-		<type name="varchar" length="64"/>
-	</column>
-	<column name="is_director" not-null="true">
-		<type name="bool" length="0"/>
-	</column>
-	<column name="is_officer" not-null="true">
-		<type name="bool" length="0"/>
-	</column>
-	<column name="is_ten_percent_owner" not-null="true">
-		<type name="bool" length="0"/>
-	</column>
-	<column name="security_ad_type_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="transaction_type_id">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="shares_owned_before_transaction" not-null="true">
+	<column name="event_code_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="transaction_shares">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="shares_owned_following_transaction" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="transaction_price_per_share">
-		<type name="money" length="0"/>
-	</column>
-	<column name="transaction_value">
-		<type name="money" length="0"/>
-	</column>
-	<column name="security_title_type_id" not-null="true">
-		<type name="smallint" length="0"/>
-	</column>
-	<column name="direct_or_indirect" not-null="true">
-		<type name="char" length="1"/>
-	</column>
-	<column name="nature_of_ownership">
-		<type name="varchar" length="128"/>
-	</column>
-	<column name="date_exercisable">
-		<type name="date" length="0"/>
-	</column>
-	<column name="price_exercisable">
-		<type name="money" length="0"/>
-	</column>
-	<column name="expiration_date">
-		<type name="date" length="0"/>
-	</column>
+	<constraint name="event_pk" type="pk-constr" table="sharadar.event">
+		<columns names="event_id" ref-type="src-columns"/>
+	</constraint>
 </table>
+
+<sequence name="insider_holdings_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+</sequence>
 
 <sequence name="scale_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
@@ -639,7 +171,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="sector_map" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="980" y="760"/>
+	<position x="1000" y="760"/>
 	<column name="sector_map_id" not-null="true" sequence="sharadar.sector_map_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -668,7 +200,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="ticker" layer="0" collapse-mode="2" max-obj-count="30" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="700" y="80"/>
+	<position x="720" y="80"/>
 	<column name="ticker_id" not-null="true" sequence="sharadar.ticker_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -752,7 +284,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="scale" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1080" y="120"/>
+	<position x="1100" y="120"/>
 	<column name="scale_id" not-null="true" sequence="sharadar.scale_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -775,7 +307,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="ticker_category" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="400" y="100"/>
+	<position x="420" y="100"/>
 	<column name="ticker_category_id" not-null="true" sequence="sharadar.ticker_category_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -798,7 +330,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="exchange" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1360" y="340"/>
+	<position x="1380" y="340"/>
 	<column name="exchange_id" not-null="true" sequence="sharadar.exchange_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -821,7 +353,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="currency" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1100" y="240"/>
+	<position x="1120" y="240"/>
 	<column name="currency_id" not-null="true" sequence="sharadar.currency_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -839,7 +371,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="sector_code_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1220" y="1020"/>
+	<position x="1240" y="1020"/>
 	<column name="sector_code_type_id" not-null="true" sequence="sharadar.sector_code_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -862,6 +394,162 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 </sequence>
 
+<table name="equity_price" layer="0" collapse-mode="2" max-obj-count="13" z-value="0">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+	<position x="620" y="780"/>
+	<column name="equity_price_id" not-null="true" sequence="sharadar.equity_price_seq">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="ticker_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="price_date" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="open" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<column name="high" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<column name="low" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<column name="close" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<column name="volume" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="dividends" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<column name="close_unadj" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<column name="last_updated" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<constraint name="equity_price_pk" type="pk-constr" table="sharadar.equity_price">
+		<columns names="equity_price_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="ticker_price_date_uq" type="uq-constr" table="sharadar.equity_price">
+		<columns names="ticker_id,price_date" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="institutional_holdings" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+	<position x="1540" y="880"/>
+	<column name="institutional_holdings_id" not-null="true" sequence="sharadar.institutional_holdings_seq">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="ticker_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="institutional_investor_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="security_type_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="calendar_date" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="value" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<column name="units" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="price" not-null="true">
+		<type name="money" length="0"/>
+	</column>
+	<constraint name="institutional_holdings_pk" type="pk-constr" table="sharadar.institutional_holdings">
+		<columns names="institutional_holdings_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="27" z-value="0">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+	<position x="1660" y="400"/>
+	<column name="insider_holdings_id" not-null="true" sequence="sharadar.insider_holdings_seq">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="ticker_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="filing_date" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="form_type_id" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="issuer_name" not-null="true">
+		<type name="varchar" length="128"/>
+	</column>
+	<column name="owner_name" not-null="true">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="officer_title">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="is_director" not-null="true">
+		<type name="bool" length="0"/>
+	</column>
+	<column name="is_officer" not-null="true">
+		<type name="bool" length="0"/>
+	</column>
+	<column name="is_ten_percent_owner" not-null="true">
+		<type name="bool" length="0"/>
+	</column>
+	<column name="security_ad_type_id" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="transaction_type_id">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="shares_owned_before_transaction" not-null="true">
+		<type name="int8" length="0"/>
+	</column>
+	<column name="transaction_shares">
+		<type name="int8" length="0"/>
+	</column>
+	<column name="shares_owned_following_transaction" not-null="true">
+		<type name="int8" length="0"/>
+	</column>
+	<column name="transaction_price_per_share">
+		<type name="money" length="0"/>
+	</column>
+	<column name="transaction_value">
+		<type name="money" length="0"/>
+	</column>
+	<column name="security_title_type_id" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="direct_or_indirect" not-null="true">
+		<type name="char" length="1"/>
+	</column>
+	<column name="nature_of_ownership">
+		<type name="varchar" length="128"/>
+	</column>
+	<column name="date_exercisable">
+		<type name="date" length="0"/>
+	</column>
+	<column name="price_exercisable">
+		<type name="money" length="0"/>
+	</column>
+	<column name="expiration_date">
+		<type name="date" length="0"/>
+	</column>
+	<constraint name="insider_holdings_pk" type="pk-constr" table="sharadar.insider_holdings">
+		<columns names="insider_holdings_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
 <sequence name="institutional_investor_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
@@ -870,7 +558,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="institutional_investor" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1960" y="960"/>
+	<position x="1980" y="960"/>
 	<column name="institutional_investor_id" not-null="true" sequence="sharadar.institutional_investor_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -890,7 +578,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1980" y="780"/>
+	<position x="2000" y="780"/>
 	<column name="security_type_id" not-null="true" sequence="sharadar.security_type_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -902,6 +590,351 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
+<table name="fundamentals" layer="0" collapse-mode="2" max-obj-count="134" z-value="0">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+	<position x="900" y="940"/>
+	<column name="fundamentals_id" not-null="true" sequence="sharadar.fundamentals_seq">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="ticker_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="dimension_type_id" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="calendar_date" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="date_key" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="report_period" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="last_updated" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="accoci">
+		<type name="money" length="0"/>
+	</column>
+	<column name="assets">
+		<type name="money" length="0"/>
+	</column>
+	<column name="assets_avg">
+		<type name="money" length="0"/>
+	</column>
+	<column name="assets_c">
+		<type name="money" length="0"/>
+	</column>
+	<column name="assets_nc">
+		<type name="money" length="0"/>
+	</column>
+	<column name="asset_turnover">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="bvps">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="capex">
+		<type name="money" length="0"/>
+	</column>
+	<column name="cash_neq">
+		<type name="money" length="0"/>
+	</column>
+	<column name="cash_neq_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="cor">
+		<type name="money" length="0"/>
+	</column>
+	<column name="consol_inc">
+		<type name="money" length="0"/>
+	</column>
+	<column name="current_ratio">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="de">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="debt">
+		<type name="money" length="0"/>
+	</column>
+	<column name="debt_c">
+		<type name="money" length="0"/>
+	</column>
+	<column name="debt_nc">
+		<type name="money" length="0"/>
+	</column>
+	<column name="debt_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="deferred_rev">
+		<type name="money" length="0"/>
+	</column>
+	<column name="dep_amor">
+		<type name="money" length="0"/>
+	</column>
+	<column name="deposits">
+		<type name="money" length="0"/>
+	</column>
+	<column name="div_yield">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="dps">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ebit">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ebitda">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ebitda_margin">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="ebitda_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ebit_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ebt">
+		<type name="money" length="0"/>
+	</column>
+	<column name="eps">
+		<type name="money" length="0"/>
+	</column>
+	<column name="eps_dil">
+		<type name="money" length="0"/>
+	</column>
+	<column name="eps_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="equity">
+		<type name="money" length="0"/>
+	</column>
+	<column name="equity_avg">
+		<type name="money" length="0"/>
+	</column>
+	<column name="equity_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ev">
+		<type name="money" length="10" precision="8"/>
+	</column>
+	<column name="ev_ebit">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="ev_ebitda">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="fcf">
+		<type name="money" length="0"/>
+	</column>
+	<column name="fcf_ps">
+		<type name="money" length="0"/>
+	</column>
+	<column name="fx_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="gp">
+		<type name="money" length="0"/>
+	</column>
+	<column name="gross_margin">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="intangibles">
+		<type name="money" length="0"/>
+	</column>
+	<column name="int_exp">
+		<type name="money" length="0"/>
+	</column>
+	<column name="inv_cap">
+		<type name="money" length="0"/>
+	</column>
+	<column name="inv_cap_avg">
+		<type name="money" length="0"/>
+	</column>
+	<column name="inventory">
+		<type name="money" length="0"/>
+	</column>
+	<column name="investments">
+		<type name="money" length="0"/>
+	</column>
+	<column name="investments_c">
+		<type name="money" length="0"/>
+	</column>
+	<column name="investments_nc">
+		<type name="money" length="0"/>
+	</column>
+	<column name="liabilities">
+		<type name="money" length="0"/>
+	</column>
+	<column name="liabilities_c">
+		<type name="money" length="0"/>
+	</column>
+	<column name="liabilities_nc">
+		<type name="money" length="0"/>
+	</column>
+	<column name="market_cap">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_bus">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_common">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_debt">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_div">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_f">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_i">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_inv">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_o">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ncf_x">
+		<type name="money" length="0"/>
+	</column>
+	<column name="net_inc">
+		<type name="money" length="0"/>
+	</column>
+	<column name="net_inc_cmn">
+		<type name="money" length="0"/>
+	</column>
+	<column name="net_inc_cmn_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="net_inc_dis">
+		<type name="money" length="0"/>
+	</column>
+	<column name="net_inc_nci">
+		<type name="money" length="0"/>
+	</column>
+	<column name="net_margin">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="op_ex">
+		<type name="money" length="0"/>
+	</column>
+	<column name="op_inc">
+		<type name="money" length="0"/>
+	</column>
+	<column name="payables">
+		<type name="money" length="0"/>
+	</column>
+	<column name="payout_ratio">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="pb">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="pe">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="pe1">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="ppne_net">
+		<type name="money" length="0"/>
+	</column>
+	<column name="pref_div_is">
+		<type name="money" length="10" precision="8"/>
+	</column>
+	<column name="price">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ps">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="ps1">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="receivables">
+		<type name="money" length="0"/>
+	</column>
+	<column name="ret_earn">
+		<type name="money" length="0"/>
+	</column>
+	<column name="revenue">
+		<type name="money" length="0"/>
+	</column>
+	<column name="revenue_usd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="rnd">
+		<type name="money" length="0"/>
+	</column>
+	<column name="roa">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="roe">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="roic">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="ros">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="sb_comp">
+		<type name="money" length="0"/>
+	</column>
+	<column name="sgna">
+		<type name="money" length="0"/>
+	</column>
+	<column name="share_factor">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="shares_bas">
+		<type name="int8" length="0"/>
+	</column>
+	<column name="shares_wa">
+		<type name="int8" length="0"/>
+	</column>
+	<column name="shares_wa_dil">
+		<type name="int8" length="0"/>
+	</column>
+	<column name="sps">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="tangibles">
+		<type name="money" length="0"/>
+	</column>
+	<column name="tax_assets">
+		<type name="money" length="0"/>
+	</column>
+	<column name="tax_exp">
+		<type name="money" length="0"/>
+	</column>
+	<column name="tax_liabilities">
+		<type name="money" length="0"/>
+	</column>
+	<column name="tbvps">
+		<type name="decimal" length="16" precision="8"/>
+	</column>
+	<column name="working_capital">
+		<type name="money" length="0"/>
+	</column>
+	<constraint name="fundamentals_pk" type="pk-constr" table="sharadar.fundamentals">
+		<columns names="fundamentals_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
 <sequence name="form_type_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
@@ -910,7 +943,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="form_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="2100" y="300"/>
+	<position x="2120" y="300"/>
 	<column name="form_type_id" not-null="true" sequence="sharadar.form_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -930,7 +963,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_ad_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1800" y="160"/>
+	<position x="1820" y="160"/>
 	<column name="security_ad_type_id" not-null="true" sequence="sharadar.security_ad_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -950,7 +983,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="transaction_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1520" y="160"/>
+	<position x="1540" y="160"/>
 	<column name="transaction_type_id" not-null="true" sequence="sharadar.tranaction_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -970,7 +1003,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_title_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="2180" y="620"/>
+	<position x="2200" y="620"/>
 	<column name="security_title_type_id" not-null="true" sequence="sharadar.security_title_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -990,7 +1023,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="dimension_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1420" y="2040"/>
+	<position x="1440" y="2040"/>
 	<column name="dimension_type_id" not-null="true" sequence="sharadar.dimension_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -1010,7 +1043,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="corp_action_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="240" y="1180"/>
+	<position x="260" y="1180"/>
 	<column name="corp_action_type_id" not-null="true" sequence="sharadar.corp_action_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -1019,6 +1052,39 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<constraint name="corp_action_type_pk" type="pk-constr" table="sharadar.corp_action_type">
 		<columns names="corp_action_type_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="corp_action" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+	<position x="540" y="1460"/>
+	<column name="corp_action_id" not-null="true" sequence="sharadar.corporate_action_seq">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="corp_action_date" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="ticker_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="corp_action_type_id" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="name">
+		<type name="varchar" length="128"/>
+	</column>
+	<column name="value">
+		<type name="decimal" length="10" precision="8"/>
+	</column>
+	<column name="contra_ticker">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="contra_name">
+		<type name="varchar" length="128"/>
+	</column>
+	<constraint name="corp_action_pk" type="pk-constr" table="sharadar.corp_action">
+		<columns names="corp_action_id" ref-type="src-columns"/>
 	</constraint>
 </table>
 
@@ -1045,13 +1111,13 @@ CAUTION: Do not modify this file unless you know what you are doing.
 </constraint>
 
 <constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.corporate_actions">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.corp_action">
 	<columns names="ticker_id" ref-type="src-columns"/>
 	<columns names="ticker_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="corp_action_type_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.corp_action_type" table="sharadar.corporate_actions">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.corp_action_type" table="sharadar.corp_action">
 	<columns names="corp_action_type_id" ref-type="src-columns"/>
 	<columns names="corp_action_type_id" ref-type="dst-columns"/>
 </constraint>
@@ -1135,19 +1201,19 @@ CAUTION: Do not modify this file unless you know what you are doing.
 </constraint>
 
 <constraint name="event_code_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.event_code" table="sharadar.events">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.event_code" table="sharadar.event">
 	<columns names="event_code_id" ref-type="src-columns"/>
 	<columns names="event_code_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.events">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.event">
 	<columns names="ticker_id" ref-type="src-columns"/>
 	<columns names="ticker_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.equity_prices">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.equity_price">
 	<columns names="ticker_id" ref-type="src-columns"/>
 	<columns names="ticker_id" ref-type="dst-columns"/>
 </constraint>
@@ -1198,7 +1264,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 </relationship>
 
 <relationship name="rel_events_event_code" type="relfk" layer="0"
-	 src-table="sharadar.events"
+	 src-table="sharadar.event"
 	 dst-table="sharadar.event_code" reference-fk="event_code_fk"
 	 src-required="false" dst-required="true">
 	<label ref-type="name-label">
@@ -1284,12 +1350,16 @@ CAUTION: Do not modify this file unless you know what you are doing.
 </relationship>
 
 <relationship name="rel_events_ticker" type="relfk" layer="0"
-	 src-table="sharadar.events"
+	 src-table="sharadar.event"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="true">
+	<label ref-type="name-label">
+		<position x="69.439" y="-64.7399"/>
+	</label>
+</relationship>
 
 <relationship name="rel_equity_prices_ticker" type="relfk" layer="0"
-	 src-table="sharadar.equity_prices"
+	 src-table="sharadar.equity_price"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
 	 src-required="false" dst-required="true"/>
 
@@ -1344,12 +1414,12 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 src-required="false" dst-required="true"/>
 
 <relationship name="rel_corporate_actions_ticker" type="relfk" layer="0"
-	 src-table="sharadar.corporate_actions"
+	 src-table="sharadar.corp_action"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
 	 src-required="false" dst-required="true"/>
 
 <relationship name="rel_corporate_actions_corp_action_type" type="relfk" layer="0"
-	 src-table="sharadar.corporate_actions"
+	 src-table="sharadar.corp_action"
 	 dst-table="sharadar.corp_action_type" reference-fk="corp_action_type_fk"
 	 src-required="false" dst-required="true"/>
 

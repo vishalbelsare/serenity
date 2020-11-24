@@ -3,8 +3,9 @@ import pandas as pd
 import quandl
 from sqlalchemy.orm import Session
 
-from serenity.equity.sharadar_api import init_quandl, create_sharadar_session, UnitType, Indicator, Exchange, \
-    TickerCategory, Sector, Scale, Currency, Ticker
+from serenity.equity.sharadar_api import init_quandl, create_sharadar_session
+from serenity.equity.sharadar_refdata import UnitType, Indicator, Exchange, TickerCategory, Sector, Scale, Currency, \
+    Ticker
 
 
 def load_sharadar_refdata():
@@ -38,7 +39,9 @@ def load_indicators(session: Session):
 
 # noinspection DuplicatedCode
 def load_tickers(session: Session):
-    df = quandl.get_table("SHARADAR/TICKERS", paginate=True)
+    load_path = 'sharadar_tickers.zip'
+    quandl.export_table('SHARADAR/TICKERS', filename=load_path)
+    df = pd.read_csv(load_path)
 
     for index, row in df.iterrows():
         table_name = row['table']
@@ -47,32 +50,32 @@ def load_tickers(session: Session):
         if ticker == 'N/A':
             ticker = None
         name = row['name']
-        exchange = Exchange.get_or_create(session, row['exchange'])
+        exchange = Exchange.get_or_create(session, clean_nulls(row['exchange']))
         is_delisted = yes_no_to_bool(row['isdelisted'])
-        category = TickerCategory.get_or_create(session, row['category'])
+        category = TickerCategory.get_or_create(session, clean_nulls(row['category']))
 
         cusips = row['cusips']
 
-        sic_sector_code = row['siccode']
-        sic_sector = row['sicsector']
-        sic_industry = row['sicindustry']
+        sic_sector_code = clean_nulls(row['siccode'])
+        sic_sector = clean_nulls(row['sicsector'])
+        sic_industry = clean_nulls(row['sicindustry'])
         sic_sector_map = Sector.get_or_create(session, sector_code_type_code='SIC', sector_code=sic_sector_code,
                                               sector=sic_sector, industry=sic_industry)
 
-        fama_sector = row['famasector']
-        fama_industry = row['famaindustry']
+        fama_sector = clean_nulls(row['famasector'])
+        fama_industry = clean_nulls(row['famaindustry'])
         fama_sector_map = Sector.get_or_create(session, sector_code_type_code='FAMA', sector_code=None,
                                                sector=fama_sector, industry=fama_industry)
 
-        sector = row['sector']
-        industry = row['industry']
+        sector = clean_nulls(row['sector'])
+        industry = clean_nulls(row['industry'])
         sharadar_sector_map = Sector.get_or_create(session, sector_code_type_code='Sharadar', sector_code=None,
                                                    sector=sector, industry=industry)
 
-        market_cap_scale_code = row['scalemarketcap']
+        market_cap_scale_code = clean_nulls(row['scalemarketcap'])
         market_cap_scale = Scale.get_or_create(session, market_cap_scale_code)
 
-        revenue_scale_code = row['scalerevenue']
+        revenue_scale_code = clean_nulls(row['scalerevenue'])
         revenue_scale = Scale.get_or_create(session, revenue_scale_code)
 
         related_tickers = row['relatedtickers']
@@ -81,12 +84,12 @@ def load_tickers(session: Session):
         currency = Currency.get_or_create(session, currency_code)
 
         location = row['location']
-        last_updated = clean_date(row['lastupdated'])
-        first_added = clean_date(row['firstadded'])
-        first_price_date = clean_date(row['firstpricedate'])
-        last_price_date = clean_date(row['lastpricedate'])
-        first_quarter = clean_date(row['firstquarter'])
-        last_quarter = clean_date(row['lastquarter'])
+        last_updated = clean_nulls(row['lastupdated'])
+        first_added = clean_nulls(row['firstadded'])
+        first_price_date = clean_nulls(row['firstpricedate'])
+        last_price_date = clean_nulls(row['lastpricedate'])
+        first_quarter = clean_nulls(row['firstquarter'])
+        last_quarter = clean_nulls(row['lastquarter'])
         sec_filings = row['secfilings']
         company_site = row['companysite']
 
@@ -138,11 +141,11 @@ def yes_no_to_bool(yes_no: str) -> bool:
     return yes_no == 'Y'
 
 
-def clean_date(date_value):
-    if pd.isnull(date_value):
+def clean_nulls(value):
+    if pd.isnull(value):
         return None
     else:
-        return date_value
+        return value
 
 
 if __name__ == '__main__':
