@@ -1,5 +1,6 @@
 import os
 
+import pandas as pd
 import quandl
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -20,4 +21,10 @@ def create_sharadar_session(hostname: str = os.getenv('TIMESCALEDB_NODEPORT_SERV
 def init_quandl(quandl_api_key: str = os.getenv('QUANDL_API_KEY')):
     quandl.ApiConfig.api_key = quandl_api_key
 
+
+def clean_nulls(value):
+    if pd.isnull(value):
+        return None
+    else:
+        return value
 

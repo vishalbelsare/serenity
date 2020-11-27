@@ -3,7 +3,7 @@ import pandas as pd
 import quandl
 from sqlalchemy.orm import Session
 
-from serenity.equity.sharadar_api import init_quandl, create_sharadar_session
+from serenity.equity.sharadar_api import init_quandl, create_sharadar_session, clean_nulls
 from serenity.equity.sharadar_refdata import UnitType, Indicator, Exchange, TickerCategory, Sector, Scale, Currency, \
     Ticker
 
@@ -139,13 +139,6 @@ def load_tickers(session: Session):
 
 def yes_no_to_bool(yes_no: str) -> bool:
     return yes_no == 'Y'
-
-
-def clean_nulls(value):
-    if pd.isnull(value):
-        return None
-    else:
-        return value
 
 
 if __name__ == '__main__':

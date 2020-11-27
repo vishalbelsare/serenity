@@ -2,7 +2,7 @@ import fire
 import pandas as pd
 import quandl
 
-from serenity.equity.sharadar_api import init_quandl, create_sharadar_session
+from serenity.equity.sharadar_api import init_quandl, create_sharadar_session, clean_nulls
 from serenity.equity.sharadar_prices import EquityPrice
 from serenity.equity.sharadar_refdata import Ticker
 
@@ -21,7 +21,7 @@ def backfill_sharadar_prices():
         high_px = row['high']
         low_px = row['low']
         close_px = row['close']
-        volume = row['volume']
+        volume = clean_nulls(row['volume'])
         dividends = row['dividends']
         close_unadj = row['closeunadj']
         last_updated = row['lastupdated']

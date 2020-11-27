@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="16,0" last-zoom="1" max-obj-count="30"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="16,213" last-zoom="1" max-obj-count="30"
 	 default-schema="public" default-owner="postgres">
 <database name="sharadar" is-template="false" allow-conns="true">
 </database>
@@ -419,7 +419,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="close" not-null="true">
 		<type name="money" length="0"/>
 	</column>
-	<column name="volume" not-null="true">
+	<column name="volume">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="dividends" not-null="true">
@@ -631,10 +631,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="asset_turnover">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="bvps">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="money" length="16" precision="8"/>
 	</column>
 	<column name="capex">
 		<type name="money" length="0"/>
@@ -652,10 +652,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="current_ratio">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="de">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="debt">
 		<type name="money" length="0"/>
@@ -679,7 +679,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="div_yield">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="dps">
 		<type name="money" length="0"/>
@@ -691,7 +691,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="ebitda_margin">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="ebitda_usd">
 		<type name="money" length="0"/>
@@ -724,10 +724,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="10" precision="8"/>
 	</column>
 	<column name="ev_ebit">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="ev_ebitda">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="fcf">
 		<type name="money" length="0"/>
@@ -742,7 +742,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="gross_margin">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="intangibles">
 		<type name="money" length="0"/>
@@ -826,7 +826,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="net_margin">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="op_ex">
 		<type name="money" length="0"/>
@@ -838,16 +838,16 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="payout_ratio">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="pb">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="pe">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="pe1">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="ppne_net">
 		<type name="money" length="0"/>
@@ -859,10 +859,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="ps">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="ps1">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="receivables">
 		<type name="money" length="0"/>
@@ -880,16 +880,16 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="roa">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="roe">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="roic">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="ros">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="sb_comp">
 		<type name="money" length="0"/>
@@ -898,7 +898,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="share_factor">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="shares_bas">
 		<type name="int8" length="0"/>
@@ -910,7 +910,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="int8" length="0"/>
 	</column>
 	<column name="sps">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="money" length="16" precision="8"/>
 	</column>
 	<column name="tangibles">
 		<type name="money" length="0"/>
@@ -925,7 +925,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="tbvps">
-		<type name="decimal" length="16" precision="8"/>
+		<type name="money" length="16" precision="8"/>
 	</column>
 	<column name="working_capital">
 		<type name="money" length="0"/>
