@@ -12,7 +12,7 @@ def backfill_sharadar_fundamentals():
     session = create_sharadar_session()
 
     load_path = 'sharadar_fundamentals.zip'
-    # quandl.export_table('SHARADAR/SF1', filename=load_path)
+    quandl.export_table('SHARADAR/SF1', filename=load_path)
     df = pd.read_csv(load_path)
     row_count = 0
     for index, row in df.iterrows():

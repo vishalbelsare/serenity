@@ -56,24 +56,24 @@ class Ticker(Base):
     ticker = Column(String(16))
     name = Column(String(256))
     exchange_id = Column(Integer, ForeignKey('exchange.exchange_id'))
-    exchange = relationship('Exchange')
+    exchange = relationship('Exchange', lazy='joined')
     is_delisted = Column(Boolean)
     ticker_category_id = Column(Integer, ForeignKey('ticker_category.ticker_category_id'))
-    ticker_category = relationship('TickerCategory')
+    ticker_category = relationship('TickerCategory', lazy='joined')
     cusips = Column(String(256))
     sic_sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
-    sic_sector = relationship('Sector', foreign_keys=sic_sector_id)
+    sic_sector = relationship('Sector', foreign_keys=sic_sector_id, lazy='joined')
     fama_sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
-    fama_sector = relationship('Sector', foreign_keys=fama_sector_id)
+    fama_sector = relationship('Sector', foreign_keys=fama_sector_id, lazy='joined')
     sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
-    sector = relationship('Sector', foreign_keys=sector_id)
+    sector = relationship('Sector', foreign_keys=sector_id, lazy='joined')
     market_cap_scale_id = Column(Integer, ForeignKey('scale.scale_id'))
-    market_cap_scale = relationship('Scale', foreign_keys=market_cap_scale_id)
+    market_cap_scale = relationship('Scale', foreign_keys=market_cap_scale_id, lazy='joined')
     revenue_scale_id = Column(Integer, ForeignKey('scale.scale_id'))
-    revenue_scale = relationship('Scale', foreign_keys=revenue_scale_id)
+    revenue_scale = relationship('Scale', foreign_keys=revenue_scale_id, lazy='joined')
     related_tickers = Column(String(256))
     currency_id = Column(Integer, ForeignKey('currency.currency_id'))
-    currency = relationship('Currency')
+    currency = relationship('Currency', lazy='joined')
     location = Column(String(64))
     last_updated = Column(Date)
     first_added = Column(Date)
@@ -239,3 +239,12 @@ class Currency(Base):
                 ccy = Currency(currency_code=currency_code)
                 session.add(ccy)
             return ccy
+
+
+def get_indicator_details(session: Session, table_name: str, indicator: str):
+    """
+    Helper method that gets the description & units for a table column or other metadata given (pseudo) table name
+    and the column name / type code.
+    """
+    return session.query(Indicator).filter(Indicator.table_name == table_name,
+                                           Indicator.indicator == indicator).one_or_none()
