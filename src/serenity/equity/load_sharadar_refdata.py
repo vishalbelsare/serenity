@@ -132,7 +132,6 @@ def load_tickers(session: Session):
                                    first_quarter=first_quarter, last_quarter=last_quarter, secfilings=sec_filings,
                                    company_site=company_site)
             session.add(ticker_entity)
-            pass
 
     session.commit()
 

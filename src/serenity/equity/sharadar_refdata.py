@@ -39,7 +39,7 @@ class Indicator(Base):
     title = Column(String(256))
     description = Column(String(2048))
     unit_type_id = Column(Integer, ForeignKey('unit_type.unit_type_id'))
-    unit_type = relationship('UnitType')
+    unit_type = relationship('UnitType', lazy='joined')
 
     @classmethod
     def find_by_name(cls, session: Session, table_name: str, indicator: str):
