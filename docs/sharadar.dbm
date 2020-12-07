@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,825" last-zoom="1" max-obj-count="30"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1.05" max-obj-count="30"
 	 default-schema="public" default-owner="postgres">
 <database name="sharadar" is-template="false" allow-conns="true">
 </database>
@@ -160,7 +160,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="integer" length="0"/>
 	</column>
 	<column name="sector_code_type_id" not-null="true">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="sector_code">
 		<type name="integer" length="0"/>
@@ -201,13 +201,13 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="varchar" length="256"/>
 	</column>
 	<column name="exchange_id">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="is_delisted" not-null="true">
 		<type name="bool" length="1"/>
 	</column>
 	<column name="ticker_category_id">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="cusips">
 		<type name="varchar" length="256"/>
@@ -222,16 +222,16 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="integer" length="0"/>
 	</column>
 	<column name="market_cap_scale_id">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="revenue_scale_id">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="related_tickers">
 		<type name="varchar" length="256"/>
 	</column>
 	<column name="currency_id" not-null="true">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="location">
 		<type name="varchar" length="64"/>
@@ -270,7 +270,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 	<position x="1100" y="160"/>
 	<column name="scale_id" not-null="true" sequence="sharadar.scale_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="scale_code" not-null="true">
 		<type name="varchar" length="32"/>
@@ -293,7 +293,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 	<position x="420" y="140"/>
 	<column name="ticker_category_id" not-null="true" sequence="sharadar.ticker_category_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="ticker_category_code">
 		<type name="varchar" length="64"/>
@@ -316,7 +316,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 	<position x="1380" y="380"/>
 	<column name="exchange_id" not-null="true" sequence="sharadar.exchange_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="exchange_code" not-null="true">
 		<type name="varchar" length="32"/>
@@ -339,7 +339,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 	<position x="1120" y="280"/>
 	<column name="currency_id" not-null="true" sequence="sharadar.currency_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="currency_code" not-null="true">
 		<type name="varchar" length="8"/>
@@ -357,7 +357,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 	<position x="1240" y="1060"/>
 	<column name="sector_code_type_id" not-null="true" sequence="sharadar.sector_code_type_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="sector_code_type_code" not-null="true">
 		<type name="varchar" length="32"/>
@@ -433,9 +433,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<constraint name="equity_price_pk" type="pk-constr" table="sharadar.equity_price">
 		<columns names="equity_price_id" ref-type="src-columns"/>
-	</constraint>
-	<constraint name="ticker_price_date_uq" type="uq-constr" table="sharadar.equity_price">
-		<columns names="ticker_id,price_date" ref-type="src-columns"/>
 	</constraint>
 </table>
 
@@ -613,7 +610,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="integer" length="0"/>
 	</column>
 	<column name="dimension_type_id" not-null="true">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="calendar_date" not-null="true">
 		<type name="date" length="0"/>
@@ -1049,7 +1046,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 	<position x="1440" y="2080"/>
 	<column name="dimension_type_id" not-null="true" sequence="sharadar.dimension_type_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="dimension_type_code" not-null="true">
 		<type name="varchar" length="8"/>
@@ -1069,10 +1066,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<role name="postgres"/>
 	<position x="260" y="1220"/>
 	<column name="corp_action_type_id" not-null="true" sequence="sharadar.corp_action_type_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="corp_action_type_code" not-null="true">
-		<type name="varchar" length="8"/>
+		<type name="varchar" length="32"/>
 	</column>
 	<constraint name="corp_action_type_pk" type="pk-constr" table="sharadar.corp_action_type">
 		<columns names="corp_action_type_id" ref-type="src-columns"/>
@@ -1096,19 +1093,19 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="integer" length="0"/>
 	</column>
 	<column name="corp_action_type_id" not-null="true">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="name">
-		<type name="varchar" length="128"/>
+		<type name="varchar" length="256"/>
 	</column>
 	<column name="value">
-		<type name="decimal" length="10" precision="8"/>
+		<type name="decimal" length="16" precision="4"/>
 	</column>
 	<column name="contra_ticker">
 		<type name="varchar" length="16"/>
 	</column>
 	<column name="contra_name">
-		<type name="varchar" length="128"/>
+		<type name="varchar" length="256"/>
 	</column>
 	<constraint name="corp_action_pk" type="pk-constr" table="sharadar.corp_action">
 		<columns names="corp_action_id" ref-type="src-columns"/>
@@ -1193,6 +1190,34 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="corp_action_type_id"/>
+		</idxelement>
+</index>
+
+<index name="equity_price_uq_idx" table="sharadar.equity_price"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="ticker_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="price_date"/>
+		</idxelement>
+</index>
+
+<index name="fundamentals_uq_idx" table="sharadar.fundamentals"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="ticker_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="dimension_type_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="date_key"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="report_period"/>
 		</idxelement>
 </index>
 

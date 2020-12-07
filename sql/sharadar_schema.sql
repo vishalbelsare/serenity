@@ -254,7 +254,7 @@ ALTER SEQUENCE sharadar.sector_code_type_seq OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.sector_map CASCADE;
 CREATE TABLE sharadar.sector_map (
 	sector_map_id integer NOT NULL DEFAULT nextval('sharadar.sector_map_seq'::regclass),
-	sector_code_type_id smallint NOT NULL,
+	sector_code_type_id integer NOT NULL,
 	sector_code integer,
 	sector varchar(64),
 	industry varchar(64),
@@ -287,17 +287,17 @@ CREATE TABLE sharadar.ticker (
 	perma_ticker_id integer NOT NULL,
 	ticker varchar(16),
 	name varchar(256) NOT NULL,
-	exchange_id smallint,
+	exchange_id integer,
 	is_delisted bool NOT NULL,
-	ticker_category_id smallint,
+	ticker_category_id integer,
 	cusips varchar(256),
 	sic_sector_id integer,
 	fama_sector_id integer,
 	sector_id integer,
-	market_cap_scale_id smallint,
-	revenue_scale_id smallint,
+	market_cap_scale_id integer,
+	revenue_scale_id integer,
 	related_tickers varchar(256),
-	currency_id smallint NOT NULL,
+	currency_id integer NOT NULL,
 	location varchar(64),
 	last_updated date,
 	first_added date,
@@ -317,7 +317,7 @@ ALTER TABLE sharadar.ticker OWNER TO postgres;
 -- object: sharadar.scale | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.scale CASCADE;
 CREATE TABLE sharadar.scale (
-	scale_id smallint NOT NULL DEFAULT nextval('sharadar.scale_seq'::regclass),
+	scale_id integer NOT NULL DEFAULT nextval('sharadar.scale_seq'::regclass),
 	scale_code varchar(32) NOT NULL,
 	CONSTRAINT scale_pk PRIMARY KEY (scale_id),
 	CONSTRAINT scale_code_uq UNIQUE (scale_code)
@@ -344,7 +344,7 @@ ALTER SEQUENCE sharadar.cusip_seq OWNER TO postgres;
 -- object: sharadar.ticker_category | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.ticker_category CASCADE;
 CREATE TABLE sharadar.ticker_category (
-	ticker_category_id smallint NOT NULL DEFAULT nextval('sharadar.ticker_category_seq'::regclass),
+	ticker_category_id integer NOT NULL DEFAULT nextval('sharadar.ticker_category_seq'::regclass),
 	ticker_category_code varchar(64),
 	CONSTRAINT ticker_category_pk PRIMARY KEY (ticker_category_id),
 	CONSTRAINT ticker_category_code_uq UNIQUE (ticker_category_code)
@@ -371,7 +371,7 @@ ALTER SEQUENCE sharadar.exchange_seq OWNER TO postgres;
 -- object: sharadar.exchange | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.exchange CASCADE;
 CREATE TABLE sharadar.exchange (
-	exchange_id smallint NOT NULL DEFAULT nextval('sharadar.exchange_seq'::regclass),
+	exchange_id integer NOT NULL DEFAULT nextval('sharadar.exchange_seq'::regclass),
 	exchange_code varchar(32) NOT NULL,
 	CONSTRAINT exchange_pk PRIMARY KEY (exchange_id),
 	CONSTRAINT exchange_code_uq UNIQUE (exchange_code)
@@ -398,7 +398,7 @@ ALTER SEQUENCE sharadar.currency_seq OWNER TO postgres;
 -- object: sharadar.currency | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.currency CASCADE;
 CREATE TABLE sharadar.currency (
-	currency_id smallint NOT NULL DEFAULT nextval('sharadar.currency_seq'::regclass),
+	currency_id integer NOT NULL DEFAULT nextval('sharadar.currency_seq'::regclass),
 	currency_code varchar(8) NOT NULL,
 	CONSTRAINT currency_pk PRIMARY KEY (currency_id),
 	CONSTRAINT currency_code_uq UNIQUE (currency_code)
@@ -411,7 +411,7 @@ ALTER TABLE sharadar.currency OWNER TO postgres;
 -- object: sharadar.sector_code_type | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.sector_code_type CASCADE;
 CREATE TABLE sharadar.sector_code_type (
-	sector_code_type_id smallint NOT NULL DEFAULT nextval('sharadar.sector_code_type_seq'::regclass),
+	sector_code_type_id integer NOT NULL DEFAULT nextval('sharadar.sector_code_type_seq'::regclass),
 	sector_code_type_code varchar(32) NOT NULL,
 	CONSTRAINT sector_code_type_pk PRIMARY KEY (sector_code_type_id)
 
@@ -455,8 +455,7 @@ CREATE TABLE sharadar.equity_price (
 	dividends money NOT NULL,
 	close_unadj money NOT NULL,
 	last_updated date NOT NULL,
-	CONSTRAINT equity_price_pk PRIMARY KEY (equity_price_id),
-	CONSTRAINT ticker_price_date_uq UNIQUE (ticker_id,price_date)
+	CONSTRAINT equity_price_pk PRIMARY KEY (equity_price_id)
 
 );
 -- ddl-end --
@@ -575,7 +574,7 @@ ALTER TABLE sharadar.security_type OWNER TO postgres;
 CREATE TABLE sharadar.fundamentals (
 	fundamentals_id integer NOT NULL DEFAULT nextval('sharadar.fundamentals_seq'::regclass),
 	ticker_id integer NOT NULL,
-	dimension_type_id smallint NOT NULL,
+	dimension_type_id integer NOT NULL,
 	calendar_date date NOT NULL,
 	date_key date NOT NULL,
 	report_period date NOT NULL,
@@ -817,7 +816,7 @@ ALTER SEQUENCE sharadar.dimension_type_seq OWNER TO postgres;
 -- object: sharadar.dimension_type | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.dimension_type CASCADE;
 CREATE TABLE sharadar.dimension_type (
-	dimension_type_id smallint NOT NULL DEFAULT nextval('sharadar.dimension_type_seq'::regclass),
+	dimension_type_id integer NOT NULL DEFAULT nextval('sharadar.dimension_type_seq'::regclass),
 	dimension_type_code varchar(8) NOT NULL,
 	CONSTRAINT dimension_type_pk PRIMARY KEY (dimension_type_id)
 
@@ -933,6 +932,28 @@ CREATE UNIQUE INDEX corp_action_uq_idx ON sharadar.corp_action
 	  ticker_id,
 	  corp_action_date,
 	  corp_action_type_id
+	);
+-- ddl-end --
+
+-- object: equity_price_uq_idx | type: INDEX --
+-- DROP INDEX IF EXISTS sharadar.equity_price_uq_idx CASCADE;
+CREATE UNIQUE INDEX equity_price_uq_idx ON sharadar.equity_price
+	USING btree
+	(
+	  ticker_id,
+	  price_date
+	);
+-- ddl-end --
+
+-- object: fundamentals_uq_idx | type: INDEX --
+-- DROP INDEX IF EXISTS sharadar.fundamentals_uq_idx CASCADE;
+CREATE UNIQUE INDEX fundamentals_uq_idx ON sharadar.fundamentals
+	USING btree
+	(
+	  ticker_id,
+	  dimension_type_id,
+	  date_key,
+	  report_period
 	);
 -- ddl-end --
 

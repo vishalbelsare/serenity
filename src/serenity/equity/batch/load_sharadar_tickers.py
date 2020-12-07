@@ -1,66 +1,60 @@
-import logging
+import datetime
 
-import fire
-import pandas as pd
-import quandl
+import luigi
 
-from serenity.equity.sharadar_api import init_quandl, create_sharadar_session, clean_nulls, yes_no_to_bool
+from serenity.equity.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
+from serenity.equity.sharadar_api import clean_nulls, yes_no_to_bool
 from serenity.equity.sharadar_refdata import Exchange, TickerCategory, Sector, Scale, Currency, Ticker
-from serenity.utils import init_logging
-
-
-logger = logging.getLogger(__name__)
 
 
 # noinspection DuplicatedCode
-def load_tickers():
-    session = create_sharadar_session()
-    load_path = 'sharadar_tickers.zip'
-    logger.info(f'downloading ticker data to {load_path}')
-    quandl.export_table('SHARADAR/TICKERS', filename=load_path)
-    df = pd.read_csv(load_path)
-    logger.info(f'loaded {len(df)} rows of ticker CSV data from {load_path}')
+class LoadSharadarTickersTask(LoadSharadarTableTask):
+    start_date = luigi.DateParameter(default=datetime.date.today())
+    end_date = luigi.DateParameter(default=datetime.date.today())
 
-    row_count = 0
-    for index, row in df.iterrows():
+    def requires(self):
+        yield ExportQuandlTableTask(table_name='SHARADAR/TICKERS', date_column='lastupdated',
+                                    start_date=self.start_date, end_date=self.end_date)
+
+    def process_row(self, index, row):
         table_name = row['table']
         perma_ticker_id = row['permaticker']
         ticker = row['ticker']
         if ticker == 'N/A':
             ticker = None
         name = row['name']
-        exchange = Exchange.get_or_create(session, clean_nulls(row['exchange']))
+        exchange = Exchange.get_or_create(self.session, clean_nulls(row['exchange']))
         is_delisted = yes_no_to_bool(row['isdelisted'])
-        category = TickerCategory.get_or_create(session, clean_nulls(row['category']))
+        category = TickerCategory.get_or_create(self.session, clean_nulls(row['category']))
 
         cusips = row['cusips']
 
         sic_sector_code = clean_nulls(row['siccode'])
         sic_sector = clean_nulls(row['sicsector'])
         sic_industry = clean_nulls(row['sicindustry'])
-        sic_sector_map = Sector.get_or_create(session, sector_code_type_code='SIC', sector_code=sic_sector_code,
+        sic_sector_map = Sector.get_or_create(self.session, sector_code_type_code='SIC', sector_code=sic_sector_code,
                                               sector=sic_sector, industry=sic_industry)
 
         fama_sector = clean_nulls(row['famasector'])
         fama_industry = clean_nulls(row['famaindustry'])
-        fama_sector_map = Sector.get_or_create(session, sector_code_type_code='FAMA', sector_code=None,
+        fama_sector_map = Sector.get_or_create(self.session, sector_code_type_code='FAMA', sector_code=None,
                                                sector=fama_sector, industry=fama_industry)
 
         sector = clean_nulls(row['sector'])
         industry = clean_nulls(row['industry'])
-        sharadar_sector_map = Sector.get_or_create(session, sector_code_type_code='Sharadar', sector_code=None,
+        sharadar_sector_map = Sector.get_or_create(self.session, sector_code_type_code='Sharadar', sector_code=None,
                                                    sector=sector, industry=industry)
 
         market_cap_scale_code = clean_nulls(row['scalemarketcap'])
-        market_cap_scale = Scale.get_or_create(session, market_cap_scale_code)
+        market_cap_scale = Scale.get_or_create(self.session, market_cap_scale_code)
 
         revenue_scale_code = clean_nulls(row['scalerevenue'])
-        revenue_scale = Scale.get_or_create(session, revenue_scale_code)
+        revenue_scale = Scale.get_or_create(self.session, revenue_scale_code)
 
         related_tickers = row['relatedtickers']
 
         currency_code = row['currency']
-        currency = Currency.get_or_create(session, currency_code)
+        currency = Currency.get_or_create(self.session, currency_code)
 
         location = row['location']
         last_updated = clean_nulls(row['lastupdated'])
@@ -72,7 +66,7 @@ def load_tickers():
         sec_filings = row['secfilings']
         company_site = row['companysite']
 
-        ticker_entity = Ticker.find_by_perma_id(session, perma_ticker_id)
+        ticker_entity = Ticker.find_by_perma_id(self.session, perma_ticker_id)
         if ticker_entity is not None:
             ticker_entity.table_name = table_name
             ticker_entity.ticker = ticker
@@ -108,17 +102,4 @@ def load_tickers():
                                    first_price_date=first_price_date, last_price_date=last_price_date,
                                    first_quarter=first_quarter, last_quarter=last_quarter, secfilings=sec_filings,
                                    company_site=company_site)
-        session.add(ticker_entity)
-
-        if row_count > 0 and row_count % 1000 == 0:
-            logger.info(f'{row_count} rows loaded; flushing next 1000 rows to database')
-            session.commit()
-        row_count += 1
-
-    session.commit()
-
-
-if __name__ == '__main__':
-    init_logging()
-    init_quandl()
-    fire.Fire(load_tickers)
+        self.session.add(ticker_entity)
