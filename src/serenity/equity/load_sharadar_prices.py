@@ -11,8 +11,9 @@ def backfill_sharadar_prices():
     init_quandl()
     session = create_sharadar_session()
 
-    quandl.export_table('SHARADAR/SEP', filename='sharadar_prices.zip')
-    df = pd.read_csv('sharadar_prices.zip')
+    load_path = 'sharadar_prices.zip'
+    quandl.export_table('SHARADAR/SEP', filename=load_path)
+    df = pd.read_csv(load_path)
     row_count = 0
     for index, row in df.iterrows():
         ticker_code = row['ticker']

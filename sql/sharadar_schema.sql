@@ -166,18 +166,18 @@ CREATE TABLE sharadar.unit_type (
 ALTER TABLE sharadar.unit_type OWNER TO postgres;
 -- ddl-end --
 
--- object: sharadar.event_code | type: TABLE --
--- DROP TABLE IF EXISTS sharadar.event_code CASCADE;
-CREATE TABLE sharadar.event_code (
-	event_code_id integer NOT NULL,
-	event_code varchar(64) NOT NULL,
-	event_description varchar(256) NOT NULL,
-	CONSTRAINT event_code_pk PRIMARY KEY (event_code_id),
-	CONSTRAINT event_code_uq UNIQUE (event_code)
-
-);
+-- object: sharadar.event_code_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.event_code_seq CASCADE;
+CREATE SEQUENCE sharadar.event_code_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
 -- ddl-end --
-ALTER TABLE sharadar.event_code OWNER TO postgres;
+ALTER SEQUENCE sharadar.event_code_seq OWNER TO postgres;
 -- ddl-end --
 
 -- object: sharadar.event | type: TABLE --
@@ -427,18 +427,18 @@ INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_cod
 INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_code) VALUES (E'3', E'other');
 -- ddl-end --
 
--- object: sharadar.event_code_seq | type: SEQUENCE --
--- DROP SEQUENCE IF EXISTS sharadar.event_code_seq CASCADE;
-CREATE SEQUENCE sharadar.event_code_seq
-	INCREMENT BY 1
-	MINVALUE 0
-	MAXVALUE 2147483647
-	START WITH 1
-	CACHE 1
-	NO CYCLE
-	OWNED BY NONE;
+-- object: sharadar.event_code | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.event_code CASCADE;
+CREATE TABLE sharadar.event_code (
+	event_code_id integer NOT NULL DEFAULT nextval('sharadar.event_code_seq'::regclass),
+	event_code integer NOT NULL,
+	event_description varchar(256) NOT NULL,
+	CONSTRAINT event_code_pk PRIMARY KEY (event_code_id),
+	CONSTRAINT event_code_uq UNIQUE (event_code)
+
+);
 -- ddl-end --
-ALTER SEQUENCE sharadar.event_code_seq OWNER TO postgres;
+ALTER TABLE sharadar.event_code OWNER TO postgres;
 -- ddl-end --
 
 -- object: sharadar.equity_price | type: TABLE --
@@ -484,10 +484,10 @@ ALTER TABLE sharadar.institutional_holdings OWNER TO postgres;
 -- object: sharadar.insider_holdings | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.insider_holdings CASCADE;
 CREATE TABLE sharadar.insider_holdings (
-	insider_holdings_id smallint NOT NULL DEFAULT nextval('sharadar.insider_holdings_seq'::regclass),
+	insider_holdings_id integer NOT NULL DEFAULT nextval('sharadar.insider_holdings_seq'::regclass),
 	ticker_id integer NOT NULL,
 	filing_date date NOT NULL,
-	form_type_id smallint NOT NULL,
+	form_type_id integer NOT NULL,
 	issuer_name varchar(128) NOT NULL,
 	owner_name varchar(128) NOT NULL,
 	officer_title varchar(128),
@@ -495,14 +495,14 @@ CREATE TABLE sharadar.insider_holdings (
 	is_officer bool NOT NULL,
 	is_ten_percent_owner bool NOT NULL,
 	transaction_date date,
-	security_ad_type_id smallint,
-	transaction_type_id smallint,
+	security_ad_type_id integer,
+	transaction_type_id integer,
 	shares_owned_before_transaction int8,
 	transaction_shares int8,
 	shares_owned_following_transaction int8,
 	transaction_price_per_share money,
 	transaction_value money,
-	security_title_type_id smallint NOT NULL,
+	security_title_type_id integer NOT NULL,
 	direct_or_indirect char(1) NOT NULL,
 	nature_of_ownership varchar(128),
 	date_exercisable date,
@@ -709,7 +709,7 @@ ALTER SEQUENCE sharadar.form_type_seq OWNER TO postgres;
 -- object: sharadar.form_type | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.form_type CASCADE;
 CREATE TABLE sharadar.form_type (
-	form_type_id smallint NOT NULL DEFAULT nextval('sharadar.form_type_seq'::regclass),
+	form_type_id integer NOT NULL DEFAULT nextval('sharadar.form_type_seq'::regclass),
 	form_type_code varchar(32) NOT NULL,
 	CONSTRAINT form_type_pk PRIMARY KEY (form_type_id),
 	CONSTRAINT form_type_uq UNIQUE (form_type_code)
@@ -736,7 +736,7 @@ ALTER SEQUENCE sharadar.security_ad_seq OWNER TO postgres;
 -- object: sharadar.security_ad_type | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.security_ad_type CASCADE;
 CREATE TABLE sharadar.security_ad_type (
-	security_ad_type_id smallint NOT NULL DEFAULT nextval('sharadar.security_ad_seq'::regclass),
+	security_ad_type_id integer NOT NULL DEFAULT nextval('sharadar.security_ad_seq'::regclass),
 	security_ad_type_code varchar(8) NOT NULL,
 	CONSTRAINT security_ad_type_pk PRIMARY KEY (security_ad_type_id),
 	CONSTRAINT security_ad_type_uq UNIQUE (security_ad_type_code)
@@ -763,7 +763,7 @@ ALTER SEQUENCE sharadar.tranaction_type_seq OWNER TO postgres;
 -- object: sharadar.transaction_type | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.transaction_type CASCADE;
 CREATE TABLE sharadar.transaction_type (
-	transaction_type_id smallint NOT NULL DEFAULT nextval('sharadar.tranaction_type_seq'::regclass),
+	transaction_type_id integer NOT NULL DEFAULT nextval('sharadar.tranaction_type_seq'::regclass),
 	transaction_type_code varchar(8) NOT NULL,
 	CONSTRAINT transaction_type_pk PRIMARY KEY (transaction_type_id),
 	CONSTRAINT transaction_type_uq UNIQUE (transaction_type_code)
@@ -790,7 +790,7 @@ ALTER SEQUENCE sharadar.security_title_type_seq OWNER TO postgres;
 -- object: sharadar.security_title_type | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.security_title_type CASCADE;
 CREATE TABLE sharadar.security_title_type (
-	security_title_type_id smallint NOT NULL DEFAULT nextval('sharadar.security_title_type_seq'::regclass),
+	security_title_type_id integer NOT NULL DEFAULT nextval('sharadar.security_title_type_seq'::regclass),
 	security_title_type_code varchar(32) NOT NULL,
 	CONSTRAINT security_title_type_pk PRIMARY KEY (security_title_type_id),
 	CONSTRAINT security_title_type_uq UNIQUE (security_title_type_code)
@@ -910,6 +910,17 @@ CREATE UNIQUE INDEX insider_holdings_uq_idx ON sharadar.insider_holdings
 	  owner_name,
 	  form_type_id,
 	  row_num
+	);
+-- ddl-end --
+
+-- object: event_uq_idx | type: INDEX --
+-- DROP INDEX IF EXISTS sharadar.event_uq_idx CASCADE;
+CREATE UNIQUE INDEX event_uq_idx ON sharadar.event
+	USING btree
+	(
+	  ticker_id,
+	  event_date,
+	  event_code_id
 	);
 -- ddl-end --
 

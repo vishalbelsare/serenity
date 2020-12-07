@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date
@@ -45,52 +46,6 @@ class Indicator(Base):
     def find_by_name(cls, session: Session, table_name: str, indicator: str):
         return session.query(Indicator).filter(Indicator.table_name == table_name,
                                                Indicator.indicator == indicator).one_or_none()
-
-
-class Ticker(Base):
-    __tablename__ = 'ticker'
-
-    ticker_id = Column(Integer, primary_key=True)
-    table_name = Column(String(32))
-    perma_ticker_id = Column(Integer)
-    ticker = Column(String(16))
-    name = Column(String(256))
-    exchange_id = Column(Integer, ForeignKey('exchange.exchange_id'))
-    exchange = relationship('Exchange', lazy='joined')
-    is_delisted = Column(Boolean)
-    ticker_category_id = Column(Integer, ForeignKey('ticker_category.ticker_category_id'))
-    ticker_category = relationship('TickerCategory', lazy='joined')
-    cusips = Column(String(256))
-    sic_sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
-    sic_sector = relationship('Sector', foreign_keys=sic_sector_id, lazy='joined')
-    fama_sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
-    fama_sector = relationship('Sector', foreign_keys=fama_sector_id, lazy='joined')
-    sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
-    sector = relationship('Sector', foreign_keys=sector_id, lazy='joined')
-    market_cap_scale_id = Column(Integer, ForeignKey('scale.scale_id'))
-    market_cap_scale = relationship('Scale', foreign_keys=market_cap_scale_id, lazy='joined')
-    revenue_scale_id = Column(Integer, ForeignKey('scale.scale_id'))
-    revenue_scale = relationship('Scale', foreign_keys=revenue_scale_id, lazy='joined')
-    related_tickers = Column(String(256))
-    currency_id = Column(Integer, ForeignKey('currency.currency_id'))
-    currency = relationship('Currency', lazy='joined')
-    location = Column(String(64))
-    last_updated = Column(Date)
-    first_added = Column(Date)
-    first_price_date = Column(Date)
-    last_price_date = Column(Date)
-    first_quarter = Column(Date)
-    last_quarter = Column(Date)
-    secfilings = Column(String(256))
-    company_site = Column(String(256))
-
-    @classmethod
-    def find_by_perma_id(cls, session: Session, perma_ticker_id: int):
-        return session.query(Ticker).filter(Ticker.perma_ticker_id == perma_ticker_id).one_or_none()
-
-    @classmethod
-    def find_by_ticker(cls, session: Session, ticker: str):
-        return session.query(Ticker).filter(Ticker.ticker == ticker).one_or_none()
 
 
 class Exchange(Base):
@@ -239,6 +194,93 @@ class Currency(Base):
                 ccy = Currency(currency_code=currency_code)
                 session.add(ccy)
             return ccy
+
+
+class Ticker(Base):
+    __tablename__ = 'ticker'
+
+    ticker_id = Column(Integer, primary_key=True)
+    table_name = Column(String(32))
+    perma_ticker_id = Column(Integer)
+    ticker = Column(String(16))
+    name = Column(String(256))
+    exchange_id = Column(Integer, ForeignKey('exchange.exchange_id'))
+    exchange = relationship('Exchange', lazy='joined')
+    is_delisted = Column(Boolean)
+    ticker_category_id = Column(Integer, ForeignKey('ticker_category.ticker_category_id'))
+    ticker_category = relationship('TickerCategory', lazy='joined')
+    cusips = Column(String(256))
+    sic_sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
+    sic_sector = relationship('Sector', foreign_keys=sic_sector_id, lazy='joined')
+    fama_sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
+    fama_sector = relationship('Sector', foreign_keys=fama_sector_id, lazy='joined')
+    sector_id = Column(Integer, ForeignKey('sector_map.sector_map_id'))
+    sector = relationship('Sector', foreign_keys=sector_id, lazy='joined')
+    market_cap_scale_id = Column(Integer, ForeignKey('scale.scale_id'))
+    market_cap_scale = relationship('Scale', foreign_keys=market_cap_scale_id, lazy='joined')
+    revenue_scale_id = Column(Integer, ForeignKey('scale.scale_id'))
+    revenue_scale = relationship('Scale', foreign_keys=revenue_scale_id, lazy='joined')
+    related_tickers = Column(String(256))
+    currency_id = Column(Integer, ForeignKey('currency.currency_id'))
+    currency = relationship('Currency', lazy='joined')
+    location = Column(String(64))
+    last_updated = Column(Date)
+    first_added = Column(Date)
+    first_price_date = Column(Date)
+    last_price_date = Column(Date)
+    first_quarter = Column(Date)
+    last_quarter = Column(Date)
+    secfilings = Column(String(256))
+    company_site = Column(String(256))
+
+    @classmethod
+    def find_by_perma_id(cls, session: Session, perma_ticker_id: int):
+        return session.query(Ticker).filter(Ticker.perma_ticker_id == perma_ticker_id).one_or_none()
+
+    @classmethod
+    def find_by_ticker(cls, session: Session, ticker: str):
+        return session.query(Ticker).filter(Ticker.ticker == ticker).one_or_none()
+
+
+class EventCode(Base):
+    __tablename__ = 'event_code'
+
+    event_code_id = Column(Integer, primary_key=True)
+    event_code = Column(String(64))
+    event_description = Column(String(256))
+
+    @classmethod
+    def find_by_code(cls, session: Session, event_code: int):
+        return session.query(EventCode).filter(EventCode.event_code == event_code).one_or_none()
+
+    @classmethod
+    def get_or_create(cls, session: Session, event_code: int, event_description: str):
+        if event_code is None:
+            return None
+        else:
+            ccy = EventCode.find_by_code(session, event_code)
+            if ccy is None:
+                ccy = EventCode(event_code=event_code, event_description=event_description)
+                session.add(ccy)
+            return ccy
+
+
+class Event(Base):
+    __tablename__ = 'event'
+
+    event_id = Column(Integer, primary_key=True)
+    ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
+    ticker = relationship('Ticker', lazy='joined')
+    event_date = Column(Date)
+    event_code_id = Column(Integer, ForeignKey('event_code.event_code_id'))
+    event_code = relationship('EventCode', lazy='joined')
+
+    @classmethod
+    def find(cls, session: Session, ticker: str, event_date: datetime.date, event_code: int):
+        return session.query(Event).join(Ticker).join(EventCode).filter(Ticker.ticker == ticker,
+                                                                        Event.event_date == event_date,
+                                                                        EventCode.event_code == event_code)\
+            .one_or_none()
 
 
 def get_indicator_details(session: Session, table_name: str, indicator: str):
