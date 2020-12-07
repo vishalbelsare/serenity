@@ -33,6 +33,10 @@ def clean_nulls(value):
         return value
 
 
+def yes_no_to_bool(yes_no: str) -> bool:
+    return yes_no == 'Y'
+
+
 class USD(TypeDecorator):
     impl = MONEY
 

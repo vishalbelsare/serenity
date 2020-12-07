@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="16,213" last-zoom="1" max-obj-count="30"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,212" last-zoom="1" max-obj-count="30"
 	 default-schema="public" default-owner="postgres">
 <database name="sharadar" is-template="false" allow-conns="true">
 </database>
@@ -462,9 +462,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="units" not-null="true">
-		<type name="integer" length="0"/>
+		<type name="int8" length="0"/>
 	</column>
-	<column name="price" not-null="true">
+	<column name="price">
 		<type name="money" length="0"/>
 	</column>
 	<constraint name="institutional_holdings_pk" type="pk-constr" table="sharadar.institutional_holdings">
@@ -472,10 +472,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="27" z-value="0">
+<table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="30" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1660" y="400"/>
+	<position x="1660" y="380"/>
 	<column name="insider_holdings_id" not-null="true" sequence="sharadar.insider_holdings_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -492,10 +492,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="varchar" length="128"/>
 	</column>
 	<column name="owner_name" not-null="true">
-		<type name="varchar" length="64"/>
+		<type name="varchar" length="128"/>
 	</column>
 	<column name="officer_title">
-		<type name="varchar" length="64"/>
+		<type name="varchar" length="128"/>
 	</column>
 	<column name="is_director" not-null="true">
 		<type name="bool" length="0"/>
@@ -506,19 +506,22 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="is_ten_percent_owner" not-null="true">
 		<type name="bool" length="0"/>
 	</column>
-	<column name="security_ad_type_id" not-null="true">
+	<column name="transaction_date">
+		<type name="date" length="0"/>
+	</column>
+	<column name="security_ad_type_id">
 		<type name="smallint" length="0"/>
 	</column>
 	<column name="transaction_type_id">
 		<type name="smallint" length="0"/>
 	</column>
-	<column name="shares_owned_before_transaction" not-null="true">
+	<column name="shares_owned_before_transaction">
 		<type name="int8" length="0"/>
 	</column>
 	<column name="transaction_shares">
 		<type name="int8" length="0"/>
 	</column>
-	<column name="shares_owned_following_transaction" not-null="true">
+	<column name="shares_owned_following_transaction">
 		<type name="int8" length="0"/>
 	</column>
 	<column name="transaction_price_per_share">
@@ -545,6 +548,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="expiration_date">
 		<type name="date" length="0"/>
 	</column>
+	<column name="row_num" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
 	<constraint name="insider_holdings_pk" type="pk-constr" table="sharadar.insider_holdings">
 		<columns names="insider_holdings_id" ref-type="src-columns"/>
 	</constraint>
@@ -568,6 +574,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<constraint name="institutional_investor_pk" type="pk-constr" table="sharadar.institutional_investor">
 		<columns names="institutional_investor_id" ref-type="src-columns"/>
 	</constraint>
+	<constraint name="institutional_investor_uq" type="uq-constr" table="sharadar.institutional_investor">
+		<columns names="institutional_investor_name" ref-type="src-columns"/>
+	</constraint>
 </table>
 
 <sequence name="security_type_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
@@ -587,6 +596,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<constraint name="security_type_pk" type="pk-constr" table="sharadar.security_type">
 		<columns names="security_type_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="security_type_uq" type="uq-constr" table="sharadar.security_type">
+		<columns names="security_type_code" ref-type="src-columns"/>
 	</constraint>
 </table>
 
@@ -948,10 +960,13 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="smallint" length="0"/>
 	</column>
 	<column name="form_type_code" not-null="true">
-		<type name="varchar" length="8"/>
+		<type name="varchar" length="32"/>
 	</column>
 	<constraint name="form_type_pk" type="pk-constr" table="sharadar.form_type">
 		<columns names="form_type_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="form_type_uq" type="uq-constr" table="sharadar.form_type">
+		<columns names="form_type_code" ref-type="src-columns"/>
 	</constraint>
 </table>
 
@@ -970,8 +985,11 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="security_ad_type_code" not-null="true">
 		<type name="varchar" length="8"/>
 	</column>
-	<constraint name="security_ad_pk" type="pk-constr" table="sharadar.security_ad_type">
+	<constraint name="security_ad_type_pk" type="pk-constr" table="sharadar.security_ad_type">
 		<columns names="security_ad_type_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="security_ad_type_uq" type="uq-constr" table="sharadar.security_ad_type">
+		<columns names="security_ad_type_code" ref-type="src-columns"/>
 	</constraint>
 </table>
 
@@ -993,6 +1011,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<constraint name="transaction_type_pk" type="pk-constr" table="sharadar.transaction_type">
 		<columns names="transaction_type_id" ref-type="src-columns"/>
 	</constraint>
+	<constraint name="transaction_type_uq" type="uq-constr" table="sharadar.transaction_type">
+		<columns names="transaction_type_code" ref-type="src-columns"/>
+	</constraint>
 </table>
 
 <sequence name="security_title_type_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
@@ -1012,6 +1033,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<constraint name="security_title_type_pk" type="pk-constr" table="sharadar.security_title_type">
 		<columns names="security_title_type_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="security_title_type_uq" type="uq-constr" table="sharadar.security_title_type">
+		<columns names="security_title_type_code" ref-type="src-columns"/>
 	</constraint>
 </table>
 
@@ -1104,22 +1128,65 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		</idxelement>
 </index>
 
+<index name="institutional_holdings_uq_idx" table="sharadar.institutional_holdings"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="ticker_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="institutional_investor_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="security_type_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="calendar_date"/>
+		</idxelement>
+</index>
+
+<index name="insider_holdings_uq_idx" table="sharadar.insider_holdings"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="ticker_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="filing_date"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="owner_name"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="form_type_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="row_num"/>
+		</idxelement>
+</index>
+
 <constraint name="unit_type_fk" type="fk-constr" comparison-type="MATCH FULL"
 	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.unit_type" table="sharadar.indicators">
 	<columns names="unit_type_id" ref-type="src-columns"/>
 	<columns names="unit_type_id" ref-type="dst-columns"/>
 </constraint>
 
+<constraint name="event_code_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.event_code" table="sharadar.event">
+	<columns names="event_code_id" ref-type="src-columns"/>
+	<columns names="event_code_id" ref-type="dst-columns"/>
+</constraint>
+
 <constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.corp_action">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.event">
 	<columns names="ticker_id" ref-type="src-columns"/>
 	<columns names="ticker_id" ref-type="dst-columns"/>
 </constraint>
 
-<constraint name="corp_action_type_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.corp_action_type" table="sharadar.corp_action">
-	<columns names="corp_action_type_id" ref-type="src-columns"/>
-	<columns names="corp_action_type_id" ref-type="dst-columns"/>
+<constraint name="sector_code_type_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.sector_code_type" table="sharadar.sector_map">
+	<columns names="sector_code_type_id" ref-type="src-columns"/>
+	<columns names="sector_code_type_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="exchange_fk" type="fk-constr" comparison-type="MATCH FULL"
@@ -1171,15 +1238,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 </constraint>
 
 <constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.fundamentals">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.equity_price">
 	<columns names="ticker_id" ref-type="src-columns"/>
 	<columns names="ticker_id" ref-type="dst-columns"/>
-</constraint>
-
-<constraint name="dimension_type_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.dimension_type" table="sharadar.fundamentals">
-	<columns names="dimension_type_id" ref-type="src-columns"/>
-	<columns names="dimension_type_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
@@ -1198,24 +1259,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.security_type" table="sharadar.institutional_holdings">
 	<columns names="security_type_id" ref-type="src-columns"/>
 	<columns names="security_type_id" ref-type="dst-columns"/>
-</constraint>
-
-<constraint name="event_code_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.event_code" table="sharadar.event">
-	<columns names="event_code_id" ref-type="src-columns"/>
-	<columns names="event_code_id" ref-type="dst-columns"/>
-</constraint>
-
-<constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.event">
-	<columns names="ticker_id" ref-type="src-columns"/>
-	<columns names="ticker_id" ref-type="dst-columns"/>
-</constraint>
-
-<constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.equity_price">
-	<columns names="ticker_id" ref-type="src-columns"/>
-	<columns names="ticker_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
@@ -1248,10 +1291,28 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<columns names="security_title_type_id" ref-type="dst-columns"/>
 </constraint>
 
-<constraint name="sector_code_type_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.sector_code_type" table="sharadar.sector_map">
-	<columns names="sector_code_type_id" ref-type="src-columns"/>
-	<columns names="sector_code_type_id" ref-type="dst-columns"/>
+<constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.fundamentals">
+	<columns names="ticker_id" ref-type="src-columns"/>
+	<columns names="ticker_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="dimension_type_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.dimension_type" table="sharadar.fundamentals">
+	<columns names="dimension_type_id" ref-type="src-columns"/>
+	<columns names="dimension_type_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="ticker_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.ticker" table="sharadar.corp_action">
+	<columns names="ticker_id" ref-type="src-columns"/>
+	<columns names="ticker_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="corp_action_type_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.corp_action_type" table="sharadar.corp_action">
+	<columns names="corp_action_type_id" ref-type="src-columns"/>
+	<columns names="corp_action_type_id" ref-type="dst-columns"/>
 </constraint>
 
 <relationship name="rel_indicators_unit_type" type="relfk" layer="0"
@@ -1396,7 +1457,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_insider_holdings_security_ad" type="relfk" layer="0"
 	 src-table="sharadar.insider_holdings"
 	 dst-table="sharadar.security_ad_type" reference-fk="security_ad_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_insider_holdings_transaction_type" type="relfk" layer="0"
 	 src-table="sharadar.insider_holdings"
