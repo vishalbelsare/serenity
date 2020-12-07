@@ -1,3 +1,5 @@
+import logging
+
 import fire
 import pandas as pd
 import quandl
@@ -5,20 +7,26 @@ import quandl
 from serenity.equity.sharadar_api import init_quandl, create_sharadar_session
 from serenity.equity.sharadar_fundamentals import DimensionType, Fundamentals
 from serenity.equity.sharadar_refdata import Ticker
+from serenity.utils import init_logging
+
+logger = logging.getLogger(__name__)
 
 
 def backfill_sharadar_fundamentals():
-    init_quandl()
     session = create_sharadar_session()
 
     load_path = 'sharadar_fundamentals.zip'
+    logger.info(f'downloading fundamentals data to {load_path}')
     quandl.export_table('SHARADAR/SF1', filename=load_path)
     df = pd.read_csv(load_path)
+    logger.info(f'loaded {len(df)} rows of fundamentals CSV data from {load_path}')
+
     row_count = 0
     for index, row in df.iterrows():
         ticker_code = row['ticker']
         ticker = Ticker.find_by_ticker(session, ticker_code)
         if ticker is None:
+            logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
             continue
 
         dimension_type_code = row['dimension']
@@ -163,7 +171,8 @@ def backfill_sharadar_fundamentals():
                                     tbvps=tbvps, working_capital=working_capital)
         session.add(fundamentals)
 
-        if row_count % 1000 == 0:
+        if row_count > 0 and row_count % 1000 == 0:
+            logger.info(f'{row_count} rows loaded; flushing next 1000 rows to database')
             session.commit()
         row_count += 1
 
@@ -178,4 +187,6 @@ def clean_nan(value):
 
 
 if __name__ == '__main__':
+    init_logging()
+    init_quandl()
     fire.Fire(backfill_sharadar_fundamentals)

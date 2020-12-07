@@ -1,48 +1,27 @@
+import logging
+
 import fire
 import pandas as pd
 import quandl
-from sqlalchemy.orm import Session
 
 from serenity.equity.sharadar_api import init_quandl, create_sharadar_session, clean_nulls, yes_no_to_bool
-from serenity.equity.sharadar_refdata import UnitType, Indicator, Exchange, TickerCategory, Sector, Scale, Currency, \
-    Ticker
+from serenity.equity.sharadar_refdata import Exchange, TickerCategory, Sector, Scale, Currency, Ticker
+from serenity.utils import init_logging
 
 
-def load_sharadar_refdata():
-    init_quandl()
-    session = create_sharadar_session()
-    load_indicators(session)
-    load_tickers(session)
-    session.commit()
-
-
-def load_indicators(session: Session):
-    df = quandl.get_table("SHARADAR/INDICATORS", paginate=True)
-    for index, row in df.iterrows():
-        table_name, indicator, is_filter, is_primary_key, title, description, unit_type_code = row
-        is_filter = yes_no_to_bool(is_filter)
-        is_primary_key = yes_no_to_bool(is_primary_key)
-
-        unit_type = UnitType.get_or_create(session, unit_type_code)
-
-        ind_entity = Indicator.find_by_name(session, table_name, indicator)
-        if ind_entity is None:
-            ind_entity = Indicator(table_name=table_name,
-                                   indicator=indicator,
-                                   is_filter=is_filter,
-                                   is_primary_key=is_primary_key,
-                                   title=title,
-                                   description=description,
-                                   unit_type=unit_type)
-            session.add(ind_entity)
+logger = logging.getLogger(__name__)
 
 
 # noinspection DuplicatedCode
-def load_tickers(session: Session):
+def load_tickers():
+    session = create_sharadar_session()
     load_path = 'sharadar_tickers.zip'
+    logger.info(f'downloading ticker data to {load_path}')
     quandl.export_table('SHARADAR/TICKERS', filename=load_path)
     df = pd.read_csv(load_path)
+    logger.info(f'loaded {len(df)} rows of ticker CSV data from {load_path}')
 
+    row_count = 0
     for index, row in df.iterrows():
         table_name = row['table']
         perma_ticker_id = row['permaticker']
@@ -118,8 +97,6 @@ def load_tickers(session: Session):
             ticker_entity.last_quarter = last_quarter
             ticker_entity.secfilings = sec_filings
             ticker_entity.company_site = company_site
-
-            session.add(ticker_entity)
         else:
             # noinspection PyTypeChecker
             ticker_entity = Ticker(table_name=table_name, ticker=ticker, name=name, perma_ticker_id=perma_ticker_id,
@@ -131,10 +108,17 @@ def load_tickers(session: Session):
                                    first_price_date=first_price_date, last_price_date=last_price_date,
                                    first_quarter=first_quarter, last_quarter=last_quarter, secfilings=sec_filings,
                                    company_site=company_site)
-            session.add(ticker_entity)
+        session.add(ticker_entity)
+
+        if row_count > 0 and row_count % 1000 == 0:
+            logger.info(f'{row_count} rows loaded; flushing next 1000 rows to database')
+            session.commit()
+        row_count += 1
 
     session.commit()
 
 
 if __name__ == '__main__':
-    fire.Fire(load_sharadar_refdata)
+    init_logging()
+    init_quandl()
+    fire.Fire(load_tickers)

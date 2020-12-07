@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import socket
-from enum import Enum
 
 import websockets
 from tau.core import MutableSignal, NetworkScheduler

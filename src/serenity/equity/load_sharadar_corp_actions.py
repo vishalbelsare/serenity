@@ -1,22 +1,31 @@
+import logging
+
 import fire
 import pandas as pd
 import quandl
 
 from serenity.equity.sharadar_api import init_quandl, create_sharadar_session, clean_nulls
 from serenity.equity.sharadar_refdata import Ticker, CorporateActionType, CorporateAction
+from serenity.utils import init_logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def load_sharadar_corp_actions():
-    init_quandl()
     session = create_sharadar_session()
     load_path = 'sharadar_corp_actions.zip'
+    logger.info(f'downloading corporate actions data to {load_path}')
     quandl.export_table('SHARADAR/ACTIONS', filename=load_path)
     df = pd.read_csv(load_path)
+    logger.info(f'loaded {len(df)} rows of corporate actions CSV data from {load_path}')
+
     row_count = 0
     for index, row in df.iterrows():
         ticker_code = clean_nulls(row['ticker'])
         ticker = Ticker.find_by_ticker(session, ticker_code)
         if ticker is None:
+            logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
             continue
 
         corp_action_date = row['date']
@@ -41,7 +50,8 @@ def load_sharadar_corp_actions():
 
         session.add(corp_action)
 
-        if row_count % 1000 == 0:
+        if row_count > 0 and row_count % 1000 == 0:
+            logger.info(f'{row_count} rows loaded; flushing next 1000 rows to database')
             session.commit()
         row_count += 1
 
@@ -49,4 +59,6 @@ def load_sharadar_corp_actions():
 
 
 if __name__ == '__main__':
+    init_logging()
+    init_quandl()
     fire.Fire(load_sharadar_corp_actions)
