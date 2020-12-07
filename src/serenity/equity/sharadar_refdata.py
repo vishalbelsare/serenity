@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, DECIMAL
 from sqlalchemy.orm import relationship, Session
 
 from serenity.equity.sharadar_api import Base
@@ -239,6 +239,8 @@ class Ticker(Base):
 
     @classmethod
     def find_by_ticker(cls, session: Session, ticker: str):
+        if ticker is None:
+            return None
         return session.query(Ticker).filter(Ticker.ticker == ticker).one_or_none()
 
 
@@ -246,7 +248,7 @@ class EventCode(Base):
     __tablename__ = 'event_code'
 
     event_code_id = Column(Integer, primary_key=True)
-    event_code = Column(String(64))
+    event_code = Column(Integer)
     event_description = Column(String(256))
 
     @classmethod
@@ -281,6 +283,51 @@ class Event(Base):
                                                                         Event.event_date == event_date,
                                                                         EventCode.event_code == event_code)\
             .one_or_none()
+
+
+class CorporateActionType(Base):
+    __tablename__ = 'corp_action_type'
+
+    corp_action_type_id = Column(Integer, primary_key=True)
+    corp_action_type_code = Column(String(8))
+
+    @classmethod
+    def find_by_code(cls, session: Session, corp_action_type_code: str):
+        return session.query(CorporateActionType)\
+            .filter(CorporateActionType.corp_action_type_code == corp_action_type_code).one_or_none()
+
+    @classmethod
+    def get_or_create(cls, session: Session, corp_action_type_code: str):
+        if corp_action_type_code is None:
+            return None
+        else:
+            ccy = CorporateActionType.find_by_code(session, corp_action_type_code)
+            if ccy is None:
+                ccy = CorporateActionType(corp_action_type_code=corp_action_type_code)
+                session.add(ccy)
+            return ccy
+
+
+class CorporateAction(Base):
+    __tablename__ = 'corp_action'
+
+    corp_action_id = Column(Integer, primary_key=True)
+    corp_action_date = Column(Date)
+    ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
+    ticker = relationship('Ticker', lazy='joined')
+    corp_action_type_id = Column(Integer, ForeignKey('corp_action_type.corp_action_type_id'))
+    corp_action_type = relationship('CorporateActionType', lazy='joined')
+    name = Column(String(128))
+    value = Column(DECIMAL)
+    contra_ticker = Column(String(16))
+    contra_name = Column(String(128))
+
+    @classmethod
+    def find(cls, session: Session, ticker: str, corp_action_date: datetime.date, corp_action_type_code: str):
+        return session.query(CorporateAction).join(Ticker).join(CorporateActionType)\
+            .filter(Ticker.ticker == ticker,
+                    CorporateAction.corp_action_date == corp_action_date,
+                    CorporateActionType.corp_action_type_code == corp_action_type_code).one_or_none()
 
 
 def get_indicator_details(session: Session, table_name: str, indicator: str):

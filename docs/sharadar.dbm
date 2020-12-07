@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,212" last-zoom="1" max-obj-count="30"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,825" last-zoom="1" max-obj-count="30"
 	 default-schema="public" default-owner="postgres">
 <database name="sharadar" is-template="false" allow-conns="true">
 </database>
@@ -58,7 +58,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="indicators" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="300" y="500"/>
+	<position x="300" y="540"/>
 	<column name="indicator_id" not-null="true" sequence="sharadar.indicator_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -91,7 +91,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="unit_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="480" y="300"/>
+	<position x="480" y="340"/>
 	<column name="unit_type_id" not-null="true" sequence="sharadar.unit_type_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -106,31 +106,15 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="event_code" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
+<sequence name="event_code_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="220" y="980"/>
-	<column name="event_code_id" not-null="true">
-		<type name="integer" length="0"/>
-	</column>
-	<column name="event_code" not-null="true">
-		<type name="varchar" length="64"/>
-	</column>
-	<column name="event_description" not-null="true">
-		<type name="varchar" length="256"/>
-	</column>
-	<constraint name="event_code_pk" type="pk-constr" table="sharadar.event_code">
-		<columns names="event_code_id" ref-type="src-columns"/>
-	</constraint>
-	<constraint name="event_code_uq" type="uq-constr" table="sharadar.event_code">
-		<columns names="event_code" ref-type="src-columns"/>
-	</constraint>
-</table>
+</sequence>
 
 <table name="event" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="320" y="760"/>
+	<position x="320" y="800"/>
 	<column name="event_id" not-null="true" sequence="sharadar.event_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -171,7 +155,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="sector_map" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1000" y="760"/>
+	<position x="1000" y="800"/>
 	<column name="sector_map_id" not-null="true" sequence="sharadar.sector_map_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -200,7 +184,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="ticker" layer="0" collapse-mode="2" max-obj-count="30" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="720" y="80"/>
+	<position x="720" y="120"/>
 	<column name="ticker_id" not-null="true" sequence="sharadar.ticker_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -284,7 +268,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="scale" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1100" y="120"/>
+	<position x="1100" y="160"/>
 	<column name="scale_id" not-null="true" sequence="sharadar.scale_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -307,7 +291,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="ticker_category" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="420" y="100"/>
+	<position x="420" y="140"/>
 	<column name="ticker_category_id" not-null="true" sequence="sharadar.ticker_category_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -330,7 +314,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="exchange" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1380" y="340"/>
+	<position x="1380" y="380"/>
 	<column name="exchange_id" not-null="true" sequence="sharadar.exchange_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -353,7 +337,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="currency" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1120" y="240"/>
+	<position x="1120" y="280"/>
 	<column name="currency_id" not-null="true" sequence="sharadar.currency_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -371,7 +355,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="sector_code_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1240" y="1020"/>
+	<position x="1240" y="1060"/>
 	<column name="sector_code_type_id" not-null="true" sequence="sharadar.sector_code_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -389,15 +373,31 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</initial-data>
 </table>
 
-<sequence name="event_code_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
+<table name="event_code" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-</sequence>
+	<position x="220" y="1020"/>
+	<column name="event_code_id" not-null="true" sequence="sharadar.event_code_seq">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="event_code" not-null="true">
+		<type name="integer" length="64"/>
+	</column>
+	<column name="event_description" not-null="true">
+		<type name="varchar" length="256"/>
+	</column>
+	<constraint name="event_code_pk" type="pk-constr" table="sharadar.event_code">
+		<columns names="event_code_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="event_code_uq" type="uq-constr" table="sharadar.event_code">
+		<columns names="event_code" ref-type="src-columns"/>
+	</constraint>
+</table>
 
 <table name="equity_price" layer="0" collapse-mode="2" max-obj-count="13" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="620" y="780"/>
+	<position x="620" y="820"/>
 	<column name="equity_price_id" not-null="true" sequence="sharadar.equity_price_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -442,7 +442,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="institutional_holdings" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1540" y="880"/>
+	<position x="1540" y="920"/>
 	<column name="institutional_holdings_id" not-null="true" sequence="sharadar.institutional_holdings_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -475,9 +475,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="30" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1660" y="380"/>
+	<position x="1660" y="420"/>
 	<column name="insider_holdings_id" not-null="true" sequence="sharadar.insider_holdings_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="ticker_id" not-null="true">
 		<type name="integer" length="0"/>
@@ -486,7 +486,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="date" length="0"/>
 	</column>
 	<column name="form_type_id" not-null="true">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="issuer_name" not-null="true">
 		<type name="varchar" length="128"/>
@@ -510,10 +510,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="date" length="0"/>
 	</column>
 	<column name="security_ad_type_id">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="transaction_type_id">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="shares_owned_before_transaction">
 		<type name="int8" length="0"/>
@@ -531,7 +531,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="money" length="0"/>
 	</column>
 	<column name="security_title_type_id" not-null="true">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="direct_or_indirect" not-null="true">
 		<type name="char" length="1"/>
@@ -564,7 +564,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="institutional_investor" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1980" y="960"/>
+	<position x="1980" y="1000"/>
 	<column name="institutional_investor_id" not-null="true" sequence="sharadar.institutional_investor_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -587,7 +587,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="2000" y="780"/>
+	<position x="2000" y="820"/>
 	<column name="security_type_id" not-null="true" sequence="sharadar.security_type_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -605,7 +605,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="fundamentals" layer="0" collapse-mode="2" max-obj-count="134" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="900" y="940"/>
+	<position x="900" y="980"/>
 	<column name="fundamentals_id" not-null="true" sequence="sharadar.fundamentals_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -955,9 +955,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="form_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="2120" y="300"/>
+	<position x="2120" y="340"/>
 	<column name="form_type_id" not-null="true" sequence="sharadar.form_type_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="form_type_code" not-null="true">
 		<type name="varchar" length="32"/>
@@ -978,9 +978,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_ad_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1820" y="160"/>
+	<position x="1820" y="200"/>
 	<column name="security_ad_type_id" not-null="true" sequence="sharadar.security_ad_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="security_ad_type_code" not-null="true">
 		<type name="varchar" length="8"/>
@@ -1001,9 +1001,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="transaction_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1540" y="160"/>
+	<position x="1540" y="200"/>
 	<column name="transaction_type_id" not-null="true" sequence="sharadar.tranaction_type_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="transaction_type_code" not-null="true">
 		<type name="varchar" length="8"/>
@@ -1024,9 +1024,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="security_title_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="2200" y="620"/>
+	<position x="2200" y="660"/>
 	<column name="security_title_type_id" not-null="true" sequence="sharadar.security_title_type_seq">
-		<type name="smallint" length="0"/>
+		<type name="integer" length="0"/>
 	</column>
 	<column name="security_title_type_code" not-null="true">
 		<type name="varchar" length="32"/>
@@ -1047,7 +1047,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="dimension_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1440" y="2040"/>
+	<position x="1440" y="2080"/>
 	<column name="dimension_type_id" not-null="true" sequence="sharadar.dimension_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
@@ -1067,22 +1067,25 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="corp_action_type" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="260" y="1180"/>
+	<position x="260" y="1220"/>
 	<column name="corp_action_type_id" not-null="true" sequence="sharadar.corp_action_type_seq">
 		<type name="smallint" length="0"/>
 	</column>
-	<column name="corp_action_type_code">
+	<column name="corp_action_type_code" not-null="true">
 		<type name="varchar" length="8"/>
 	</column>
 	<constraint name="corp_action_type_pk" type="pk-constr" table="sharadar.corp_action_type">
 		<columns names="corp_action_type_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="corp_action_type_uq" type="uq-constr" table="sharadar.corp_action_type">
+		<columns names="corp_action_type_code" ref-type="src-columns"/>
 	</constraint>
 </table>
 
 <table name="corp_action" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="540" y="1460"/>
+	<position x="540" y="1500"/>
 	<column name="corp_action_id" not-null="true" sequence="sharadar.corporate_action_seq">
 		<type name="integer" length="0"/>
 	</column>
@@ -1162,6 +1165,34 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="row_num"/>
+		</idxelement>
+</index>
+
+<index name="event_uq_idx" table="sharadar.event"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="ticker_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="event_date"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="event_code_id"/>
+		</idxelement>
+</index>
+
+<index name="corp_action_uq_idx" table="sharadar.corp_action"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="ticker_id"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="corp_action_date"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="corp_action_type_id"/>
 		</idxelement>
 </index>
 

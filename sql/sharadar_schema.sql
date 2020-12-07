@@ -843,9 +843,10 @@ ALTER SEQUENCE sharadar.corp_action_type_seq OWNER TO postgres;
 -- object: sharadar.corp_action_type | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.corp_action_type CASCADE;
 CREATE TABLE sharadar.corp_action_type (
-	corp_action_type_id smallint NOT NULL DEFAULT nextval('sharadar.corp_action_type_seq'::regclass),
-	corp_action_type_code varchar(8),
-	CONSTRAINT corp_action_type_pk PRIMARY KEY (corp_action_type_id)
+	corp_action_type_id integer NOT NULL DEFAULT nextval('sharadar.corp_action_type_seq'::regclass),
+	corp_action_type_code varchar(32) NOT NULL,
+	CONSTRAINT corp_action_type_pk PRIMARY KEY (corp_action_type_id),
+	CONSTRAINT corp_action_type_uq UNIQUE (corp_action_type_code)
 
 );
 -- ddl-end --
@@ -858,11 +859,11 @@ CREATE TABLE sharadar.corp_action (
 	corp_action_id integer NOT NULL DEFAULT nextval('sharadar.corporate_action_seq'::regclass),
 	corp_action_date date NOT NULL,
 	ticker_id integer NOT NULL,
-	corp_action_type_id smallint NOT NULL,
-	name varchar(128),
-	value decimal(10,8),
+	corp_action_type_id integer NOT NULL,
+	name varchar(256),
+	value decimal(16,4),
 	contra_ticker varchar(16),
-	contra_name varchar(128),
+	contra_name varchar(256),
 	CONSTRAINT corp_action_pk PRIMARY KEY (corp_action_id)
 
 );
@@ -921,6 +922,17 @@ CREATE UNIQUE INDEX event_uq_idx ON sharadar.event
 	  ticker_id,
 	  event_date,
 	  event_code_id
+	);
+-- ddl-end --
+
+-- object: corp_action_uq_idx | type: INDEX --
+-- DROP INDEX IF EXISTS sharadar.corp_action_uq_idx CASCADE;
+CREATE UNIQUE INDEX corp_action_uq_idx ON sharadar.corp_action
+	USING btree
+	(
+	  ticker_id,
+	  corp_action_date,
+	  corp_action_type_id
 	);
 -- ddl-end --
 
