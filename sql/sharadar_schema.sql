@@ -4,6 +4,13 @@
 -- Project Site: pgmodeler.io
 -- Model Author: ---
 
+-- object: sharadar | type: ROLE --
+-- DROP ROLE IF EXISTS sharadar;
+CREATE ROLE sharadar WITH 
+	LOGIN
+	ENCRYPTED PASSWORD 'sharadardb';
+-- ddl-end --
+
 
 -- Database creation must be done outside a multicommand file.
 -- These commands were put in this file only as a convenience.
@@ -1173,3 +1180,9 @@ ON DELETE NO ACTION ON UPDATE NO ACTION;
 -- ddl-end --
 
 
+-- Appended SQL commands --
+GRANT USAGE ON SCHEMA sharadar TO sharadar;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA sharadar TO sharadar;
+GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA sharadar TO sharadar;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;
+-- ddl-end --

@@ -3,9 +3,19 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1.05" max-obj-count="30"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1.05" max-obj-count="31"
 	 default-schema="public" default-owner="postgres">
-<database name="sharadar" is-template="false" allow-conns="true">
+<role name="sharadar"
+      login="true"
+      encrypted="true"
+      password="sharadardb">
+</role>
+
+<database name="sharadar" is-template="false" allow-conns="true" append-at-eod="true">
+	<appended-sql><![CDATA[GRANT USAGE ON SCHEMA sharadar TO sharadar;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA sharadar TO sharadar;
+GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA sharadar TO sharadar;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 </database>
 
 <schema name="public" layer="0" fill-color="#e1e1e1" sql-disabled="true">
@@ -527,7 +537,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="transaction_value">
 		<type name="money" length="0"/>
 	</column>
-	<column name="security_title_type_id" not-null="true">
+	<column name="security_title_type_id">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="direct_or_indirect" not-null="true">
@@ -1221,6 +1231,49 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		</idxelement>
 </index>
 
+<sequence name="batch_status_seq" cycle="false" start="1" increment="1" min-value="0" max-value="2147483647" cache="1">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+</sequence>
+
+<table name="batch_status" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
+	<schema name="sharadar"/>
+	<role name="postgres"/>
+	<position x="1240" y="1220"/>
+	<column name="batch_status_id" not-null="true" sequence="sharadar.batch_status_seq">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="workflow_name" not-null="true">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="start_date">
+		<type name="date" length="0"/>
+	</column>
+	<column name="end_date">
+		<type name="date" length="0"/>
+	</column>
+	<column name="md5_checksum" not-null="true">
+		<type name="varchar" length="32"/>
+	</column>
+	<constraint name="batch_status_pk" type="pk-constr" table="sharadar.batch_status">
+		<columns names="batch_status_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<index name="batch_status_uq_idx" table="sharadar.batch_status"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="workflow_name"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="start_date"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="end_date"/>
+		</idxelement>
+</index>
+
 <constraint name="unit_type_fk" type="fk-constr" comparison-type="MATCH FULL"
 	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="sharadar.unit_type" table="sharadar.indicators">
 	<columns names="unit_type_id" ref-type="src-columns"/>
@@ -1523,7 +1576,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <relationship name="rel_insider_holdings_security_title_type" type="relfk" layer="0"
 	 src-table="sharadar.insider_holdings"
 	 dst-table="sharadar.security_title_type" reference-fk="security_title_type_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_fundamentals_dimension_type" type="relfk" layer="0"
 	 src-table="sharadar.fundamentals"
