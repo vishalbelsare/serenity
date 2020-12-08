@@ -501,7 +501,7 @@ CREATE TABLE sharadar.insider_holdings (
 	shares_owned_following_transaction int8,
 	transaction_price_per_share money,
 	transaction_value money,
-	security_title_type_id integer NOT NULL,
+	security_title_type_id integer,
 	direct_or_indirect char(1) NOT NULL,
 	nature_of_ownership varchar(128),
 	date_exercisable date,
@@ -954,6 +954,46 @@ CREATE UNIQUE INDEX fundamentals_uq_idx ON sharadar.fundamentals
 	  dimension_type_id,
 	  date_key,
 	  report_period
+	);
+-- ddl-end --
+
+-- object: sharadar.batch_status_seq | type: SEQUENCE --
+-- DROP SEQUENCE IF EXISTS sharadar.batch_status_seq CASCADE;
+CREATE SEQUENCE sharadar.batch_status_seq
+	INCREMENT BY 1
+	MINVALUE 0
+	MAXVALUE 2147483647
+	START WITH 1
+	CACHE 1
+	NO CYCLE
+	OWNED BY NONE;
+-- ddl-end --
+ALTER SEQUENCE sharadar.batch_status_seq OWNER TO postgres;
+-- ddl-end --
+
+-- object: sharadar.batch_status | type: TABLE --
+-- DROP TABLE IF EXISTS sharadar.batch_status CASCADE;
+CREATE TABLE sharadar.batch_status (
+	batch_status_id integer NOT NULL DEFAULT nextval('sharadar.batch_status_seq'::regclass),
+	workflow_name varchar(64) NOT NULL,
+	start_date date,
+	end_date date,
+	md5_checksum varchar(32) NOT NULL,
+	CONSTRAINT batch_status_pk PRIMARY KEY (batch_status_id)
+
+);
+-- ddl-end --
+ALTER TABLE sharadar.batch_status OWNER TO postgres;
+-- ddl-end --
+
+-- object: batch_status_uq_idx | type: INDEX --
+-- DROP INDEX IF EXISTS sharadar.batch_status_uq_idx CASCADE;
+CREATE UNIQUE INDEX batch_status_uq_idx ON sharadar.batch_status
+	USING btree
+	(
+	  workflow_name,
+	  start_date,
+	  end_date
 	);
 -- ddl-end --
 
