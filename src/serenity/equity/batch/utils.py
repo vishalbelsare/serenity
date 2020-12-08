@@ -18,7 +18,7 @@ class ExportQuandlTableTask(luigi.Task):
     logger = logging.getLogger('luigi-interface')
 
     table_name = luigi.Parameter()
-    date_column = luigi.Parameter(default=None)
+    date_column = luigi.Parameter(default='')
     start_date = luigi.DateParameter(default=None)
     end_date = luigi.DateParameter(default=None)
     api_key = luigi.configuration.get_config().get('QuandlApi', 'api_key', None)
@@ -37,7 +37,7 @@ class ExportQuandlTableTask(luigi.Task):
         quandl.ApiConfig.api_key = str(self.api_key)
         with self.output().temporary_path() as path:
             self.logger.info(f'downloading {self.table_name} to {path}')
-            if self.date_column is None:
+            if self.date_column == '':
                 kwargs = {
                     'filename': path
                 }

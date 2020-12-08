@@ -1,16 +1,9 @@
-import datetime
-
-import luigi
-
 from serenity.equity.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
 from serenity.equity.sharadar_api import yes_no_to_bool
 from serenity.equity.sharadar_refdata import UnitType, Indicator
 
 
 class LoadSharadarMetaTask(LoadSharadarTableTask):
-    start_date = luigi.DateParameter(default=datetime.date.today())
-    end_date = luigi.DateParameter(default=datetime.date.today())
-
     def requires(self):
         yield ExportQuandlTableTask(table_name='SHARADAR/INDICATORS')
 
