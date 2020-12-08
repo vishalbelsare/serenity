@@ -18,26 +18,34 @@ class ExportQuandlTableTask(luigi.Task):
     logger = logging.getLogger('luigi-interface')
 
     table_name = luigi.Parameter()
-    date_column = luigi.Parameter()
-    start_date = luigi.DateParameter()
-    end_date = luigi.DateParameter()
+    date_column = luigi.Parameter(default=None)
+    start_date = luigi.DateParameter(default=None)
+    end_date = luigi.DateParameter(default=None)
     api_key = luigi.configuration.get_config().get('QuandlApi', 'api_key', None)
 
     def output(self):
-        end_date_txt = str(self.end_date)
-        if self.end_date is None:
-            end_date_txt = 'LATEST'
-        date_range = f'{self.start_date}-{end_date_txt}'
-        return luigi.LocalTarget(f'data/{str(self.table_name).replace("/", "-")}_{date_range}_quandl_data.zip')
+        if self.start_date is None and self.end_date is None:
+            return luigi.LocalTarget(f'data/{str(self.table_name).replace("/", "-")}_quandl_data.zip')
+        else:
+            end_date_txt = str(self.end_date)
+            if self.end_date is None:
+                end_date_txt = 'LATEST'
+            date_range = f'{self.start_date}-{end_date_txt}'
+            return luigi.LocalTarget(f'data/{str(self.table_name).replace("/", "-")}_{date_range}_quandl_data.zip')
 
     def run(self):
         quandl.ApiConfig.api_key = str(self.api_key)
         with self.output().temporary_path() as path:
             self.logger.info(f'downloading {self.table_name} to {path}')
-            kwargs = {
-                'filename': path,
-                str(self.date_column): {'gte': self.start_date, 'lte': self.end_date}
-            }
+            if self.date_column is None:
+                kwargs = {
+                    'filename': path
+                }
+            else:
+                kwargs = {
+                    'filename': path,
+                    str(self.date_column): {'gte': self.start_date, 'lte': self.end_date}
+                }
             quandl.export_table(str(self.table_name), **kwargs)
 
 
@@ -49,7 +57,7 @@ class LoadSharadarTableTask(ABC, luigi.Task):
         for table_in in self.input():
             in_file = table_in.path
             df = pd.read_csv(in_file)
-            self.logger.info(f'loaded {len(df)} rows of ticker CSV data from {in_file}')
+            self.logger.info(f'loaded {len(df)} rows of CSV data from {in_file}')
 
             md5 = hashlib.md5(open(in_file, 'rb').read()).hexdigest()
             self.logger.info(f'computed MD5 checksum for {in_file}: {md5}')

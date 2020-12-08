@@ -1,40 +1,34 @@
-import logging
+import datetime
 
-import fire
-import pandas as pd
-import quandl
+import luigi
 
-from serenity.equity.sharadar_api import init_quandl, create_sharadar_session, clean_nulls, yes_no_to_bool
+from serenity.equity.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
+from serenity.equity.sharadar_api import clean_nulls, yes_no_to_bool
 from serenity.equity.sharadar_holdings import FormType, SecurityAdType, TransactionType, SecurityTitleType, \
     InsiderHoldings
 from serenity.equity.sharadar_refdata import Ticker
-from serenity.utils import init_logging
-
-logger = logging.getLogger(__name__)
 
 
 # noinspection DuplicatedCode
-def load_sharadar_insider_holdings():
-    session = create_sharadar_session()
+class LoadInsiderHoldingsTask(LoadSharadarTableTask):
+    start_date = luigi.DateParameter(default=datetime.date.today())
+    end_date = luigi.DateParameter(default=datetime.date.today())
 
-    load_path = 'sharadar_insider_holdings.zip'
-    logger.info(f'downloading insider holdings data to {load_path}')
-    quandl.export_table('SHARADAR/SF2', filename=load_path)
-    df = pd.read_csv(load_path)
-    logger.info(f'loaded {len(df)} rows of insider holdings CSV data from {load_path}')
+    def requires(self):
+        yield ExportQuandlTableTask(table_name='SHARADAR/SF2', date_column='filingdate',
+                                    start_date=self.start_date, end_date=self.end_date)
 
-    row_count = 0
-    for index, row in df.iterrows():
+    def process_row(self, index, row):
         ticker_code = row['ticker']
-        ticker = Ticker.find_by_ticker(session, ticker_code)
+        ticker = Ticker.find_by_ticker(self.session, ticker_code)
         if ticker is None:
-            logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
-            continue
+            self.logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
+            return
 
         filing_date = row['filingdate']
 
         form_type_code = row['formtype']
-        form_type = FormType.get_or_create(session, form_type_code)
+        form_type = FormType.get_or_create(self.session, form_type_code)
 
         issuer_name = row['issuername']
         owner_name = row['ownername']
@@ -45,10 +39,10 @@ def load_sharadar_insider_holdings():
         transaction_date = clean_nulls(row['transactiondate'])
 
         security_ad_type_code = clean_nulls(row['securityadcode'])
-        security_ad_type = SecurityAdType.get_or_create(session, security_ad_type_code)
+        security_ad_type = SecurityAdType.get_or_create(self.session, security_ad_type_code)
 
         transaction_type_code = clean_nulls(row['transactioncode'])
-        transaction_type = TransactionType.get_or_create(session, transaction_type_code)
+        transaction_type = TransactionType.get_or_create(self.session, transaction_type_code)
 
         shares_owned_before_transaction = clean_nulls(row['sharesownedbeforetransaction'])
         transaction_shares = clean_nulls(row['transactionshares'])
@@ -56,8 +50,8 @@ def load_sharadar_insider_holdings():
         transaction_price_per_share = clean_nulls(row['transactionpricepershare'])
         transaction_value = clean_nulls(row['transactionvalue'])
 
-        security_title_type_code = row['securitytitle']
-        security_title_type = SecurityTitleType.get_or_create(session, security_title_type_code)
+        security_title_type_code = clean_nulls(row['securitytitle'])
+        security_title_type = SecurityTitleType.get_or_create(self.session, security_title_type_code)
 
         direct_or_indirect = row['directorindirect']
         nature_of_ownership = clean_nulls(row['natureofownership'])
@@ -66,7 +60,7 @@ def load_sharadar_insider_holdings():
         expiration_date = clean_nulls(row['expirationdate'])
         row_num = row['rownum']
 
-        holdings = InsiderHoldings.find_holdings(session, ticker, filing_date, owner_name, form_type, row_num)
+        holdings = InsiderHoldings.find_holdings(self.session, ticker, filing_date, owner_name, form_type, row_num)
         if holdings is None:
             holdings = InsiderHoldings(ticker=ticker, filing_date=filing_date, form_type=form_type,
                                        issuer_name=issuer_name, owner_name=owner_name, officer_title=officer_title,
@@ -100,17 +94,4 @@ def load_sharadar_insider_holdings():
             holdings.price_exercisable = price_exercisable
             holdings.expiration_date = expiration_date
 
-        session.add(holdings)
-
-        if row_count > 0 and row_count % 1000 == 0:
-            logger.info(f'{row_count} rows loaded; flushing next 1000 rows to database')
-            session.commit()
-        row_count += 1
-
-    session.commit()
-
-
-if __name__ == '__main__':
-    init_logging()
-    init_quandl()
-    fire.Fire(load_sharadar_insider_holdings)
+        self.session.add(holdings)
