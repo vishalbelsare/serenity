@@ -11,11 +11,17 @@ spec:
           - name: sharadar-backfill
             image: cloudwallcapital/serenity:2020.10.24-b52
             command: ["python"]
-            args: ["serenity/equity/batch/main.py", "--mode", "BACKFILL", "--workers", "5"]
+            args: ["serenity/equity/batch/main.py", "--mode", "BACKFILL"]
             env:
             - name: POSTGRES_SHARADAR_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: database-secret-config
                   key: sharadar-password
+            - name: QUANDL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: quandl-secret-config
+                  key: api-key
+
           restartPolicy: OnFailure

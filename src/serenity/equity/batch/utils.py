@@ -18,7 +18,7 @@ class QuandlApi(luigi.Config):
 
 
 class ExportQuandlTableTask(luigi.Task):
-    logger = logging.getLogger('luigi-interface')
+    logger = logging.getLogger('etc-interface')
 
     table_name = luigi.Parameter()
     date_column = luigi.Parameter(default='')
@@ -81,14 +81,14 @@ class BatchStatusTarget(Target):
 
     def done(self):
         batch_status = BatchStatus.find(self.session, self.workflow_name, self.start_date, self.end_date)
-        if batch_status.is_pending:
+        if batch_status is not None and batch_status.is_pending:
             batch_status.is_pending = False
             self.session.add(batch_status)
         self.session.commit()
 
 
 class LoadSharadarTableTask(ABC, luigi.Task):
-    logger = logging.getLogger('luigi-interface')
+    logger = logging.getLogger('etc-interface')
     session = create_sharadar_session()
 
     start_date = luigi.DateParameter(default=datetime.date.today())
