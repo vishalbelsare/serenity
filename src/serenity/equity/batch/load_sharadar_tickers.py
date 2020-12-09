@@ -1,7 +1,3 @@
-import datetime
-
-import luigi
-
 from serenity.equity.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
 from serenity.equity.sharadar_api import clean_nulls, yes_no_to_bool
 from serenity.equity.sharadar_refdata import Exchange, TickerCategory, Sector, Scale, Currency, Ticker
@@ -10,8 +6,8 @@ from serenity.equity.sharadar_refdata import Exchange, TickerCategory, Sector, S
 # noinspection DuplicatedCode
 class LoadSharadarTickersTask(LoadSharadarTableTask):
     def requires(self):
-        yield ExportQuandlTableTask(table_name=self.get_workflow_name(), date_column='lastupdated',
-                                    start_date=self.start_date, end_date=self.end_date)
+        return ExportQuandlTableTask(table_name=self.get_workflow_name(), date_column='lastupdated',
+                                     start_date=self.start_date, end_date=self.end_date)
 
     def process_row(self, index, row):
         table_name = row['table']

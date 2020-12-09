@@ -6,9 +6,9 @@ from serenity.equity.sharadar_refdata import Ticker, CorporateActionType, Corpor
 
 class LoadCorporateActionsTask(LoadSharadarTableTask):
     def requires(self):
-        yield LoadSharadarTickersTask(start_date=self.start_date, end_date=self.end_date)
-        yield ExportQuandlTableTask(table_name=self.get_workflow_name(), date_column='date',
-                                    start_date=self.start_date, end_date=self.end_date)
+        return LoadSharadarTickersTask(start_date=self.start_date, end_date=self.end_date), \
+               ExportQuandlTableTask(table_name=self.get_workflow_name(), date_column='date',
+                                     start_date=self.start_date, end_date=self.end_date)
 
     def process_row(self, index, row):
         ticker_code = clean_nulls(row['ticker'])
