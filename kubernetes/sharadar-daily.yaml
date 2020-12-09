@@ -19,4 +19,13 @@ spec:
                 secretKeyRef:
                   name: database-secret-config
                   key: sharadar-password
+            - name: LUIGI_DATA_DIR
+              value: /luigi
+            volumeMounts:
+            - mountPath: /luigi
+              name: luigi
           restartPolicy: OnFailure
+          volumes:
+            - name: luigi
+              persistentVolumeClaim:
+                claimName: luigi-pv-claim

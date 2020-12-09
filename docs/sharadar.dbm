@@ -453,7 +453,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	<column name="institutional_holdings_id" not-null="true" sequence="sharadar.institutional_holdings_seq">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="ticker" not-null="true">
+	<column name="ticker">
 		<type name="varchar" length="16"/>
 	</column>
 	<column name="ticker_id">

@@ -13,10 +13,6 @@ from sqlalchemy.orm import Session
 from serenity.equity.sharadar_api import create_sharadar_session, BatchStatus
 
 
-class QuandlApi(luigi.Config):
-    api_key = luigi.Parameter()
-
-
 class ExportQuandlTableTask(luigi.Task):
     logger = logging.getLogger('etc-interface')
 
@@ -24,17 +20,19 @@ class ExportQuandlTableTask(luigi.Task):
     date_column = luigi.Parameter(default='')
     start_date = luigi.DateParameter(default=None)
     end_date = luigi.DateParameter(default=None)
-    api_key = luigi.configuration.get_config().get('QuandlApi', 'api_key', None)
+    api_key = luigi.configuration.get_config().get('quandl', 'api_key', None)
+    data_dir = luigi.configuration.get_config().get('storage', 'storage_root', None)
 
     def output(self):
         if self.start_date is None and self.end_date is None:
-            return luigi.LocalTarget(f'data/{str(self.table_name).replace("/", "-")}_quandl_data.zip')
+            return luigi.LocalTarget(f'{self.data_dir}/{str(self.table_name).replace("/", "-")}_quandl_data.zip')
         else:
             end_date_txt = str(self.end_date)
             if self.end_date is None:
                 end_date_txt = 'LATEST'
             date_range = f'{self.start_date}-{end_date_txt}'
-            return luigi.LocalTarget(f'data/{str(self.table_name).replace("/", "-")}_{date_range}_quandl_data.zip')
+            return luigi.LocalTarget(f'{self.data_dir}/{str(self.table_name).replace("/", "-")}_'
+                                     f'{date_range}_quandl_data.zip')
 
     def run(self):
         quandl.ApiConfig.api_key = str(self.api_key)

@@ -21,5 +21,14 @@ spec:
               secretKeyRef:
                 name: quandl-secret-config
                 key: api-key
+          - name: LUIGI_DATA_DIR
+            value: /luigi
+          volumeMounts:
+            - mountPath: /luigi
+              name: luigi
+          volumes:
+            - name: luigi
+              persistentVolumeClaim:
+                claimName: luigi-pv-claim
       restartPolicy: Never
   backoffLimit: 4
