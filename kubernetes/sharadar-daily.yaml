@@ -1,0 +1,22 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: sharadar-daily
+spec:
+  schedule: "@midnight"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: sharadar-daily
+            image: cloudwallcapital/serenity:2020.10.24-b52
+            command: ["python"]
+            args: ["serenity/equity/batch/main.py", "--mode", "DAILY"]
+            env:
+            - name: POSTGRES_SHARADAR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret-config
+                  key: sharadar-password
+          restartPolicy: OnFailure

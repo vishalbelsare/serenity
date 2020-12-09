@@ -24,7 +24,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: database-secret-config
-                  key: password
+                  key: postgres-password
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: timescaledb

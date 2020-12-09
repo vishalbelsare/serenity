@@ -1,5 +1,6 @@
 import datetime
 
+import fire
 import luigi
 
 from serenity.equity.batch.load_sharadar_corp_actions import LoadCorporateActionsTask
@@ -11,9 +12,9 @@ from serenity.equity.batch.load_sharadar_meta import LoadSharadarMetaTask
 from serenity.equity.batch.load_sharadar_prices import LoadEquityPricesTask
 
 
-class SharadarDailyDownloadTask(luigi.WrapperTask):
-    start_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=8))
-    end_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=1))
+class SharadarDownloadTask(luigi.WrapperTask):
+    start_date = luigi.DateParameter(default=datetime.date.today())
+    end_date = luigi.DateParameter(default=datetime.date.today())
 
     def requires(self):
         yield LoadSharadarMetaTask()
@@ -25,5 +26,16 @@ class SharadarDailyDownloadTask(luigi.WrapperTask):
         yield LoadInstitutionalHoldingsTask(start_date=self.start_date, end_date=self.end_date)
 
 
+def run_luigi_task(mode: str, workers: int = 1):
+    if mode == 'BACKFILL':
+        task = SharadarDownloadTask(start_date=None, end_date=None)
+    elif mode == 'DAILY':
+        task = SharadarDownloadTask()
+    else:
+        raise ValueError(f'unknown mode: {mode}')
+
+    luigi.build([task], workers=workers, local_scheduler=True)
+
+
 if __name__ == '__main__':
-    luigi.build([SharadarDailyDownloadTask()], workers=1, local_scheduler=True)
+    fire.Fire(run_luigi_task)

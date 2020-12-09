@@ -14,11 +14,11 @@ spec:
             command: ["python"]
             args: ["serenity/marketdata/fh/behemoth_upload.py"]
             env:
-            - name: POSTGRES_PASSWORD
+            - name: POSTGRES_SERENITY_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: database-secret-config
-                  key: password
+                  key: serenity-password
             - name: AZURE_CONNECT_STR
               valueFrom:
                 secretKeyRef:

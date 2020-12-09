@@ -13,7 +13,7 @@ from serenity.model.order import Side, OrderType, DestinationType, TimeInForce
 def connect_serenity_db(hostname: str = os.getenv('TIMESCALEDB_NODEPORT_SERVICE_HOST', 'localhost'),
                         port: int = os.getenv('TIMESCALEDB_NODEPORT_SERVICE_PORT', '5432'),
                         username: str = os.getenv('POSTGRES_USER', 'serenity'),
-                        password: str = os.getenv('POSTGRES_PASSWORD', None)):
+                        password: str = os.getenv('POSTGRES_SERENITY_PASSWORD', None)):
     return psycopg2.connect(host=hostname, port=port, dbname="serenity", user=username, password=password)
 
 

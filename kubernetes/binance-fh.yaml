@@ -20,11 +20,11 @@ spec:
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/marketdata/fh/binance_fh.py"]
           env:
-            - name: POSTGRES_PASSWORD
+            - name: POSTGRES_SERENITY_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: database-secret-config
-                  key: password
+                  key: serenity-password
           volumeMounts:
             - mountPath: /behemoth
               name: behemoth 

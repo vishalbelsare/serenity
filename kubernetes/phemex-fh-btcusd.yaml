@@ -20,11 +20,11 @@ spec:
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/marketdata/fh/phemex_fh.py", "--include_symbol=BTCUSD"]
           env:
-            - name: POSTGRES_PASSWORD
+            - name: POSTGRES_SERENITY_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: database-secret-config
-                  key: password
+                  key: serenity-password
           volumeMounts:
             - mountPath: /behemoth
               name: behemoth 
