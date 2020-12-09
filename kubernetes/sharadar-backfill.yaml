@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
         - name: sharadar-backfill
-          image: cloudwallcapital/serenity:2020.12.09-b60
+          image: cloudwallcapital/serenity:2020.12.09-b61
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/equity/batch/main.py", "--mode", "BACKFILL"]
           env:
@@ -26,9 +26,9 @@ spec:
           volumeMounts:
             - mountPath: /luigi
               name: luigi
-          volumes:
-            - name: luigi
-              persistentVolumeClaim:
-                claimName: luigi-pv-claim
+      volumes:
+        - name: luigi
+          persistentVolumeClaim:
+            claimName: luigi-pv-claim
       restartPolicy: Never
   backoffLimit: 4
