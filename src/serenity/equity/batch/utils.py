@@ -74,7 +74,7 @@ class BatchStatusTarget(Target):
             self.session.add(batch_status)
             exists = False
         else:
-            exists = not batch_status.is_pending and batch_status.md5_checksum == md5_checksum
+            exists = (not batch_status.is_pending) and (batch_status.md5_checksum == md5_checksum)
         return exists
 
     def done(self):
