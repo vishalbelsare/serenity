@@ -163,7 +163,7 @@ class InstitutionalHoldings(Base):
     def find(cls, session: Session, ticker: Ticker, investor: InstitutionalInvestor,
              security_type: SecurityType, calendar_date: datetime.date):
         return session.query(InstitutionalHoldings).join(InstitutionalInvestor).join(SecurityType) \
-                .filter(InstitutionalHoldings.ticker_code == ticker.ticker,
+                .filter(InstitutionalHoldings.ticker_code == ticker,
                         InstitutionalInvestor.institutional_investor_name == investor.institutional_investor_name,
                         SecurityType.security_type_code == security_type.security_type_code,
                         InstitutionalHoldings.calendar_date == calendar_date).one_or_none()
