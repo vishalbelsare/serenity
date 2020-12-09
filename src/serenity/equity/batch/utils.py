@@ -14,7 +14,7 @@ from serenity.equity.sharadar_api import create_sharadar_session, BatchStatus
 
 
 class ExportQuandlTableTask(luigi.Task):
-    logger = logging.getLogger('etc-interface')
+    logger = logging.getLogger('luigi-interface')
 
     table_name = luigi.Parameter()
     date_column = luigi.Parameter(default='')
@@ -86,7 +86,7 @@ class BatchStatusTarget(Target):
 
 
 class LoadSharadarTableTask(ABC, luigi.Task):
-    logger = logging.getLogger('etc-interface')
+    logger = logging.getLogger('luigi-interface')
     session = create_sharadar_session()
 
     start_date = luigi.DateParameter(default=datetime.date.today())
