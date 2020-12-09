@@ -1,13 +1,16 @@
+import datetime
 import hashlib
 import logging
 from abc import ABC, abstractmethod
 
+
 import luigi
 import pandas as pd
 import quandl
-from luigi.contrib.simulate import RunAnywayTarget
+from luigi import Target, LocalTarget
+from sqlalchemy.orm import Session
 
-from serenity.equity.sharadar_api import create_sharadar_session
+from serenity.equity.sharadar_api import create_sharadar_session, BatchStatus
 
 
 class QuandlApi(luigi.Config):
@@ -49,38 +52,81 @@ class ExportQuandlTableTask(luigi.Task):
             quandl.export_table(str(self.table_name), **kwargs)
 
 
+class BatchStatusTarget(Target):
+    def __init__(self, session: Session, workflow_name: str, start_date: datetime.date, end_date: datetime.date,
+                 local_file: LocalTarget):
+        self.session = session
+        self.workflow_name = workflow_name
+        self.start_date = start_date
+        self.end_date = end_date
+        self.local_file = local_file
+
+    def exists(self):
+        if not self.local_file.exists():
+            return False
+
+        md5_checksum = hashlib.md5(open(self.local_file.path, 'rb').read()).hexdigest()
+        batch_status = BatchStatus.find(self.session, self.workflow_name, self.start_date, self.end_date)
+        if batch_status is None:
+            batch_status = BatchStatus(workflow_name=self.workflow_name,
+                                       start_date=self.start_date,
+                                       end_date=self.end_date,
+                                       md5_checksum=md5_checksum,
+                                       is_pending=True)
+            self.session.add(batch_status)
+            exists = False
+        else:
+            exists = not batch_status.is_pending and batch_status.md5_checksum == md5_checksum
+        return exists
+
+    def done(self):
+        batch_status = BatchStatus.find(self.session, self.workflow_name, self.start_date, self.end_date)
+        if batch_status.is_pending:
+            batch_status.is_pending = False
+            self.session.add(batch_status)
+        self.session.commit()
+
+
 class LoadSharadarTableTask(ABC, luigi.Task):
     logger = logging.getLogger('luigi-interface')
     session = create_sharadar_session()
 
+    start_date = luigi.DateParameter(default=datetime.date.today())
+    end_date = luigi.DateParameter(default=datetime.date.today())
+
     def run(self):
         for table_in in self.input():
-            if isinstance(table_in, RunAnywayTarget):
-                continue
+            if isinstance(table_in, LocalTarget):
+                in_file = table_in.path
+                df = pd.read_csv(in_file)
+                self.logger.info(f'loaded {len(df)} rows of CSV data from {in_file}')
 
-            in_file = table_in.path
-            df = pd.read_csv(in_file)
-            self.logger.info(f'loaded {len(df)} rows of CSV data from {in_file}')
+                row_count = 0
+                for index, row in df.iterrows():
+                    self.process_row(index, row)
+                    if row_count > 0 and row_count % 1000 == 0:
+                        self.logger.info(f'{row_count} rows loaded; flushing next 1000 rows to database')
+                        self.session.commit()
+                    row_count += 1
 
-            md5 = hashlib.md5(open(in_file, 'rb').read()).hexdigest()
-            self.logger.info(f'computed MD5 checksum for {in_file}: {md5}')
+                self.session.commit()
 
-            row_count = 0
-            for index, row in df.iterrows():
-                self.process_row(index, row)
-                if row_count > 0 and row_count % 1000 == 0:
-                    self.logger.info(f'{row_count} rows loaded; flushing next 1000 rows to database')
-                    self.session.commit()
-                row_count += 1
-
-            self.session.commit()
-
-        # mark complete
         self.output().done()
 
     def output(self):
-        return RunAnywayTarget(self)
+        target = None
+        for table_in in self.input():
+            if isinstance(table_in, LocalTarget):
+                # noinspection PyTypeChecker
+                target = BatchStatusTarget(self.session, self.get_workflow_name(),
+                                           self.start_date, self.end_date, table_in)
+
+        return target
 
     @abstractmethod
     def process_row(self, index, row):
+        pass
+
+    @abstractmethod
+    def get_workflow_name(self):
         pass

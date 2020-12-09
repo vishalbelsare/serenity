@@ -1,11 +1,12 @@
 import os
+from datetime import datetime
 
 import pandas as pd
 import quandl
 
 from money import Money
 
-from sqlalchemy import create_engine, TypeDecorator
+from sqlalchemy import create_engine, TypeDecorator, Column, Integer, String, Date, Boolean
 from sqlalchemy.dialects.postgresql import MONEY
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
@@ -61,3 +62,22 @@ class USD(TypeDecorator):
             return value
         else:
             return Money(value.replace(',', '').replace('$', ''), 'USD')
+
+
+class BatchStatus(Base):
+    __tablename__ = 'batch_status'
+
+    batch_status_id = Column(Integer, primary_key=True)
+    workflow_name = Column(String(64))
+    start_date = Column(Date)
+    end_date = Column(Date)
+    md5_checksum = Column(String(32))
+    is_pending = Column(Boolean)
+
+    @classmethod
+    def find(cls, session: Session, workflow_name: str, start_date: datetime.date, end_date: datetime.date):
+        return session.query(BatchStatus).filter(
+            BatchStatus.workflow_name == workflow_name,
+            BatchStatus.start_date == start_date,
+            BatchStatus.end_date == end_date
+        ).one_or_none()

@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1.05" max-obj-count="31"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,213" last-zoom="1.05" max-obj-count="31"
 	 default-schema="public" default-owner="postgres">
 <role name="sharadar"
       login="true"
@@ -1230,7 +1230,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	<role name="postgres"/>
 </sequence>
 
-<table name="batch_status" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
+<table name="batch_status" layer="0" collapse-mode="2" max-obj-count="7" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
 	<position x="1240" y="1220"/>
@@ -1248,6 +1248,9 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	</column>
 	<column name="md5_checksum" not-null="true">
 		<type name="varchar" length="32"/>
+	</column>
+	<column name="is_pending" not-null="true">
+		<type name="bool" length="0"/>
 	</column>
 	<constraint name="batch_status_pk" type="pk-constr" table="sharadar.batch_status">
 		<columns names="batch_status_id" ref-type="src-columns"/>

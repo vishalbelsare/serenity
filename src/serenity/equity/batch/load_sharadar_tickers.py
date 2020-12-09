@@ -9,11 +9,8 @@ from serenity.equity.sharadar_refdata import Exchange, TickerCategory, Sector, S
 
 # noinspection DuplicatedCode
 class LoadSharadarTickersTask(LoadSharadarTableTask):
-    start_date = luigi.DateParameter(default=datetime.date.today())
-    end_date = luigi.DateParameter(default=datetime.date.today())
-
     def requires(self):
-        yield ExportQuandlTableTask(table_name='SHARADAR/TICKERS', date_column='lastupdated',
+        yield ExportQuandlTableTask(table_name=self.get_workflow_name(), date_column='lastupdated',
                                     start_date=self.start_date, end_date=self.end_date)
 
     def process_row(self, index, row):
@@ -103,3 +100,6 @@ class LoadSharadarTickersTask(LoadSharadarTableTask):
                                    first_quarter=first_quarter, last_quarter=last_quarter, secfilings=sec_filings,
                                    company_site=company_site)
         self.session.add(ticker_entity)
+
+    def get_workflow_name(self):
+        return 'SHARADAR/TICKERS'

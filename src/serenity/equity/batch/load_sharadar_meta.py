@@ -5,7 +5,7 @@ from serenity.equity.sharadar_refdata import UnitType, Indicator
 
 class LoadSharadarMetaTask(LoadSharadarTableTask):
     def requires(self):
-        yield ExportQuandlTableTask(table_name='SHARADAR/INDICATORS')
+        yield ExportQuandlTableTask(table_name=self.get_workflow_name())
 
     def process_row(self, index, row):
         table_name, indicator, is_filter, is_primary_key, title, description, unit_type_code = row
@@ -24,3 +24,6 @@ class LoadSharadarMetaTask(LoadSharadarTableTask):
                                    description=description,
                                    unit_type=unit_type)
             self.session.add(ind_entity)
+
+    def get_workflow_name(self):
+        return 'SHARADAR/INDICATORS'

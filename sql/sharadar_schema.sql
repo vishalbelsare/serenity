@@ -979,6 +979,7 @@ CREATE TABLE sharadar.batch_status (
 	start_date date,
 	end_date date,
 	md5_checksum varchar(32) NOT NULL,
+	is_pending bool NOT NULL,
 	CONSTRAINT batch_status_pk PRIMARY KEY (batch_status_id)
 
 );
