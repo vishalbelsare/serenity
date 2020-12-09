@@ -2,6 +2,7 @@ import datetime
 
 import luigi
 
+from serenity.equity.batch.load_sharadar_tickers import LoadSharadarTickersTask
 from serenity.equity.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
 from serenity.equity.sharadar_api import clean_nulls
 from serenity.equity.sharadar_refdata import Ticker, CorporateActionType, CorporateAction
@@ -12,6 +13,7 @@ class LoadCorporateActionsTask(LoadSharadarTableTask):
     end_date = luigi.DateParameter(default=datetime.date.today())
 
     def requires(self):
+        yield LoadSharadarTickersTask(start_date=self.start_date, end_date=self.end_date)
         yield ExportQuandlTableTask(table_name='SHARADAR/ACTIONS', date_column='date',
                                     start_date=self.start_date, end_date=self.end_date)
 

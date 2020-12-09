@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 
 from sqlalchemy import Column, Integer, Date, ForeignKey
@@ -22,6 +24,12 @@ class EquityPrice(Base):
     dividends = Column(USD)
     close_unadj = Column(USD)
     last_updated = Column(Date)
+
+    @classmethod
+    def find(cls, session: Session, ticker: str, price_date: datetime.date):
+        return session.query(EquityPrice).join(Ticker) \
+            .filter(Ticker.ticker == ticker,
+                    EquityPrice.date == price_date).one_or_none()
 
 
 def get_equity_prices(session: Session, ticker: str) -> pd.DataFrame:

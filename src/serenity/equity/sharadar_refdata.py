@@ -140,10 +140,6 @@ class Sector(Base):
             return None
 
         sector_code_type = SectorCodeType.get_or_create(session, sector_code_type_code)
-
-        # need to force a commit so the finder below works -- otherwise sector_code_type_id won't be populated
-        session.commit()
-
         sector_entity = Sector.find_by_sector_industry_and_type(session, sector_code_type, sector, industry)
         if sector_entity is None:
             sector_entity = Sector(sector_code_type=sector_code_type, sector_code=sector_code, sector=sector,

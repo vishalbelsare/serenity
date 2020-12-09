@@ -427,13 +427,6 @@ CREATE TABLE sharadar.sector_code_type (
 ALTER TABLE sharadar.sector_code_type OWNER TO postgres;
 -- ddl-end --
 
-INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_code) VALUES (E'1', E'sic');
--- ddl-end --
-INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_code) VALUES (E'2', E'fama');
--- ddl-end --
-INSERT INTO sharadar.sector_code_type (sector_code_type_id, sector_code_type_code) VALUES (E'3', E'other');
--- ddl-end --
-
 -- object: sharadar.event_code | type: TABLE --
 -- DROP TABLE IF EXISTS sharadar.event_code CASCADE;
 CREATE TABLE sharadar.event_code (
@@ -797,7 +790,7 @@ ALTER SEQUENCE sharadar.security_title_type_seq OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.security_title_type CASCADE;
 CREATE TABLE sharadar.security_title_type (
 	security_title_type_id integer NOT NULL DEFAULT nextval('sharadar.security_title_type_seq'::regclass),
-	security_title_type_code varchar(32) NOT NULL,
+	security_title_type_code varchar(64) NOT NULL,
 	CONSTRAINT security_title_type_pk PRIMARY KEY (security_title_type_id),
 	CONSTRAINT security_title_type_uq UNIQUE (security_title_type_code)
 

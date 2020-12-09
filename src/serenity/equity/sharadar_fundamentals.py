@@ -144,6 +144,15 @@ class Fundamentals(Base):
     tbvps = Column(USD)
     working_capital = Column(USD)
 
+    @classmethod
+    def find(cls, session: Session, ticker: str, dimension_type: DimensionType, date_key: datetime.date,
+             report_period: datetime.date):
+        return session.query(Fundamentals).join(Ticker).join(DimensionType) \
+            .filter(Ticker.ticker == ticker,
+                    DimensionType.dimension_type_code == dimension_type.dimension_type_code,
+                    Fundamentals.report_period == report_period,
+                    Fundamentals.date_key == date_key).one_or_none()
+
 
 def get_ticker_fundamentals(session: Session, ticker: str, as_of_date: datetime.date,
                             dimension: str) -> Fundamentals:

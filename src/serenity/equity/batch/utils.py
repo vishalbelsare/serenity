@@ -55,6 +55,9 @@ class LoadSharadarTableTask(ABC, luigi.Task):
 
     def run(self):
         for table_in in self.input():
+            if isinstance(table_in, RunAnywayTarget):
+                continue
+
             in_file = table_in.path
             df = pd.read_csv(in_file)
             self.logger.info(f'loaded {len(df)} rows of CSV data from {in_file}')

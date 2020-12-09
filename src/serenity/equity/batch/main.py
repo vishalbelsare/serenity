@@ -9,16 +9,14 @@ from serenity.equity.batch.load_sharadar_insider_holdings import LoadInsiderHold
 from serenity.equity.batch.load_sharadar_institutional_holdings import LoadInstitutionalHoldingsTask
 from serenity.equity.batch.load_sharadar_meta import LoadSharadarMetaTask
 from serenity.equity.batch.load_sharadar_prices import LoadEquityPricesTask
-from serenity.equity.batch.load_sharadar_tickers import LoadSharadarTickersTask
 
 
 class SharadarDailyDownloadTask(luigi.WrapperTask):
-    start_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=0))
+    start_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=7))
     end_date = luigi.DateParameter(default=datetime.date.today())
 
     def requires(self):
         yield LoadSharadarMetaTask()
-        yield LoadSharadarTickersTask(start_date=self.start_date, end_date=self.end_date)
         yield LoadCorporateActionsTask(start_date=self.start_date, end_date=self.end_date)
         yield LoadEventCalendarTask(start_date=self.start_date, end_date=self.end_date)
         yield LoadEquityPricesTask(start_date=self.start_date, end_date=self.end_date)

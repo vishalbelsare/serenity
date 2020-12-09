@@ -375,12 +375,6 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	<constraint name="sector_code_type_pk" type="pk-constr" table="sharadar.sector_code_type">
 		<columns names="sector_code_type_id" ref-type="src-columns"/>
 	</constraint>
-	<initial-data>
-<![CDATA[sector_code_type_id•sector_code_type_code⸣
-1•sic⸣
-2•fama⸣
-3•other]]>
-	</initial-data>
 </table>
 
 <table name="event_code" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
@@ -1036,7 +1030,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 		<type name="integer" length="0"/>
 	</column>
 	<column name="security_title_type_code" not-null="true">
-		<type name="varchar" length="32"/>
+		<type name="varchar" length="64"/>
 	</column>
 	<constraint name="security_title_type_pk" type="pk-constr" table="sharadar.security_title_type">
 		<columns names="security_title_type_id" ref-type="src-columns"/>
