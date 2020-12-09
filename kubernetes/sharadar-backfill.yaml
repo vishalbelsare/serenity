@@ -1,15 +1,15 @@
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: Job
 metadata:
   name: sharadar-backfill
 spec:
-  jobTemplate:
+  template:
     spec:
       template:
         spec:
           containers:
           - name: sharadar-backfill
-            image: cloudwallcapital/serenity:2020.10.24-b52
+            image: cloudwallcapital/serenity:2020.12.09-b60
             command: ["python"]
             args: ["serenity/equity/batch/main.py", "--mode", "BACKFILL"]
             env:
