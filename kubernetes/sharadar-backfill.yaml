@@ -8,7 +8,7 @@ spec:
       containers:
         - name: sharadar-backfill
           image: cloudwallcapital/serenity:2020.12.09-b60
-          command: ["python"]
+          command: ["/app/venv-py3/bin/python"]
           args: ["serenity/equity/batch/main.py", "--mode", "BACKFILL"]
           env:
           - name: POSTGRES_SHARADAR_PASSWORD
@@ -21,6 +21,5 @@ spec:
               secretKeyRef:
                 name: quandl-secret-config
                 key: api-key
-
-        restartPolicy: Never
+      restartPolicy: Never
   backoffLimit: 4

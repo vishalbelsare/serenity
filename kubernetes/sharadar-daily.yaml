@@ -11,7 +11,7 @@ spec:
           containers:
           - name: sharadar-daily
             image: cloudwallcapital/serenity:2020.12.09-b60
-            command: ["python"]
+            command: ["/app/venv-py3/bin/python"]
             args: ["serenity/equity/batch/main.py", "--mode", "DAILY"]
             env:
             - name: POSTGRES_SHARADAR_PASSWORD

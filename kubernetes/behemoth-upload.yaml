@@ -11,7 +11,7 @@ spec:
           containers:
           - name: behemoth-md-upload
             image: cloudwallcapital/serenity:2020.10.24-b52
-            command: ["python"]
+            command: ["/app/venv-py3/bin/python"]
             args: ["serenity/marketdata/fh/behemoth_upload.py"]
             env:
             - name: POSTGRES_SERENITY_PASSWORD
