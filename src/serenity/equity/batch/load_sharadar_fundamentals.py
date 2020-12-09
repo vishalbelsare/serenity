@@ -8,9 +8,11 @@ from serenity.equity.sharadar_refdata import Ticker
 # noinspection DuplicatedCode
 class LoadEquityFundamentalsTask(LoadSharadarTableTask):
     def requires(self):
-        return LoadSharadarTickersTask(start_date=self.start_date, end_date=self.end_date),\
-               ExportQuandlTableTask(table_name=self.get_workflow_name(), date_column='lastupdated',
-                                     start_date=self.start_date, end_date=self.end_date)
+        return [
+            LoadSharadarTickersTask(start_date=self.start_date, end_date=self.end_date),
+            ExportQuandlTableTask(table_name=self.get_workflow_name(), date_column='lastupdated',
+                                  start_date=self.start_date, end_date=self.end_date)
+        ]
 
     def process_row(self, index, row):
         ticker_code = row['ticker']

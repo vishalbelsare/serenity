@@ -95,7 +95,9 @@ class LoadSharadarTableTask(ABC, luigi.Task):
     end_date = luigi.DateParameter(default=datetime.date.today())
 
     def run(self):
-        for table_in in self.input():
+        input_value = self.input()
+        input_value = [input_value] if type(input_value) is LocalTarget else input_value
+        for table_in in input_value:
             if isinstance(table_in, LocalTarget):
                 in_file = table_in.path
                 df = pd.read_csv(in_file)
@@ -115,7 +117,9 @@ class LoadSharadarTableTask(ABC, luigi.Task):
 
     def output(self):
         target = None
-        for table_in in self.input():
+        input_value = self.input()
+        input_value = [input_value] if type(input_value) is LocalTarget else input_value
+        for table_in in input_value:
             if isinstance(table_in, LocalTarget):
                 # noinspection PyTypeChecker
                 target = BatchStatusTarget(self.session, self.get_workflow_name(),
