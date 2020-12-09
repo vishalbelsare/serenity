@@ -15,9 +15,6 @@ class LoadEquityFundamentalsTask(LoadSharadarTableTask):
     def process_row(self, index, row):
         ticker_code = row['ticker']
         ticker = Ticker.find_by_ticker(self.session, ticker_code)
-        if ticker is None:
-            self.logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
-            return
 
         dimension_type_code = row['dimension']
         dimension_type = DimensionType.get_or_create(self.session, dimension_type_code)
@@ -134,36 +131,37 @@ class LoadEquityFundamentalsTask(LoadSharadarTableTask):
 
         fundamentals = Fundamentals.find(self.session, ticker_code, dimension_type, date_key, report_period)
         if fundamentals is None:
-            fundamentals = Fundamentals(ticker=ticker, dimension_type=dimension_type, calendar_date=calendar_date,
-                                        date_key=date_key, report_period=report_period, last_updated=last_updated,
-                                        accoci=accoci, assets=assets, assets_avg=assets_avg, assets_c=assets_c,
-                                        assets_nc=assets_nc, asset_turnover=asset_turnover, bvps=bvps, capex=capex,
-                                        cash_neq=cash_neq, cash_neq_usd=cash_neq_usd, cor=cor, consol_inc=consol_inc,
-                                        current_ratio=current_ratio, de=de, debt=debt, debt_c=debt_c, debt_nc=debt_nc,
-                                        debt_usd=debt_usd, deferred_rev=deferred_rev, dep_amor=dep_amor,
-                                        deposits=deposits, div_yield=div_yield, dps=dps, ebit=ebit, ebitda=ebitda,
-                                        ebitda_margin=ebitda_margin, ebitda_usd=ebitda_usd, ebit_usd=ebit_usd, ebt=ebt,
-                                        eps=eps, eps_dil=eps_dil, eps_usd=eps_usd, equity=equity, equity_avg=equity_avg,
-                                        equity_usd=equity_usd, ev=ev, ev_ebit=ev_ebit, ev_ebitda=ev_ebitda, fcf=fcf,
-                                        fcf_ps=fcf_ps, fx_usd=fx_usd, gp=gp, gross_margin=gross_margin, int_exp=int_exp,
-                                        inv_cap=inv_cap, inv_cap_avg=inv_cap_avg, inventory=inventory,
-                                        investments=investments, investments_c=investments_c,
-                                        investments_nc=investments_nc, liabilities=liabilities,
-                                        liabilities_c=liabilities_c, liabilities_nc=liabilities_nc,
-                                        market_cap=market_cap, ncf=ncf, ncf_bus=ncf_bus, ncf_common=ncf_common,
-                                        ncf_debt=ncf_debt, ncf_div=ncf_div, ncf_f=ncf_f, ncf_i=ncf_i, ncf_inv=ncf_inv,
-                                        ncf_o=ncf_o, ncf_x=ncf_x, net_inc=net_inc, net_inc_cmn=net_inc_cmn,
-                                        net_inc_cmn_usd=net_inc_cmn_usd, net_inc_dis=net_inc_dis,
-                                        net_inc_nci=net_inc_nci, net_margin=net_margin, op_ex=op_ex, op_inc=op_inc,
-                                        payables=payables, payout_ratio=payout_ratio, pb=pb, pe=pe, pe1=pe1,
-                                        ppne_net=ppne_net, pref_div_is=pref_div_is, price=price, ps=ps, ps1=ps1,
-                                        receivables=receivables, ret_earn=ret_earn, revenue=revenue,
+            fundamentals = Fundamentals(ticker_code=ticker_code, ticker=ticker, dimension_type=dimension_type,
+                                        calendar_date=calendar_date, date_key=date_key, report_period=report_period,
+                                        last_updated=last_updated, accoci=accoci, assets=assets, assets_avg=assets_avg,
+                                        assets_c=assets_c, assets_nc=assets_nc, asset_turnover=asset_turnover,
+                                        bvps=bvps, capex=capex, cash_neq=cash_neq, cash_neq_usd=cash_neq_usd, cor=cor,
+                                        consol_inc=consol_inc, current_ratio=current_ratio, de=de, debt=debt,
+                                        debt_c=debt_c, debt_nc=debt_nc, debt_usd=debt_usd, deferred_rev=deferred_rev,
+                                        dep_amor=dep_amor, deposits=deposits, div_yield=div_yield, dps=dps, ebit=ebit,
+                                        ebitda=ebitda, ebitda_margin=ebitda_margin, ebitda_usd=ebitda_usd,
+                                        ebit_usd=ebit_usd, ebt=ebt, eps=eps, eps_dil=eps_dil, eps_usd=eps_usd,
+                                        equity=equity, equity_avg=equity_avg, equity_usd=equity_usd, ev=ev,
+                                        ev_ebit=ev_ebit, ev_ebitda=ev_ebitda, fcf=fcf, fcf_ps=fcf_ps, fx_usd=fx_usd,
+                                        gp=gp, gross_margin=gross_margin, int_exp=int_exp, inv_cap=inv_cap,
+                                        inv_cap_avg=inv_cap_avg, inventory=inventory, investments=investments,
+                                        investments_c=investments_c, investments_nc=investments_nc,
+                                        liabilities=liabilities, liabilities_c=liabilities_c,
+                                        liabilities_nc=liabilities_nc, market_cap=market_cap, ncf=ncf, ncf_bus=ncf_bus,
+                                        ncf_common=ncf_common, ncf_debt=ncf_debt, ncf_div=ncf_div, ncf_f=ncf_f,
+                                        ncf_i=ncf_i, ncf_inv=ncf_inv, ncf_o=ncf_o, ncf_x=ncf_x, net_inc=net_inc,
+                                        net_inc_cmn=net_inc_cmn, net_inc_cmn_usd=net_inc_cmn_usd,
+                                        net_inc_dis=net_inc_dis, net_inc_nci=net_inc_nci, net_margin=net_margin,
+                                        op_ex=op_ex, op_inc=op_inc, payables=payables, payout_ratio=payout_ratio, pb=pb,
+                                        pe=pe, pe1=pe1, ppne_net=ppne_net, pref_div_is=pref_div_is, price=price, ps=ps,
+                                        ps1=ps1, receivables=receivables, ret_earn=ret_earn, revenue=revenue,
                                         revenue_usd=revenue_usd, rnd=rnd, roa=roa, roe=roe, roic=roic, ros=ros,
                                         sb_comp=sb_comp, sgna=sgna, share_factor=share_factor, shares_bas=shares_bas,
                                         shares_wa=shares_wa, shares_wa_dil=shares_wa_dil, sps=sps, tangibles=tangibles,
                                         tax_assets=tax_assets, tax_exp=tax_exp, tax_liabilities=tax_liabilities,
                                         tbvps=tbvps, working_capital=working_capital)
         else:
+            fundamentals.ticker = ticker
             fundamentals.calendar_date = calendar_date
             fundamentals.last_updated = last_updated
             fundamentals.accoci = accoci

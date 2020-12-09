@@ -16,10 +16,6 @@ class LoadInsiderHoldingsTask(LoadSharadarTableTask):
     def process_row(self, index, row):
         ticker_code = row['ticker']
         ticker = Ticker.find_by_ticker(self.session, ticker_code)
-        if ticker is None:
-            self.logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
-            return
-
         filing_date = row['filingdate']
 
         form_type_code = row['formtype']
@@ -55,11 +51,11 @@ class LoadInsiderHoldingsTask(LoadSharadarTableTask):
         expiration_date = clean_nulls(row['expirationdate'])
         row_num = row['rownum']
 
-        holdings = InsiderHoldings.find_holdings(self.session, ticker, filing_date, owner_name, form_type, row_num)
+        holdings = InsiderHoldings.find(self.session, ticker_code, filing_date, owner_name, form_type, row_num)
         if holdings is None:
-            holdings = InsiderHoldings(ticker=ticker, filing_date=filing_date, form_type=form_type,
-                                       issuer_name=issuer_name, owner_name=owner_name, officer_title=officer_title,
-                                       is_director=is_director, is_officer=is_officer,
+            holdings = InsiderHoldings(ticker_code=ticker_code, ticker=ticker, filing_date=filing_date,
+                                       form_type=form_type, issuer_name=issuer_name, owner_name=owner_name,
+                                       officer_title=officer_title, is_director=is_director, is_officer=is_officer,
                                        is_ten_percent_owner=is_ten_percent_owner, transaction_date=transaction_date,
                                        security_ad_type=security_ad_type, transaction_type=transaction_type,
                                        shares_owned_before_transaction=shares_owned_before_transaction,
@@ -71,6 +67,7 @@ class LoadInsiderHoldingsTask(LoadSharadarTableTask):
                                        date_exercisable=date_exercisable, price_exercisable=price_exercisable,
                                        expiration_date=expiration_date, row_num=row_num)
         else:
+            holdings.ticker = ticker
             holdings.issuer_name = issuer_name
             holdings.officer_title = officer_title
             holdings.is_director = is_director

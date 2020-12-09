@@ -9,6 +9,7 @@ from serenity.equity.sharadar_prices import EquityPrice
 from serenity.equity.sharadar_refdata import Ticker
 
 
+# noinspection DuplicatedCode
 class LoadEquityPricesTask(LoadSharadarTableTask):
     start_date = luigi.DateParameter(default=datetime.date.today())
     end_date = luigi.DateParameter(default=datetime.date.today())
@@ -31,16 +32,13 @@ class LoadEquityPricesTask(LoadSharadarTableTask):
         last_updated = row['lastupdated']
 
         ticker = Ticker.find_by_ticker(self.session, ticker_code)
-        if ticker is None:
-            self.logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
-            return
-
         equity_price = EquityPrice.find(self.session, ticker_code, date)
         if equity_price is None:
-            equity_price = EquityPrice(ticker=ticker, date=date, open_px=open_px, high_px=high_px, low_px=low_px,
-                                       close_px=close_px, volume=volume, dividends=dividends, close_unadj=close_unadj,
-                                       last_updated=last_updated)
+            equity_price = EquityPrice(ticker_code=ticker_code, ticker=ticker, date=date, open_px=open_px,
+                                       high_px=high_px, low_px=low_px, close_px=close_px, volume=volume,
+                                       dividends=dividends, close_unadj=close_unadj, last_updated=last_updated)
         else:
+            equity_price.ticker = ticker
             equity_price.open_px = open_px
             equity_price.high_px = high_px
             equity_price.low_px = low_px

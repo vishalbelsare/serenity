@@ -13,9 +13,6 @@ class LoadCorporateActionsTask(LoadSharadarTableTask):
     def process_row(self, index, row):
         ticker_code = clean_nulls(row['ticker'])
         ticker = Ticker.find_by_ticker(self.session, ticker_code)
-        if ticker is None:
-            self.logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
-            return
 
         corp_action_date = row['date']
         corp_action_type_code = row['action']
@@ -28,10 +25,11 @@ class LoadCorporateActionsTask(LoadSharadarTableTask):
 
         corp_action = CorporateAction.find(self.session, ticker_code, corp_action_date, corp_action_type_code)
         if corp_action is None:
-            corp_action = CorporateAction(corp_action_date=corp_action_date, ticker=ticker,
+            corp_action = CorporateAction(corp_action_date=corp_action_date, ticker_code=ticker_code, ticker=ticker,
                                           corp_action_type=corp_action_type, name=name,
                                           value=value, contra_ticker=contra_ticker, contra_name=contra_name)
         else:
+            corp_action.ticker = ticker
             corp_action.name = name
             corp_action.value = value
             corp_action.contra_ticker = contra_ticker

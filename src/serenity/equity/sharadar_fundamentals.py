@@ -31,6 +31,7 @@ class Fundamentals(Base):
     __tablename__ = 'fundamentals'
 
     fundamentals_id = Column(Integer, primary_key=True)
+    ticker_code = Column(String(16), name='ticker')
     ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
     ticker = relationship('serenity.equity.sharadar_refdata.Ticker', lazy='joined')
     dimension_type_id = Column(Integer, ForeignKey('dimension_type.dimension_type_id'))
@@ -147,26 +148,8 @@ class Fundamentals(Base):
     @classmethod
     def find(cls, session: Session, ticker: str, dimension_type: DimensionType, date_key: datetime.date,
              report_period: datetime.date):
-        return session.query(Fundamentals).join(Ticker).join(DimensionType) \
-            .filter(Ticker.ticker == ticker,
+        return session.query(Fundamentals).join(DimensionType) \
+            .filter(Fundamentals.ticker_code == ticker,
                     DimensionType.dimension_type_code == dimension_type.dimension_type_code,
                     Fundamentals.report_period == report_period,
                     Fundamentals.date_key == date_key).one_or_none()
-
-
-def get_ticker_fundamentals(session: Session, ticker: str, as_of_date: datetime.date,
-                            dimension: str) -> Fundamentals:
-    """
-    Helper method that looks up equity fundamentals for a ticker on a given date and dimension, e.g.
-    ARQ for quarterly statements without restatements.
-    """
-    f = session.query(Fundamentals)\
-        .join(Ticker)\
-        .join(DimensionType)\
-        .filter(Ticker.ticker == ticker,
-                DimensionType.dimension_type_code == dimension,
-                Fundamentals.calendar_date == as_of_date).one_or_none()
-
-    if f is None:
-        raise KeyError(f'no fundamentals data found for {ticker} on {as_of_date}')
-    return f

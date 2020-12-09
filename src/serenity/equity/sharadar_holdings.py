@@ -147,6 +147,7 @@ class InstitutionalHoldings(Base):
     __tablename__ = 'institutional_holdings'
 
     institutional_holdings_id = Column(Integer, primary_key=True)
+    ticker_code = Column(String(16), name='ticker')
     ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
     ticker = relationship('serenity.equity.sharadar_refdata.Ticker', lazy='joined')
     institutional_investor_id = Column(Integer, ForeignKey('institutional_investor.institutional_investor_id'))
@@ -159,10 +160,10 @@ class InstitutionalHoldings(Base):
     price = Column(USD)
 
     @classmethod
-    def find_holdings(cls, session: Session, ticker: Ticker, investor: InstitutionalInvestor,
-                      security_type: SecurityType, calendar_date: datetime.date):
-        return session.query(InstitutionalHoldings).join(Ticker).join(InstitutionalInvestor).join(SecurityType) \
-                .filter(Ticker.ticker == ticker.ticker,
+    def find(cls, session: Session, ticker: Ticker, investor: InstitutionalInvestor,
+             security_type: SecurityType, calendar_date: datetime.date):
+        return session.query(InstitutionalHoldings).join(InstitutionalInvestor).join(SecurityType) \
+                .filter(InstitutionalHoldings.ticker_code == ticker.ticker,
                         InstitutionalInvestor.institutional_investor_name == investor.institutional_investor_name,
                         SecurityType.security_type_code == security_type.security_type_code,
                         InstitutionalHoldings.calendar_date == calendar_date).one_or_none()
@@ -172,6 +173,7 @@ class InsiderHoldings(Base):
     __tablename__ = 'insider_holdings'
 
     insider_holdings_id = Column(Integer, primary_key=True)
+    ticker_code = Column(String(16), name='ticker')
     ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
     ticker = relationship('serenity.equity.sharadar_refdata.Ticker', lazy='joined')
     filing_date = Column(Date)
@@ -203,10 +205,10 @@ class InsiderHoldings(Base):
     row_num = Column(Integer)
 
     @classmethod
-    def find_holdings(cls, session: Session, ticker: Ticker, filing_date: datetime.date, owner_name: str,
-                      form_type: FormType, row_num: int):
-        return session.query(InsiderHoldings).join(Ticker).join(FormType) \
-                .filter(Ticker.ticker == ticker.ticker,
+    def find(cls, session: Session, ticker: str, filing_date: datetime.date, owner_name: str,
+             form_type: FormType, row_num: int):
+        return session.query(InsiderHoldings).join(FormType) \
+                .filter(InsiderHoldings.ticker_code == ticker,
                         InsiderHoldings.filing_date == filing_date,
                         InsiderHoldings.owner_name == owner_name,
                         FormType.form_type_code == form_type.form_type_code,

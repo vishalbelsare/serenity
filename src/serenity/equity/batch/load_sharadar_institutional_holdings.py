@@ -29,7 +29,7 @@ class LoadInstitutionalHoldingsTask(LoadSharadarTableTask):
         units = row['units']
         price = clean_nulls(row['price'])
 
-        holdings = InstitutionalHoldings.find_holdings(self.session, ticker, investor, security_type, calendar_date)
+        holdings = InstitutionalHoldings.find(self.session, ticker_code, investor, security_type, calendar_date)
         if holdings is None:
             holdings = InstitutionalHoldings(ticker=ticker, investor=investor, security_type=security_type,
                                              calendar_date=calendar_date, value=value, units=units, price=price)

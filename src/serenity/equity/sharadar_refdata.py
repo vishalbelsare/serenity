@@ -267,6 +267,7 @@ class Event(Base):
     __tablename__ = 'event'
 
     event_id = Column(Integer, primary_key=True)
+    ticker_code = Column(String(16), name='ticker')
     ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
     ticker = relationship('Ticker', lazy='joined')
     event_date = Column(Date)
@@ -275,9 +276,9 @@ class Event(Base):
 
     @classmethod
     def find(cls, session: Session, ticker: str, event_date: datetime.date, event_code: int):
-        return session.query(Event).join(Ticker).join(EventCode).filter(Ticker.ticker == ticker,
-                                                                        Event.event_date == event_date,
-                                                                        EventCode.event_code == event_code)\
+        return session.query(Event).join(EventCode).filter(Event.ticker_code == ticker,
+                                                           Event.event_date == event_date,
+                                                           EventCode.event_code == event_code)\
             .one_or_none()
 
 
@@ -309,6 +310,7 @@ class CorporateAction(Base):
 
     corp_action_id = Column(Integer, primary_key=True)
     corp_action_date = Column(Date)
+    ticker_code = Column(String(16), name='ticker')
     ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
     ticker = relationship('Ticker', lazy='joined')
     corp_action_type_id = Column(Integer, ForeignKey('corp_action_type.corp_action_type_id'))
@@ -320,8 +322,8 @@ class CorporateAction(Base):
 
     @classmethod
     def find(cls, session: Session, ticker: str, corp_action_date: datetime.date, corp_action_type_code: str):
-        return session.query(CorporateAction).join(Ticker).join(CorporateActionType)\
-            .filter(Ticker.ticker == ticker,
+        return session.query(CorporateAction).join(CorporateActionType)\
+            .filter(CorporateAction.ticker_code == ticker,
                     CorporateAction.corp_action_date == corp_action_date,
                     CorporateActionType.corp_action_type_code == corp_action_type_code).one_or_none()
 

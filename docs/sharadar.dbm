@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,213" last-zoom="1.05" max-obj-count="31"
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1.05" max-obj-count="31"
 	 default-schema="public" default-owner="postgres">
 <role name="sharadar"
       login="true"
@@ -121,14 +121,17 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	<role name="postgres"/>
 </sequence>
 
-<table name="event" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
+<table name="event" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
 	<position x="320" y="800"/>
 	<column name="event_id" not-null="true" sequence="sharadar.event_seq">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="ticker_id" not-null="true">
+	<column name="ticker" not-null="true">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="ticker_id">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="event_date" not-null="true">
@@ -398,14 +401,17 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	</constraint>
 </table>
 
-<table name="equity_price" layer="0" collapse-mode="2" max-obj-count="13" z-value="0">
+<table name="equity_price" layer="0" collapse-mode="2" max-obj-count="14" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
 	<position x="620" y="820"/>
 	<column name="equity_price_id" not-null="true" sequence="sharadar.equity_price_seq">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="ticker_id" not-null="true">
+	<column name="ticker" not-null="true">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="ticker_id">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="price_date" not-null="true">
@@ -440,14 +446,17 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	</constraint>
 </table>
 
-<table name="institutional_holdings" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
+<table name="institutional_holdings" layer="0" collapse-mode="2" max-obj-count="10" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
 	<position x="1540" y="920"/>
 	<column name="institutional_holdings_id" not-null="true" sequence="sharadar.institutional_holdings_seq">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="ticker_id" not-null="true">
+	<column name="ticker" not-null="true">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="ticker_id">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="institutional_investor_id" not-null="true">
@@ -473,14 +482,17 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	</constraint>
 </table>
 
-<table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="30" z-value="0">
+<table name="insider_holdings" layer="0" collapse-mode="2" max-obj-count="31" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
-	<position x="1660" y="420"/>
+	<position x="1660" y="400"/>
 	<column name="insider_holdings_id" not-null="true" sequence="sharadar.insider_holdings_seq">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="ticker_id" not-null="true">
+	<column name="ticker">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="ticker_id">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="filing_date" not-null="true">
@@ -603,14 +615,17 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	</constraint>
 </table>
 
-<table name="fundamentals" layer="0" collapse-mode="2" max-obj-count="134" z-value="0">
+<table name="fundamentals" layer="0" collapse-mode="2" max-obj-count="135" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
 	<position x="900" y="980"/>
 	<column name="fundamentals_id" not-null="true" sequence="sharadar.fundamentals_seq">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="ticker_id" not-null="true">
+	<column name="ticker" not-null="true">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="ticker_id">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="dimension_type_id" not-null="true">
@@ -1083,7 +1098,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	</constraint>
 </table>
 
-<table name="corp_action" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
+<table name="corp_action" layer="0" collapse-mode="2" max-obj-count="10" z-value="0">
 	<schema name="sharadar"/>
 	<role name="postgres"/>
 	<position x="540" y="1500"/>
@@ -1093,7 +1108,10 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	<column name="corp_action_date" not-null="true">
 		<type name="date" length="0"/>
 	</column>
-	<column name="ticker_id" not-null="true">
+	<column name="ticker">
+		<type name="varchar" length="16"/>
+	</column>
+	<column name="ticker_id">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="corp_action_type_id" not-null="true">
@@ -1136,7 +1154,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	 concurrent="false" unique="true" fast-update="false" buffering="false"
 	 index-type="btree" factor="0">
 		<idxelement use-sorting="false">
-			<column name="ticker_id"/>
+			<column name="ticker"/>
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="institutional_investor_id"/>
@@ -1153,7 +1171,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	 concurrent="false" unique="true" fast-update="false" buffering="false"
 	 index-type="btree" factor="0">
 		<idxelement use-sorting="false">
-			<column name="ticker_id"/>
+			<column name="ticker"/>
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="filing_date"/>
@@ -1173,7 +1191,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	 concurrent="false" unique="true" fast-update="false" buffering="false"
 	 index-type="btree" factor="0">
 		<idxelement use-sorting="false">
-			<column name="ticker_id"/>
+			<column name="ticker"/>
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="event_date"/>
@@ -1187,7 +1205,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	 concurrent="false" unique="true" fast-update="false" buffering="false"
 	 index-type="btree" factor="0">
 		<idxelement use-sorting="false">
-			<column name="ticker_id"/>
+			<column name="ticker"/>
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="corp_action_date"/>
@@ -1201,7 +1219,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	 concurrent="false" unique="true" fast-update="false" buffering="false"
 	 index-type="btree" factor="0">
 		<idxelement use-sorting="false">
-			<column name="ticker_id"/>
+			<column name="ticker"/>
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="price_date"/>
@@ -1212,7 +1230,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	 concurrent="false" unique="true" fast-update="false" buffering="false"
 	 index-type="btree" factor="0">
 		<idxelement use-sorting="false">
-			<column name="ticker_id"/>
+			<column name="ticker"/>
 		</idxelement>
 		<idxelement use-sorting="false">
 			<column name="dimension_type_id"/>
@@ -1519,7 +1537,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 <relationship name="rel_events_ticker" type="relfk" layer="0"
 	 src-table="sharadar.event"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true">
+	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="69.439" y="-64.7399"/>
 	</label>
@@ -1528,17 +1546,17 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 <relationship name="rel_equity_prices_ticker" type="relfk" layer="0"
 	 src-table="sharadar.equity_price"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_institutional_holdings_ticker" type="relfk" layer="0"
 	 src-table="sharadar.institutional_holdings"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_insider_holdings_ticker" type="relfk" layer="0"
 	 src-table="sharadar.insider_holdings"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_institutional_holdings_institutional_investor" type="relfk" layer="0"
 	 src-table="sharadar.institutional_holdings"
@@ -1553,7 +1571,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 <relationship name="rel_fundamentals_ticker" type="relfk" layer="0"
 	 src-table="sharadar.fundamentals"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_insider_holdings_form_type" type="relfk" layer="0"
 	 src-table="sharadar.insider_holdings"
@@ -1583,7 +1601,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 <relationship name="rel_corporate_actions_ticker" type="relfk" layer="0"
 	 src-table="sharadar.corp_action"
 	 dst-table="sharadar.ticker" reference-fk="ticker_fk"
-	 src-required="false" dst-required="true"/>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_corporate_actions_corp_action_type" type="relfk" layer="0"
 	 src-table="sharadar.corp_action"

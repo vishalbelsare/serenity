@@ -12,8 +12,8 @@ from serenity.equity.batch.load_sharadar_prices import LoadEquityPricesTask
 
 
 class SharadarDailyDownloadTask(luigi.WrapperTask):
-    start_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=0))
-    end_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=0))
+    start_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=8))
+    end_date = luigi.DateParameter(default=datetime.date.today() - datetime.timedelta(days=1))
 
     def requires(self):
         yield LoadSharadarMetaTask()

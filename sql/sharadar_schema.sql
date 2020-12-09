@@ -191,7 +191,8 @@ ALTER SEQUENCE sharadar.event_code_seq OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.event CASCADE;
 CREATE TABLE sharadar.event (
 	event_id integer NOT NULL DEFAULT nextval('sharadar.event_seq'::regclass),
-	ticker_id integer NOT NULL,
+	ticker varchar(16) NOT NULL,
+	ticker_id integer,
 	event_date date NOT NULL,
 	event_code_id integer NOT NULL,
 	CONSTRAINT event_pk PRIMARY KEY (event_id)
@@ -445,7 +446,8 @@ ALTER TABLE sharadar.event_code OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.equity_price CASCADE;
 CREATE TABLE sharadar.equity_price (
 	equity_price_id integer NOT NULL DEFAULT nextval('sharadar.equity_price_seq'::regclass),
-	ticker_id integer NOT NULL,
+	ticker varchar(16) NOT NULL,
+	ticker_id integer,
 	price_date date NOT NULL,
 	open money NOT NULL,
 	high money NOT NULL,
@@ -466,7 +468,8 @@ ALTER TABLE sharadar.equity_price OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.institutional_holdings CASCADE;
 CREATE TABLE sharadar.institutional_holdings (
 	institutional_holdings_id integer NOT NULL DEFAULT nextval('sharadar.institutional_holdings_seq'::regclass),
-	ticker_id integer NOT NULL,
+	ticker varchar(16) NOT NULL,
+	ticker_id integer,
 	institutional_investor_id integer NOT NULL,
 	security_type_id integer NOT NULL,
 	calendar_date date NOT NULL,
@@ -484,7 +487,8 @@ ALTER TABLE sharadar.institutional_holdings OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.insider_holdings CASCADE;
 CREATE TABLE sharadar.insider_holdings (
 	insider_holdings_id integer NOT NULL DEFAULT nextval('sharadar.insider_holdings_seq'::regclass),
-	ticker_id integer NOT NULL,
+	ticker varchar(16),
+	ticker_id integer,
 	filing_date date NOT NULL,
 	form_type_id integer NOT NULL,
 	issuer_name varchar(128) NOT NULL,
@@ -573,7 +577,8 @@ ALTER TABLE sharadar.security_type OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.fundamentals CASCADE;
 CREATE TABLE sharadar.fundamentals (
 	fundamentals_id integer NOT NULL DEFAULT nextval('sharadar.fundamentals_seq'::regclass),
-	ticker_id integer NOT NULL,
+	ticker varchar(16) NOT NULL,
+	ticker_id integer,
 	dimension_type_id integer NOT NULL,
 	calendar_date date NOT NULL,
 	date_key date NOT NULL,
@@ -857,7 +862,8 @@ ALTER TABLE sharadar.corp_action_type OWNER TO postgres;
 CREATE TABLE sharadar.corp_action (
 	corp_action_id integer NOT NULL DEFAULT nextval('sharadar.corporate_action_seq'::regclass),
 	corp_action_date date NOT NULL,
-	ticker_id integer NOT NULL,
+	ticker varchar(16),
+	ticker_id integer,
 	corp_action_type_id integer NOT NULL,
 	name varchar(256),
 	value decimal(16,4),
@@ -893,7 +899,7 @@ CREATE INDEX ticker_idx ON sharadar.ticker
 CREATE UNIQUE INDEX institutional_holdings_uq_idx ON sharadar.institutional_holdings
 	USING btree
 	(
-	  ticker_id,
+	  ticker,
 	  institutional_investor_id,
 	  security_type_id,
 	  calendar_date
@@ -905,7 +911,7 @@ CREATE UNIQUE INDEX institutional_holdings_uq_idx ON sharadar.institutional_hold
 CREATE UNIQUE INDEX insider_holdings_uq_idx ON sharadar.insider_holdings
 	USING btree
 	(
-	  ticker_id,
+	  ticker,
 	  filing_date,
 	  owner_name,
 	  form_type_id,
@@ -918,7 +924,7 @@ CREATE UNIQUE INDEX insider_holdings_uq_idx ON sharadar.insider_holdings
 CREATE UNIQUE INDEX event_uq_idx ON sharadar.event
 	USING btree
 	(
-	  ticker_id,
+	  ticker,
 	  event_date,
 	  event_code_id
 	);
@@ -929,7 +935,7 @@ CREATE UNIQUE INDEX event_uq_idx ON sharadar.event
 CREATE UNIQUE INDEX corp_action_uq_idx ON sharadar.corp_action
 	USING btree
 	(
-	  ticker_id,
+	  ticker,
 	  corp_action_date,
 	  corp_action_type_id
 	);
@@ -940,7 +946,7 @@ CREATE UNIQUE INDEX corp_action_uq_idx ON sharadar.corp_action
 CREATE UNIQUE INDEX equity_price_uq_idx ON sharadar.equity_price
 	USING btree
 	(
-	  ticker_id,
+	  ticker,
 	  price_date
 	);
 -- ddl-end --
@@ -950,7 +956,7 @@ CREATE UNIQUE INDEX equity_price_uq_idx ON sharadar.equity_price
 CREATE UNIQUE INDEX fundamentals_uq_idx ON sharadar.fundamentals
 	USING btree
 	(
-	  ticker_id,
+	  ticker,
 	  dimension_type_id,
 	  date_key,
 	  report_period
