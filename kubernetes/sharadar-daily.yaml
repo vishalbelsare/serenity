@@ -19,6 +19,11 @@ spec:
                 secretKeyRef:
                   name: database-secret-config
                   key: sharadar-password
+          - name: QUANDL_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: quandl-secret-config
+                key: api-key
             - name: LUIGI_DATA_DIR
               value: /luigi
             volumeMounts:
