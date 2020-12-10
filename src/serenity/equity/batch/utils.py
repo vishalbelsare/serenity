@@ -75,11 +75,14 @@ class BatchStatusTarget(Target):
             exists = False
         else:
             exists = (not batch_status.is_pending) and (batch_status.md5_checksum == md5_checksum)
+            if batch_status.md5_checksum != md5_checksum:
+                batch_status.md5_checksum = md5_checksum
+                self.session.add(batch_status)
         return exists
 
     def done(self):
         batch_status = BatchStatus.find(self.session, self.workflow_name, self.start_date, self.end_date)
-        if batch_status is not None and batch_status.is_pending:
+        if batch_status is not None and not batch_status.is_pending:
             batch_status.is_pending = False
             self.session.add(batch_status)
         self.session.commit()
