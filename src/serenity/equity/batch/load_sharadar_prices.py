@@ -24,10 +24,10 @@ class LoadEquityPricesTask(LoadSharadarTableTask):
     def process_row(self, index, row):
         ticker_code = row['ticker']
         date = row['date']
-        open_px = row['open']
-        high_px = row['high']
-        low_px = row['low']
-        close_px = row['close']
+        open_px = clean_price(row['open'])
+        high_px = clean_price(row['high'])
+        low_px = clean_price(row['low'])
+        close_px = clean_price(row['close'])
         volume = clean_nulls(row['volume'])
         dividends = row['dividends']
         close_unadj = row['closeunadj']
@@ -54,3 +54,10 @@ class LoadEquityPricesTask(LoadSharadarTableTask):
 
     def get_workflow_name(self):
         return 'SHARADAR/SEP'
+
+
+def clean_price(px):
+    if float(px) < 0.01:
+        return 0
+    else:
+        return px
