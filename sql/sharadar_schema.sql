@@ -468,7 +468,7 @@ ALTER TABLE sharadar.equity_price OWNER TO postgres;
 -- DROP TABLE IF EXISTS sharadar.institutional_holdings CASCADE;
 CREATE TABLE sharadar.institutional_holdings (
 	institutional_holdings_id integer NOT NULL DEFAULT nextval('sharadar.institutional_holdings_seq'::regclass),
-	ticker varchar(16) NOT NULL,
+	ticker varchar(16),
 	ticker_id integer,
 	institutional_investor_id integer NOT NULL,
 	security_type_id integer NOT NULL,
@@ -506,7 +506,7 @@ CREATE TABLE sharadar.insider_holdings (
 	transaction_price_per_share money,
 	transaction_value money,
 	security_title_type_id integer,
-	direct_or_indirect char(1) NOT NULL,
+	direct_or_indirect char(1),
 	nature_of_ownership varchar(128),
 	date_exercisable date,
 	price_exercisable money,

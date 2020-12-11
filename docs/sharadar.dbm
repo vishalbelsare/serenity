@@ -546,7 +546,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 	<column name="security_title_type_id">
 		<type name="integer" length="0"/>
 	</column>
-	<column name="direct_or_indirect" not-null="true">
+	<column name="direct_or_indirect">
 		<type name="char" length="1"/>
 	</column>
 	<column name="nature_of_ownership">

@@ -46,7 +46,7 @@ class LoadInsiderHoldingsTask(LoadSharadarTableTask):
         security_title_type_code = clean_nulls(row['securitytitle'])
         security_title_type = SecurityTitleType.get_or_create(self.session, security_title_type_code)
 
-        direct_or_indirect = row['directorindirect']
+        direct_or_indirect = clean_nulls(row['directorindirect'])
         nature_of_ownership = clean_nulls(row['natureofownership'])
         date_exercisable = clean_nulls(row['dateexercisable'])
         price_exercisable = clean_nulls(row['priceexercisable'])
