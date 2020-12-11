@@ -82,7 +82,7 @@ class BatchStatusTarget(Target):
 
     def done(self):
         batch_status = BatchStatus.find(self.session, self.workflow_name, self.start_date, self.end_date)
-        if batch_status is not None and not batch_status.is_pending:
+        if batch_status is not None and batch_status.is_pending:
             batch_status.is_pending = False
             self.session.add(batch_status)
         self.session.commit()
