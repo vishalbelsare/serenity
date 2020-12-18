@@ -16,9 +16,6 @@ class LoadInstitutionalHoldingsTask(LoadSharadarTableTask):
     def process_row(self, index, row):
         ticker_code = row['ticker']
         ticker = Ticker.find_by_ticker(self.session, ticker_code)
-        if ticker is None:
-            self.logger.warning(f'unknown ticker referenced; skipping: {ticker_code}')
-            return
 
         investor_name = row['investorname']
         investor = InstitutionalInvestor.get_or_create(self.session, investor_name)
