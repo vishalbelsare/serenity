@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: sharadar-daily
-            image: cloudwallcapital/serenity:2020.12.11-b71
+            image: cloudwallcapital/serenity:2020.12.18-b72
             command: ["/app/venv-py3/bin/python"]
             args: ["serenity/equity/batch/main.py", "--mode", "DAILY"]
             env:
