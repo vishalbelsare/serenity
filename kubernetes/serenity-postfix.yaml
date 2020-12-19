@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: serenity-postfix
-          image: cloudwallcapital/serenity-postfix:2020.12.19-b3
+          image: cloudwallcapital/serenity-postfix:2020.12.19-b14
           ports:
           - containerPort: 25
 ---
