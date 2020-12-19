@@ -85,6 +85,14 @@ class BatchStatusTarget(Target):
         if batch_status is not None and batch_status.is_pending:
             batch_status.is_pending = False
             self.session.add(batch_status)
+        elif batch_status is None:
+            md5_checksum = hashlib.md5(open(self.local_file.path, 'rb').read()).hexdigest()
+            batch_status = BatchStatus(workflow_name=self.workflow_name,
+                                       start_date=self.start_date,
+                                       end_date=self.end_date,
+                                       md5_checksum=md5_checksum,
+                                       is_pending=False)
+            self.session.add(batch_status)
         self.session.commit()
 
 
