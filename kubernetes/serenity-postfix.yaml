@@ -16,6 +16,19 @@ spec:
     spec:
       containers:
         - name: serenity-postfix
-          image: cloudwallcapital/serenity-postfix:2020.12.19-b1
+          image: cloudwallcapital/serenity-postfix:2020.12.19-b3
           ports:
-            - containerPort: 25
+          - containerPort: 25
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: serenity-postfix
+  labels:
+    app: serenity-postfix
+spec:
+  ports:
+  - port: 25
+    protocol: TCP
+  selector:
+    app: serenity-postfix
