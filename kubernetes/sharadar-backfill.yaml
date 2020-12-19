@@ -23,6 +23,8 @@ spec:
                 key: api-key
           - name: LUIGI_DATA_DIR
             value: /luigi
+          - name: SMTP_HOSTNAME
+            value: serenity-postfix
           volumeMounts:
             - mountPath: /luigi
               name: luigi
