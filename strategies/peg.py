@@ -74,7 +74,7 @@ class Peg(Strategy):
     def init(self, ctx: StrategyContext):
         self.ctx = ctx
 
-        account = ctx.getenv('EXCHANGE_ACCOUNT', None)
+        account = ctx.getenv('EXCHANGE_ACCOUNT')
         if account is None:
             raise ValueError('Missing EXCHANGE_ACCOUNT')
 
@@ -85,7 +85,7 @@ class Peg(Strategy):
         if peg_type == 'Near':
             self.peg_type = PegType.NEAR
 
-        peg_side = ctx.getenv('PEG_SIDE', None)
+        peg_side = ctx.getenv('PEG_SIDE')
         if peg_side == 'Buy':
             self.peg_side = Side.BUY
         elif peg_side == 'Sell':

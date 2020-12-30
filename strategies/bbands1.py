@@ -119,7 +119,7 @@ class BollingerBandsStrategy1(Strategy):
 
                             trade_pnl = (order_event.get_last_px() - self.last_entry) * \
                                         (contract_qty / self.last_entry)
-                            self.cum_pnl = self.cum_pnl + trade_pnl
+                            self.cum_pnl += trade_pnl
                             self.strategy.logger.info(f'Trade P&L={trade_pnl}; cumulative P&L={self.cum_pnl}')
 
                             dcs.capture('PnL', {

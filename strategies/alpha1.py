@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from typing import Set
 
 from phemex.order import Contract, Side, Trigger, Condition, ConditionalOrder
 from tau.core import Event, Network
@@ -8,8 +7,7 @@ from tau.event import Do
 from tau.math import ExponentialMovingAverage
 from tau.signal import Filter, BufferWithTime, Map
 
-from serenity.algo.api import InvestmentStrategy, StrategyContext
-from serenity.model.exchange import ExchangeInstrument
+from serenity.algo.api import Strategy, StrategyContext
 from serenity.signal.marketdata import ComputeOHLC
 
 
@@ -92,7 +90,7 @@ class Alpha1Trader(Event):
             return False
 
 
-class Alpha1(InvestmentStrategy):
+class Alpha1(Strategy):
     """
     An example investment strategy. This signal has not been backtested & calibrated and you should not
     trade it; this is for example purposes only. Likely this is TOTAL NONSENSE. Furthermore, the fast
@@ -116,10 +114,6 @@ class Alpha1(InvestmentStrategy):
         self.ewma = None
         self.trader = None
 
-    def get_instrument_universe(self) -> Set[ExchangeInstrument]:
-        btc_usd_future = self.ctx.get_instrument_cache().get_exchange_instrument('Phemex', 'BTCUSD')
-        return {btc_usd_future}
-
     def init(self, ctx: StrategyContext):
         self.ctx = ctx
 
@@ -135,15 +129,15 @@ class Alpha1(InvestmentStrategy):
         network = self.ctx.get_network()
 
         # scan the spot market for large trades
-        btc_usd_spot = self.ctx.get_instrument_cache().get_exchange_instrument('CoinbasePro', 'BTC-USD')
+        btc_usd_spot = self.ctx.get_instrument_cache().get_crypto_exchange_instrument('CoinbasePro', 'BTC-USD')
         spot_trades = self.ctx.get_marketdata_service().get_trades(btc_usd_spot)
         Do(network, spot_trades, lambda: self.logger.info(f'Spot market trade: {spot_trades.get_value()}'))
         self.big_prints = Filter(network, spot_trades, lambda x: x.get_qty() >= big_print_qty)
 
         # compute 5 minute bins for the futures market and extract the volume field
-        btc_usd_future = self.ctx.get_instrument_cache().get_exchange_instrument('Phemex', 'BTCUSD')
+        btc_usd_future = self.ctx.get_instrument_cache().get_crypto_exchange_instrument('Phemex', 'BTCUSD')
         self.futures_trades = self.ctx.get_marketdata_service().get_trades(btc_usd_future)
-        buffer_5min = BufferWithTime(network, self.futures_trades, timedelta(minutes=5))
+        buffer_5min = BufferWithTime(self.ctx.get_scheduler(), self.futures_trades, timedelta(minutes=5))
         self.ohlc_5min = ComputeOHLC(network, buffer_5min)
         Do(network, self.ohlc_5min, lambda: self.logger.info(f'OHLC[5min]: {self.ohlc_5min.get_value()}'))
         self.volume = Map(network, self.ohlc_5min, lambda x: x.volume)

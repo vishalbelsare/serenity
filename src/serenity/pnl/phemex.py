@@ -5,13 +5,12 @@ import logging
 from phemex import PublicCredentials
 from serenity.db.api import InstrumentCache
 from tau.core import Signal, MutableSignal, NetworkScheduler
-from tau.signal import Map, Filter
+from tau.signal import Map, Filter, Pipe
 
 from serenity.exchange.phemex import get_phemex_connection
 from serenity.model.exchange import ExchangeInstrument
 from serenity.model.instrument import FutureContract, CurrencyPair, Instrument
 from serenity.pnl.api import MarkService, Mark
-from serenity.signal.core import Pipe
 from serenity.utils import websocket_subscribe_with_retry
 
 

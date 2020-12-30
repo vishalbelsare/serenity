@@ -128,7 +128,7 @@ class AlgoBacktester:
 
         xps = NullExchangePositionService(self.scheduler)
 
-        extra_outputs_txt = bt_env.getenv('EXTRA_OUTPUTS', None)
+        extra_outputs_txt = bt_env.getenv('EXTRA_OUTPUTS')
         if extra_outputs_txt is None:
             extra_outputs = []
         else:

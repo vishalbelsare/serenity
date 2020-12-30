@@ -77,7 +77,7 @@ class AlgoEngine:
             mark_service = PhemexMarkService(scheduler, instrument_cache, instance_id)
             self.xps = None
 
-            extra_outputs_txt = self.engine_env.getenv('EXTRA_OUTPUTS', None)
+            extra_outputs_txt = self.engine_env.getenv('EXTRA_OUTPUTS')
             if extra_outputs_txt is None:
                 extra_outputs = []
             else:

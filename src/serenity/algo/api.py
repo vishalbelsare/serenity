@@ -8,7 +8,6 @@ from serenity.db.api import InstrumentCache, TypeCodeCache
 from serenity.marketdata.api import MarketdataService
 from serenity.pnl.api import MarkService
 from serenity.position.api import PositionService, ExchangePositionService
-from serenity.trading.api import OrderPlacer
 from serenity.trading.oms import OrderPlacerService
 
 
@@ -115,18 +114,5 @@ class Strategy(ABC):
         Callback made whenever the strategy is cancelled by a command from the engine.
         This call is valid for all states except CANCELLED. Subsequent to a cancel the
         strategy needs to be re-created or the engine restarted in order to continue trading.
-        """
-        pass
-
-
-class AlgoExecutor(OrderPlacer, ABC):
-    pass
-
-
-class InvestmentStrategy(Strategy):
-    @abstractmethod
-    def get_instrument_universe(self) -> set:
-        """
-        Gets the universe of exchange-traded instruments that this strategy trades.
         """
         pass
