@@ -3,7 +3,7 @@ from enum import Enum, auto
 
 import pandas as pd
 
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from tau.core import Event, NetworkScheduler
 from tau.event import Do
@@ -138,7 +138,7 @@ class BollingerBandsStrategy1(Strategy):
                         return False
 
                     self.strategy.logger.info(f'Close below lower Bollinger band, enter long position '
-                                              f'at {datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                                              f'at {scheduler.get_clock().get_time()}')
 
                     stop_px = close_prices.get_value() - ((bbands.get_value().sma - bbands.get_value().lower) *
                                                           (stop_std / num_std))
@@ -157,7 +157,7 @@ class BollingerBandsStrategy1(Strategy):
                     self.trader_state = TraderState.GOING_LONG
                 elif self.trader_state == TraderState.LONG and close_prices.get_value() > bbands.get_value().upper:
                     self.strategy.logger.info(f'Close above upper Bollinger band, exiting long position at '
-                                              f'{datetime.fromtimestamp(self.scheduler.get_time() / 1000.0)}')
+                                              f'{scheduler.get_clock().get_time()}')
 
                     order = self.op.get_order_factory().create_market_order(Side.SELL, contract_qty, instrument)
                     self.op.submit(order)

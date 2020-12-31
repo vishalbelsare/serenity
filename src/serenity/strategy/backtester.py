@@ -1,6 +1,4 @@
-import datetime
 import logging
-import time
 from pathlib import Path
 
 import fire
@@ -10,7 +8,8 @@ from tau.core import HistoricNetworkScheduler, Event
 from serenity.equity.sharadar_api import create_sharadar_session
 from serenity.strategy.api import PriceField, InvestmentStrategy, Portfolio
 from serenity.strategy.core import TradableUniversePricingContext, DefaultRebalanceContext, \
-    ZeroCommissionTradingCostCalculator, PandasMarketCalendarMarketScheduleProvider, TradableUniverseDividendContext
+    ZeroCommissionTradingCostCalculator, PandasMarketCalendarMarketScheduleProvider, TradableUniverseDividendContext, \
+    DailyProcessingSchedule
 from serenity.strategy.historical import BacktestStrategyContext, MarketOnCloseTradingSimulator
 from serenity.strategy.sharadar import SharadarTradableUniverse, SharadarPricingContext, SharadarDividendContext
 from serenity.strategy.utils import StrategyLoader
@@ -49,6 +48,29 @@ class InvestmentStrategyBacktester:
 
         rebalance_ctx = DefaultRebalanceContext(self.scheduler, portfolio, universe, pricing_ctx, div_ctx, trading_ctx)
 
+        class DailyProcessingAction(Event):
+            def __init__(self, backtester: InvestmentStrategyBacktester):
+                self.backtester = backtester
+
+            def on_activate(self) -> bool:
+                today = self.backtester.scheduler.get_clock().get_time()
+                self.backtester.logger.info(f'Performing daily bookkeeping for {today.date()}')
+
+                # process dividends
+                div_policy = strategy_instance.get_dividend_policy(trading_ctx, pricing_ctx)
+                for account in portfolio.get_accounts():
+                    for position in account.get_positions():
+                        div = div_ctx.get_dividend(position.get_tradable(), rebalance_ctx.get_rebalance_time().date())
+                        if div is not None:
+                            self.backtester.logger.info(f'Dividend paid on {position.get_tradable().get_symbol()}'
+                                                        f': {div}')
+                            div_policy.apply(div, rebalance_ctx.get_portfolio())
+
+                # mark positions
+                portfolio.mark(today.date(), pricing_ctx)
+
+                return True
+
         class RebalanceAction(Event):
             def __init__(self, backtester: InvestmentStrategyBacktester):
                 self.backtester = backtester
@@ -56,20 +78,13 @@ class InvestmentStrategyBacktester:
             def on_activate(self) -> bool:
                 self.backtester.logger.info(f'Rebalancing at {rebalance_ctx.get_rebalance_time()}')
                 strategy_instance.rebalance(rebalance_ctx)
-
-                for account in portfolio.get_accounts():
-                    for position in account.get_positions():
-                        div = div_ctx.get_dividend(position.get_tradable(), rebalance_ctx.get_rebalance_time().date())
-                        if div is not None:
-                            self.backtester.logger.info(f'Dividend paid on {position.get_tradable().get_symbol()}'
-                                                        f': {div}')
-                            strategy_instance.get_dividend_policy().apply(div, rebalance_ctx.get_portfolio())
-
                 return True
 
         msp = PandasMarketCalendarMarketScheduleProvider(self.scheduler, 'US/Eastern')
-        rebalance_event = strategy_instance.get_rebalance_schedule().get_rebalance_event(universe, msp)
+        rebalance_event = strategy_instance.get_rebalance_schedule(self.scheduler, universe, msp).get_rebalance_event()
+        daily_close_event = DailyProcessingSchedule(universe, msp).get_market_close_event()
         self.scheduler.get_network().connect(rebalance_event, RebalanceAction(self))
+        self.scheduler.get_network().connect(daily_close_event, DailyProcessingAction(self))
 
         return portfolio
 
@@ -83,11 +98,7 @@ def main(config_path: str, strategy_dir: str, start_time: str, end_time: str):
     loader = StrategyLoader(Path(strategy_dir))
     strategy_instance = loader.load(strategy_module, strategy_class)
 
-    timestamp_fmt = '%Y-%m-%dT%H:%M:%S'
-    start_time_millis = int(time.mktime(datetime.datetime.strptime(start_time, timestamp_fmt).timetuple()) * 1000)
-    end_time_millis = int(time.mktime(datetime.datetime.strptime(end_time, timestamp_fmt).timetuple()) * 1000)
-
-    scheduler = HistoricNetworkScheduler(start_time_millis, end_time_millis)
+    scheduler = HistoricNetworkScheduler.new_instance(start_time, end_time)
     backtester = InvestmentStrategyBacktester(scheduler)
     portfolio = backtester.run(strategy_instance, config)
     scheduler.run()
@@ -96,7 +107,7 @@ def main(config_path: str, strategy_dir: str, start_time: str, end_time: str):
         print(f'Account: [{account.get_name()}]')
         print(f'\tcash: {account.get_cash_balance().get_balance()}')
         for position in account.get_positions():
-            print(f'\t{position.get_tradable().get_symbol()}: {position.get_qty()} shares')
+            print(f'\t{position.get_tradable().get_symbol()}: {position.get_qty()} shares ({position.get_notional()})')
 
 
 if __name__ == '__main__':

@@ -1,17 +1,16 @@
 from decimal import Decimal
 
 from money import Money
+from tau.core import NetworkScheduler
 
 from serenity.strategy.api import InvestmentStrategy, RebalanceContext, StrategyContext, TradableUniverse, Portfolio, \
-    PriceField, RebalanceSchedule, DividendPolicy
-from serenity.strategy.core import FixedTradableUniverse, DailyRebalanceOnCloseSchedule, AccumulateCashDividendPolicy
+    PriceField, RebalanceSchedule, DividendPolicy, MarketScheduleProvider, TradingContext, PricingContext
+from serenity.strategy.core import FixedTradableUniverse, OneShotRebalanceOnCloseSchedule, \
+    ReinvestTradableDividendPolicy
 from serenity.trading.api import Side
 
 
 class BuyAndHold(InvestmentStrategy):
-    def get_rebalance_schedule(self) -> RebalanceSchedule:
-        return DailyRebalanceOnCloseSchedule()
-
     def __init__(self):
         self.ctx = None
         self.ticker_id = None
@@ -33,14 +32,16 @@ class BuyAndHold(InvestmentStrategy):
         tradable = base_universe.lookup(self.ticker_id)
         return FixedTradableUniverse([tradable])
 
-    def get_dividend_policy(self) -> DividendPolicy:
-        return AccumulateCashDividendPolicy()
+    def get_rebalance_schedule(self, scheduler: NetworkScheduler, universe: TradableUniverse,
+                               msp: MarketScheduleProvider) -> RebalanceSchedule:
+        return OneShotRebalanceOnCloseSchedule(scheduler, universe, msp)
+
+    def get_dividend_policy(self, trading_ctx: TradingContext, pricing_ctx: PricingContext) -> DividendPolicy:
+        return ReinvestTradableDividendPolicy(trading_ctx, pricing_ctx)
 
     def rebalance(self, rebalance_ctx: RebalanceContext):
+        # get the instrument to trade
         tradable = rebalance_ctx.get_tradable_universe().lookup(self.ticker_id)
-        if rebalance_ctx.get_portfolio().get_account(self.default_account).get_position(tradable).get_qty() > 0.0:
-            # already fully invested, hold
-            return
 
         # compute how many shares we can afford to buy
         initial_cash = rebalance_ctx.get_portfolio().get_account(self.default_account).get_cash_balance().get_balance()
@@ -56,5 +57,5 @@ class BuyAndHold(InvestmentStrategy):
             remaining_cash = initial_cash - qty * px
 
         # execute the buy
-        tx = rebalance_ctx.get_trading_ctx().buy(tradable, qty, None)
+        tx = rebalance_ctx.get_trading_ctx().buy(tradable, qty)
         rebalance_ctx.get_portfolio().get_account(self.default_account).apply(tx)

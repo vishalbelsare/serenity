@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 from typing import List, Optional
 
@@ -7,7 +8,7 @@ import pandas_market_calendars as mcal
 import pytz
 
 from money import Money
-from tau.core import NetworkScheduler, Event, HistoricNetworkScheduler
+from tau.core import NetworkScheduler, Event, Clock
 
 from serenity.strategy.api import DividendPolicy, Dividend, Portfolio, TradableUniverse, Tradable, PricingContext, \
     StrategyContext, PriceField, RebalanceContext, DividendContext, TradingContext, TradingCostCalculator, \
@@ -22,7 +23,7 @@ class DefaultRebalanceContext(RebalanceContext):
         self.scheduler = scheduler
 
     def get_rebalance_time(self) -> datetime.datetime:
-        return datetime.datetime.fromtimestamp(int(self.scheduler.get_time() / 1000.0))
+        return self.scheduler.get_clock().get_time()
 
 
 class FixedTradableUniverse(TradableUniverse):
@@ -49,7 +50,8 @@ class TradableUniversePricingContext(PricingContext):
 
     def price(self, tradable: Tradable, price_date: datetime.date, price_field: PriceField) -> Money:
         assert self.price_field == price_field
-        return Money(self.price_histories.loc[price_date][[tradable.get_ticker_id()]].squeeze(), currency='USD')
+        return Money(self.price_histories.loc[price_date][[tradable.get_ticker_id()]].squeeze(),
+                     tradable.get_currency())
 
     def get_price_history(self, tradables: List[Tradable], start_date: datetime.date, end_date: datetime.date,
                           price_field: PriceField) -> pd.DataFrame:
@@ -73,7 +75,8 @@ class TradableUniverseDividendContext(DividendContext):
 
     def get_dividend(self, tradable: Tradable, payment_date: datetime.date) -> Optional[Dividend]:
         try:
-            amount = Money(self.div_streams.loc[payment_date][[tradable.get_ticker_id()]].squeeze(), currency='USD')
+            amount = Money(self.div_streams.loc[payment_date][[tradable.get_ticker_id()]].squeeze(),
+                           tradable.get_currency())
             return Dividend(tradable, payment_date, amount)
         except KeyError:
             return None
@@ -96,8 +99,34 @@ class NullDividendPolicy(DividendPolicy):
 
 
 class ReinvestTradableDividendPolicy(DividendPolicy):
+    def __init__(self, trading_ctx: TradingContext, pricing_ctx: PricingContext):
+        self.trading_ctx = trading_ctx
+        self.pricing_ctx = pricing_ctx
+
     def apply(self, div: Dividend, pf: Portfolio):
-        pass
+        for account in pf.get_accounts():
+            for position in account.get_positions():
+                if position.get_tradable().get_ticker_id() == div.get_tradable().get_ticker_id():
+                    # increase cash position by dividend payment
+                    px = self.pricing_ctx.price(div.get_tradable(), div.get_payment_date(), PriceField.CLOSE)
+                    qty = position.get_qty()
+                    amt_paid = Money(qty * div.get_amount().amount, div.get_amount().currency)
+                    account.get_cash_balance().deposit(amt_paid)
+                    avail_cash = account.get_cash_balance().get_balance()
+
+                    # execute a buy for the maximum amount given available cash
+                    qty = Decimal(int(avail_cash / px.amount))
+                    cost = self.trading_ctx.get_trading_cost_per_qty(Side.BUY, div.get_tradable())
+                    est_total_cost = qty * cost
+                    remaining_cash = avail_cash - qty * px
+                    while remaining_cash < est_total_cost:
+                        qty -= 1
+                        est_total_cost = qty * cost
+                        remaining_cash = avail_cash - qty * px
+
+                    tx = self.trading_ctx.buy(div.tradable, qty)
+
+                    position.apply(tx, account.get_cash_balance())
 
 
 class ReinvestPortfolioDividendPolicy(DividendPolicy):
@@ -124,16 +153,15 @@ class ZeroCommissionTradingCostCalculator(TradingCostCalculator):
 
 
 class PandasMarketCalendarMarketScheduleProvider(MarketScheduleProvider):
-    def __init__(self, scheduler: HistoricNetworkScheduler, local_tz: str):
+    def __init__(self, scheduler: NetworkScheduler, local_tz: str):
         self.scheduler = scheduler
         self.local_tz = local_tz
 
     def get_market_schedule(self, market: str) -> MarketSchedule:
         tz = pytz.timezone(self.local_tz)
         exch_calendar = mcal.get_calendar(market)
-        schedule_df = exch_calendar.schedule(
-            datetime.datetime.fromtimestamp(self.scheduler.get_start_time() / 1000.0, tz=tz),
-            datetime.datetime.fromtimestamp(self.scheduler.get_end_time() / 1000.0, tz=tz))
+        schedule_df = exch_calendar.schedule(self.scheduler.get_clock().get_start_time(tz),
+                                             self.scheduler.get_clock().get_end_time(tz))
 
         class NullEvent(Event):
             def on_activate(self) -> bool:
@@ -147,14 +175,51 @@ class PandasMarketCalendarMarketScheduleProvider(MarketScheduleProvider):
 
             self.scheduler.get_network().attach(market_open)
             self.scheduler.get_network().attach(market_close)
-            self.scheduler.schedule_event_at(market_open, int(market_open_dt.timestamp() * 1000))
-            self.scheduler.schedule_event_at(market_close, int(market_close_dt.timestamp() * 1000))
+            self.scheduler.schedule_event_at(market_open, Clock.to_millis_time(market_open_dt))
+            self.scheduler.schedule_event_at(market_close, Clock.to_millis_time(market_close_dt))
 
-        return MarketSchedule(market_open, market_close)
+        return MarketSchedule(schedule_df, market_open, market_close)
 
 
 class DailyRebalanceOnCloseSchedule(RebalanceSchedule):
-    def get_rebalance_event(self, universe: TradableUniverse, msp: MarketScheduleProvider) -> Event:
+    def __init__(self, universe: TradableUniverse, msp: MarketScheduleProvider):
         all_markets = set([tradable.get_market() for tradable in universe.all()])
         assert len(all_markets) == 1
-        return msp.get_market_schedule(all_markets.pop()).get_market_close_event()
+        self.market = all_markets.pop()
+        self.msp = msp
+
+    def get_rebalance_event(self) -> Event:
+        return self.msp.get_market_schedule(self.market).get_market_close_event()
+
+
+class OneShotRebalanceOnCloseSchedule(RebalanceSchedule):
+    def __init__(self, scheduler: NetworkScheduler, universe: TradableUniverse, msp: MarketScheduleProvider):
+        self.scheduler = scheduler
+        all_markets = set([tradable.get_market() for tradable in universe.all()])
+        assert len(all_markets) == 1
+
+        market = all_markets.pop()
+        market_schedule = msp.get_market_schedule(market)
+        first = market_schedule.get_schedule().iloc[0]
+
+        class NullEvent(Event):
+            def on_activate(self) -> bool:
+                return True
+
+        self.event = NullEvent()
+        self.scheduler.schedule_event_at(self.event, Clock.to_millis_time(first['market_close']))
+
+    def get_rebalance_event(self) -> Event:
+        return self.event
+
+
+class DailyProcessingSchedule:
+    def __init__(self, universe: TradableUniverse, msp: MarketScheduleProvider):
+        self.universe = universe
+        all_markets = set([tradable.get_market() for tradable in universe.all()])
+        assert len(all_markets) == 1
+        self.market = all_markets.pop()
+        self.msp = msp
+
+    def get_market_close_event(self) -> Event:
+        return self.msp.get_market_schedule(self.market).get_market_close_event()

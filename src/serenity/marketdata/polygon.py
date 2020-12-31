@@ -2,8 +2,6 @@ import logging
 import pandas_market_calendars
 import polygon
 
-from datetime import datetime
-
 from tau.core import Signal, HistoricNetworkScheduler, MutableSignal, SignalGenerator
 
 from serenity.marketdata.api import MarketdataService, Trade
@@ -27,8 +25,8 @@ class PolygonHistoricEquityMarketdataService(MarketdataService):
         self.trade_signal_by_symbol = {}
 
         self.client = polygon.RESTClient(api_key)
-        self.start_date = datetime.fromtimestamp(scheduler.get_start_time() / 1000.0).date()
-        self.end_date = datetime.fromtimestamp(scheduler.get_end_time() / 1000.0).date()
+        self.start_date = scheduler.get_clock().get_start_time().date()
+        self.end_date = scheduler.get_clock().get_end_time().date()
 
     def get_subscribed_instruments(self) -> Signal:
         return self.subscribed_instruments

@@ -24,6 +24,9 @@ class SharadarTradable(Tradable):
     def get_name(self) -> str:
         return self.ticker.name
 
+    def get_currency(self) -> str:
+        return self.ticker.currency.currency_code
+
     def get_market(self) -> str:
         # Sharadar only has U.S. domestic stocks
         return 'NYSE'

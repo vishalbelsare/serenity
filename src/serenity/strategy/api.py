@@ -6,7 +6,7 @@ from typing import Optional, List
 
 import pandas as pd
 from money import Money
-from tau.core import Event
+from tau.core import Event, NetworkScheduler
 
 from serenity.trading.api import Side
 
@@ -28,6 +28,10 @@ class Tradable(ABC):
     def get_name(self) -> str:
         pass
 
+    @abstractmethod
+    def get_currency(self) -> str:
+        pass
+
 
 class TradableUniverse(ABC):
     @abstractmethod
@@ -36,6 +40,24 @@ class TradableUniverse(ABC):
 
     @abstractmethod
     def all(self) -> List[Tradable]:
+        pass
+
+
+class PriceField(Enum):
+    OPEN = auto()
+    CLOSE = auto()
+    BID = auto()
+    ASK = auto()
+
+
+class PricingContext(ABC):
+    @abstractmethod
+    def price(self, tradable: Tradable, price_date: datetime.date, price_field: PriceField) -> Money:
+        pass
+
+    @abstractmethod
+    def get_price_history(self, tradables: List[Tradable], start_date: datetime.date,
+                          end_date: datetime.date, price_field: PriceField) -> pd.DataFrame:
         pass
 
 
@@ -93,6 +115,7 @@ class Position:
     def __init__(self, tradable: Tradable):
         self.tradable = tradable
         self.qty = Decimal(0.0)
+        self.px = Money(0.0, tradable.get_currency())
 
     def get_tradable(self) -> Tradable:
         return self.tradable
@@ -101,7 +124,7 @@ class Position:
         return self.qty
 
     def get_notional(self) -> Money:
-        pass
+        return Money(self.px.amount * self.qty, self.px.currency)
 
     def apply(self, tx: Transaction, cash: CashBalance):
         if tx.get_side() == Side.BUY:
@@ -114,6 +137,9 @@ class Position:
             cash.deposit(tx.get_executed_notional())
         else:
             raise ValueError(f'Side not handled: {tx.get_side()}')
+
+    def mark(self, mark_date: datetime.date, pricing_ctx: PricingContext):
+        self.px = pricing_ctx.price(self.tradable, mark_date, PriceField.CLOSE)
 
 
 class Account:
@@ -141,6 +167,10 @@ class Account:
     def apply(self, tx: Transaction):
         self.get_position(tx.get_tradable()).apply(tx, self.get_cash_balance())
 
+    def mark(self, mark_date: datetime.date, pricing_ctx: PricingContext):
+        for position in self.positions.values():
+            position.mark(mark_date, pricing_ctx)
+
 
 class Portfolio:
     def __init__(self, account_names: List[str], ccy: str):
@@ -152,6 +182,10 @@ class Portfolio:
 
     def get_accounts(self) -> List[Account]:
         return list(self.accounts.values())
+
+    def mark(self, mark_date: datetime.date, pricing_ctx: PricingContext):
+        for account in self.accounts.values():
+            account.mark(mark_date, pricing_ctx)
 
 
 class Dividend:
@@ -193,29 +227,11 @@ class TradingContext(ABC):
         return self.tc_calc.get_trading_cost_per_qty(side, tradable)
 
     @abstractmethod
-    def buy(self, tradable: Tradable, qty: Decimal, limit_px: Optional[Decimal]) -> Transaction:
+    def buy(self, tradable: Tradable, qty: Decimal, limit_px: Optional[Decimal] = None) -> Transaction:
         pass
 
     @abstractmethod
-    def sell(self, tradable: Tradable, qty: Decimal, limit_px: Optional[Decimal]) -> Transaction:
-        pass
-
-
-class PriceField(Enum):
-    OPEN = auto()
-    CLOSE = auto()
-    BID = auto()
-    ASK = auto()
-
-
-class PricingContext(ABC):
-    @abstractmethod
-    def price(self, tradable: Tradable, price_date: datetime.date, price_field: PriceField) -> Money:
-        pass
-
-    @abstractmethod
-    def get_price_history(self, tradables: List[Tradable], start_date: datetime.date,
-                          end_date: datetime.date, price_field: PriceField) -> pd.DataFrame:
+    def sell(self, tradable: Tradable, qty: Decimal, limit_px: Optional[Decimal] = None) -> Transaction:
         pass
 
 
@@ -281,9 +297,13 @@ class RebalanceContext(ABC):
 
 
 class MarketSchedule:
-    def __init__(self, market_open_event: Event, market_close_event: Event):
+    def __init__(self, schedule_df: pd.DataFrame, market_open_event: Event, market_close_event: Event):
+        self.schedule_df = schedule_df
         self.market_open_event = market_open_event
         self.market_close_event = market_close_event
+
+    def get_schedule(self) -> pd.DataFrame:
+        return self.schedule_df
 
     def get_market_open_event(self) -> Event:
         return self.market_open_event
@@ -300,7 +320,7 @@ class MarketScheduleProvider:
 
 class RebalanceSchedule(ABC):
     @abstractmethod
-    def get_rebalance_event(self, universe: TradableUniverse, msp: MarketScheduleProvider) -> Event:
+    def get_rebalance_event(self) -> Event:
         pass
 
 
@@ -314,11 +334,12 @@ class InvestmentStrategy(Strategy):
         pass
 
     @abstractmethod
-    def get_rebalance_schedule(self) -> RebalanceSchedule:
+    def get_rebalance_schedule(self, scheduler: NetworkScheduler, universe: TradableUniverse,
+                               msp: MarketScheduleProvider) -> RebalanceSchedule:
         pass
 
     @abstractmethod
-    def get_dividend_policy(self) -> DividendPolicy:
+    def get_dividend_policy(self, trading_ctx: TradingContext, pricing_ctx: PricingContext) -> DividendPolicy:
         pass
 
     @abstractmethod

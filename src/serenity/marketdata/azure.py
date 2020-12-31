@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from tau.core import Signal, HistoricNetworkScheduler, MutableSignal, NetworkScheduler, SignalGenerator
 
 from serenity.marketdata.api import MarketdataService, Trade, OrderBook, BookLevel
@@ -19,8 +17,8 @@ class AzureHistoricMarketdataService(MarketdataService):
         self.subscribed_instruments = MutableSignal()
         self.scheduler.get_network().attach(self.subscribed_instruments)
 
-        self.start_time = datetime.fromtimestamp(scheduler.get_start_time() / 1000.0)
-        self.end_time = datetime.fromtimestamp(scheduler.get_end_time() / 1000.0)
+        self.start_time = scheduler.get_clock().get_start_time()
+        self.end_time = scheduler.get_clock().get_end_time()
 
         self.all_subscribed = set()
         self.book_signal_by_symbol = {}
