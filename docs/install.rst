@@ -14,7 +14,7 @@ extensive installation process. First, you will want to clone the code locally::
 Database install
 ----------------
 
-First, install `TimescaleDB <http://timescale.com/>` on your local machine.
+First, install `TimescaleDB <http://timescale.com/>`_ on your local machine.
 
 Next, load the following files:
 
@@ -31,7 +31,7 @@ Be sure to change the passwords in ``serenitydb_install.sql`` and ``sharadar_sch
 Kubernetes install
 ------------------
 
-I highly recommend the `microk8s <https://ubuntu.com/tutorials/install-a-local-kubernetes-with-microk8s#1-overview>`
+I highly recommend the `microk8s <https://ubuntu.com/tutorials/install-a-local-kubernetes-with-microk8s#1-overview>`_
 distribution that comes with Ubuntu, but you should be able to use any Kubernetes installation
 with the YAML files that come under the ``kubernetes`` directory. Each file can be installed with::
 
