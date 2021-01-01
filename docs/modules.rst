@@ -1,5 +1,5 @@
-src
-===
+serenity
+========
 
 .. toctree::
    :maxdepth: 4

@@ -10,8 +10,6 @@ Serenity
    :maxdepth: 2
    :caption: Contents:
 
-serenity
-
 Indices and tables
 ==================
 
