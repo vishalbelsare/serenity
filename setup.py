@@ -34,8 +34,8 @@ requires = [
 
 setuptools.setup(
     name='serenity-trading',
-    version='0.7.0',
-    description='A Python cryptocurrency trading system.',
+    version='0.8.0',
+    description='A Python trading system.',
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/x-rst',
     license='MIT',

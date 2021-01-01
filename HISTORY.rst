@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+0.8.0 (2021-01-01)
+++++++++++++++++++
+
+- Extensive support for Sharadar equity fundamentals research database
+- Brand new InvestmentStrategy API and backtester for stock trading
+- Upgraded to latest Tau reactive library (0.14)
+
 0.7.0 (2020-10-31)
 ++++++++++++++++++
 
