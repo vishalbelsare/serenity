@@ -7,9 +7,12 @@ from PyPi with pip as follows::
     $ pip install serenity-trading
 
 But most likely you want to run backtests or even live trading strategies, which requires more
-extensive installation process. First, you will want to clone the code locally::
+extensive installation process. You will want to clone the code locally for this::
 
     $ git clone https://github.com/cloudwall/serenity.git
+
+then you'll need to install a (Postgres-based) database and (optionally) cloud-enable your
+install with Kubernetes, as covered below.
 
 Database install
 ----------------

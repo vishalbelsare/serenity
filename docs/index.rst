@@ -10,7 +10,13 @@ this time).
    :maxdepth: 2
 
    install
+   quickstart
+   features
+   roadmap
+   internals
    ddl
+   codestandards
+   contributing
 
 Indices and tables
 ==================
