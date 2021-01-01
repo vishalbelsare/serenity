@@ -9,7 +9,7 @@ from PyPi with pip as follows::
 But most likely you want to run backtests or even live trading strategies, which requires more
 extensive installation process. First, you will want to clone the code locally::
 
-    $ git clone
+    $ git clone https://github.com/cloudwall/serenity.git
 
 Database install
 ----------------
