@@ -28,7 +28,7 @@ steps:
 
 - script: |
     python -m pip install flake8
-    flake8 .
+    flake8 src strategies
   displayName: 'Run flake8 lint tests'
 
 - script: |

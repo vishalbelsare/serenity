@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import coinbasepro as cbp
-import datetime
 import fire
 import pandas as pd
 
@@ -36,7 +35,7 @@ class CoinbaseHistoricalRatesDownloader:
                     h = 23
                     end_minute = 59
                 else:
-                    h = h + 4
+                    h += 4
                     end_minute = 0
                 stop = start_date.strftime('%Y-%m-%d') + ' {:02d}:{:02d}:00.000'.format(h, end_minute)
 

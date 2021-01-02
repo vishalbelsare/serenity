@@ -389,7 +389,8 @@ class ExchangeEntityService:
             self.cur.execute("INSERT INTO serenity.exchange_order (exchange_id, exchange_instrument_id, order_type_id, "
                              "exchange_account_id, side_id, time_in_force_id, exchange_order_uuid, price, quantity, "
                              "create_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING exchange_order_id",
-                             (order.get_exchange().get_exchange_id(), order.get_instrument().get_exchange_instrument_id(),
+                             (order.get_exchange().get_exchange_id(),
+                              order.get_instrument().get_exchange_instrument_id(),
                               order.get_order_type().get_type_id(),
                               order.get_exchange_account().get_exchange_account_id(),
                               order.get_side().get_type_id(), order.get_time_in_force().get_type_id(),

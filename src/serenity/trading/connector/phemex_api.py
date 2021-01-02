@@ -92,7 +92,7 @@ class OrderEventSubscriber:
             while True:
                 try:
                     async with websockets.connect(self.ws_uri) as sock:
-                        self.logger.info(f'sending Account-Order-Position subscription request for orders')
+                        self.logger.info('sending Account-Order-Position subscription request for orders')
                         auth_msg = self.auth.get_user_auth_message(1)
                         await sock.send(auth_msg)
                         error_msg = await sock.recv()
@@ -192,7 +192,7 @@ class PhemexExchangePositionService(ExchangePositionService):
             while True:
                 try:
                     async with websockets.connect(self.ws_uri) as sock:
-                        self.logger.info(f'sending Account-Order-Position subscription request for positions')
+                        self.logger.info('sending Account-Order-Position subscription request for positions')
                         auth_msg = self.auth.get_user_auth_message(2)
                         await sock.send(auth_msg)
                         error_msg = await sock.recv()
@@ -295,7 +295,7 @@ class PhemexOrderPlacer(OrderPlacer):
         cl_ord_id = order.get_cl_ord_id()
         order_id = order.get_order_id()
         if order_id is None:
-            self.oms.reject(order, f'Missing order ID; cannot cancel')
+            self.oms.reject(order, 'Missing order ID; cannot cancel')
             return
         response = self.trading_conn.send_message('DELETE', '/orders', {
             'symbol': symbol,

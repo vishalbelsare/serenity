@@ -4,7 +4,6 @@ from sqlalchemy import Column, Integer, Date, ForeignKey, String, DECIMAL
 from sqlalchemy.orm import relationship, Session
 
 from serenity.equity.sharadar_api import Base, USD
-from serenity.equity.sharadar_refdata import Ticker
 
 
 class DimensionType(Base):

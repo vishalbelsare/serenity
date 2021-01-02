@@ -134,7 +134,7 @@ class BollingerBandsStrategy1(Strategy):
                 elif self.trader_state == TraderState.FLAT and close_prices.get_value() < bbands.get_value().lower:
                     if self.last_trade_time != 0 and (scheduler.get_time() - self.last_trade_time) < \
                             cooling_period_seconds * 1000:
-                        self.strategy.logger.info(f'Cooling off -- not trading again on rapidly repeated signal')
+                        self.strategy.logger.info('Cooling off -- not trading again on rapidly repeated signal')
                         return False
 
                     self.strategy.logger.info(f'Close below lower Bollinger band, enter long position '

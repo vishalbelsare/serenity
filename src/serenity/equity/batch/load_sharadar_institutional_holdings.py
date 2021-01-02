@@ -41,4 +41,3 @@ class LoadInstitutionalHoldingsTask(LoadSharadarTableTask):
 
     def get_workflow_name(self):
         return 'SHARADAR/SF3'
-

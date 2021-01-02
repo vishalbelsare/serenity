@@ -73,7 +73,7 @@ class SharadarPricingContext(PricingContext):
         rows = [self._unpack_price_row(price_date, row) for price_date, row in prices_by_date.items()]
         df = pd.DataFrame(rows)
         if df.empty:
-            raise KeyError(f'no data in price history')
+            raise KeyError('no data in price history')
         else:
             df.set_index('date', inplace=True)
             df.sort_index(inplace=True)
@@ -127,7 +127,7 @@ class SharadarDividendContext(DividendContext):
         rows = [self._unpack_dividend_row(price_date, row) for price_date, row in divs_by_date.items()]
         df = pd.DataFrame(rows)
         if df.empty:
-            raise KeyError(f'no data in dividend history')
+            raise KeyError('no data in dividend history')
         else:
             df.set_index('date', inplace=True)
             df.sort_index(inplace=True)
