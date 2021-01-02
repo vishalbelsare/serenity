@@ -52,14 +52,6 @@ serenity.marketdata.fh.phemex\_fh module
    :undoc-members:
    :show-inheritance:
 
-serenity.marketdata.fh.polygon module
--------------------------------------
-
-.. automodule:: serenity.marketdata.fh.polygon
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

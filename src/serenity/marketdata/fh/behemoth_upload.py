@@ -8,8 +8,8 @@ import fire
 import pandas as pd
 
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
-from serenity.tickstore.journal import Journal, NoSuchJournalException
-from serenity.tickstore.tickstore import LocalTickstore, BiTimestamp, AzureBlobTickstore
+from serenity.marketdata.tickstore.api import LocalTickstore, BiTimestamp, AzureBlobTickstore
+from serenity.marketdata.tickstore.journal import Journal, NoSuchJournalException
 from serenity.utils import init_logging
 
 init_logging()

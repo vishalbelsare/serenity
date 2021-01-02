@@ -2,7 +2,7 @@ import datetime
 import numpy as np
 import pandas as pd
 
-from serenity.tickstore.tickstore import LocalTickstore, BiTimestamp
+from serenity.marketdata.tickstore.api import LocalTickstore, BiTimestamp
 from pathlib import Path
 
 

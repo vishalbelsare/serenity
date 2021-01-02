@@ -8,8 +8,6 @@ environment:
     value: 9019590001
   - key: AZURE_CONNECT_STR
     value-source: SYSTEM_ENV
-  - key: POLYGON_API_KEY
-    value-source: SYSTEM_ENV
   - key: EXTRA_OUTPUTS
     value: Position,BollingerBands,PnL
 strategy:

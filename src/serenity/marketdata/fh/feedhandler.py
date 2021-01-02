@@ -13,7 +13,7 @@ from tau.signal import Function
 from serenity.db.api import TypeCodeCache, InstrumentCache, connect_serenity_db
 from serenity.marketdata.api import MarketdataService, OrderBook, OrderBookSnapshot
 from serenity.model.exchange import ExchangeInstrument
-from serenity.tickstore.journal import Journal
+from serenity.marketdata.tickstore.journal import Journal
 from serenity.trading.api import Side
 from serenity.utils import init_logging, custom_asyncio_error_handler
 

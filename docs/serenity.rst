@@ -19,7 +19,6 @@ Subpackages
    serenity.position
    serenity.signal
    serenity.strategy
-   serenity.tickstore
    serenity.trading
 
 Submodules

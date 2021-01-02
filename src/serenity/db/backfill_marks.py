@@ -2,11 +2,8 @@ import yfinance
 
 from serenity.db.api import connect_serenity_db
 
-conn = connect_serenity_db()
-cur = conn.cursor()
 
-
-def backfill_symbol(symbol):
+def backfill_symbol(cur, symbol):
     ticker = yfinance.Ticker(symbol)
     marks = ticker.history(period="max")
 
@@ -23,6 +20,10 @@ def backfill_symbol(symbol):
     conn.commit()
 
 
-backfill_symbol("BTC-USD")
-backfill_symbol("ETH-USD")
-backfill_symbol("ZEC-USD")
+if __name__ == '__main__':
+    conn = connect_serenity_db()
+    cur = conn.cursor()
+
+    backfill_symbol(cur, "BTC-USD")
+    backfill_symbol(cur, "ETH-USD")
+    backfill_symbol(cur, "ZEC-USD")

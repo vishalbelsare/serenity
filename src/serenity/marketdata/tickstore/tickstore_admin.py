@@ -2,7 +2,7 @@ from pathlib import Path
 
 import fire
 
-from serenity.tickstore.tickstore import LocalTickstore, AzureBlobTickstore, BiTimestamp
+from serenity.marketdata.tickstore.api import LocalTickstore, AzureBlobTickstore
 from serenity.utils import init_logging
 
 

@@ -2,7 +2,7 @@ from tau.core import Signal, HistoricNetworkScheduler, MutableSignal, NetworkSch
 
 from serenity.marketdata.api import MarketdataService, Trade, OrderBook, BookLevel
 from serenity.model.exchange import ExchangeInstrument
-from serenity.tickstore.tickstore import AzureBlobTickstore
+from serenity.marketdata.tickstore.api import AzureBlobTickstore
 from serenity.trading.api import Side
 
 

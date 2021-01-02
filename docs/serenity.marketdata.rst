@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    serenity.marketdata.fh
+   serenity.marketdata.tickstore
 
 Submodules
 ----------
@@ -24,14 +25,6 @@ serenity.marketdata.azure module
 --------------------------------
 
 .. automodule:: serenity.marketdata.azure
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-serenity.marketdata.polygon module
-----------------------------------
-
-.. automodule:: serenity.marketdata.polygon
    :members:
    :undoc-members:
    :show-inheritance:
