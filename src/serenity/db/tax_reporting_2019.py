@@ -184,4 +184,3 @@ def generate_tax_report():
 
 if __name__ == '__main__':
     fire.Fire(generate_tax_report)
-
