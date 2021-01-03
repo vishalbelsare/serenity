@@ -3,6 +3,9 @@ Serenity: A Trading System
 
 .. image:: docs/logo.jpg
 
+Status
+------
+
 .. image:: https://dev.azure.com/cloudwall/Serenity/_apis/build/status/cloudwall.serenity?branchName=master
     :target: https://dev.azure.com/cloudwall/Serenity/_build/latest?definitionId=7&branchName=master
 
