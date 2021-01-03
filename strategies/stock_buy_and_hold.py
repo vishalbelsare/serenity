@@ -16,16 +16,18 @@ class BuyAndHold(InvestmentStrategy):
         self.ticker_id = None
         self.ccy = None
         self.default_account = None
+        self.initial_investment = None
 
     def init(self, ctx: StrategyContext):
         self.ctx = ctx
         self.ticker_id = self.ctx.get_configuration()['universe']['ticker_id']
         self.ccy = self.ctx.get_configuration()['portfolio']['ccy']
         self.default_account = self.ctx.get_configuration()['portfolio']['default_account']
+        self.initial_investment = self.ctx.get_configuration()['portfolio']['main']['cash_balance']
 
     def get_initial_portfolio(self) -> Portfolio:
         portfolio = Portfolio([self.default_account], self.ccy)
-        portfolio.get_account(self.default_account).get_cash_balance().deposit(Money(10000, self.ccy))
+        portfolio.get_account(self.default_account).get_cash_balance().deposit(Money(self.initial_investment, self.ccy))
         return portfolio
 
     def get_tradable_universe(self, base_universe: TradableUniverse):
