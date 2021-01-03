@@ -2,6 +2,7 @@ Serenity
 ========
 
 .. image:: logo.jpg
+   :align: right
 
 Serenity is a Python 3.x-based, open source trading system. It supports both tick-by-tick style reactive programming
 and a more traditional strategy authoring approach that's more oriented toward investment strategies with longer time
