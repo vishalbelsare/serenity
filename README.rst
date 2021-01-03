@@ -13,11 +13,12 @@ Serenity: A Trading System
 .. image:: https://img.shields.io/pypi/pyversions/serenity-trading.svg
     :target: https://pypi.org/project/serenity-trading/
 
-.. image:: docs/logo.jpg
-   :align: right
 
 Features
 --------
+.. image:: docs/logo.jpg
+   :align: right
+
 - Tick-by-tick and close-on-close backtesters
 - Phemex, Coinbase Pro and Binance marketdata recorders
 - Simple file-based journal and tick store
