@@ -24,7 +24,8 @@ Links
 -----
 
 * `GitHub project <https://github.com/cloudwall/serenity>`_
-* `Azure DevOps project <https://dev.azure.com/cloudwall/Serenity>`_
+* `Azure DevOps CI pipelines <https://dev.azure.com/cloudwall/Serenity/_build>`_
+* `Azure DevOps Kanban board <https://dev.azure.com/cloudwall/Serenity/_boards/board/t/Serenity%20Team/Issues>`_
 * `Developer Slack channel (private) <http://cloudwallworkspace.slack.com>`_
 
 Indices and tables
