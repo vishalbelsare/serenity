@@ -18,6 +18,7 @@ this time).
    ddl
    codestandards
    contributing
+   resources
 
 Indices and tables
 ==================
