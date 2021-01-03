@@ -20,8 +20,15 @@ this time).
    contributing
    resources
 
+Links
+-----
+
+* `GitHub project <https://github.com/cloudwall/serenity>`_
+* `Azure DevOps project <https://dev.azure.com/cloudwall/Serenity>`_
+* `Developer Slack channel (private) <http://cloudwallworkspace.slack.com>`_
+
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
