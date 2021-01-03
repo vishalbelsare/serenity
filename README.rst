@@ -14,10 +14,10 @@ Serenity: A Trading System
     :target: https://pypi.org/project/serenity-trading/
 
 
+.. image:: docs/logo.jpg
+
 Features
 --------
-.. image:: docs/logo.jpg
-   :align: right
 
 - Tick-by-tick and close-on-close backtesters
 - Phemex, Coinbase Pro and Binance marketdata recorders
