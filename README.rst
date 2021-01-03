@@ -1,6 +1,8 @@
 Serenity: A Trading System
 ==========================
 
+.. image:: docs/logo.jpg
+
 .. image:: https://dev.azure.com/cloudwall/Serenity/_apis/build/status/cloudwall.serenity?branchName=master
     :target: https://dev.azure.com/cloudwall/Serenity/_build/latest?definitionId=7&branchName=master
 
@@ -12,9 +14,6 @@ Serenity: A Trading System
 
 .. image:: https://img.shields.io/pypi/pyversions/serenity-trading.svg
     :target: https://pypi.org/project/serenity-trading/
-
-
-.. image:: docs/logo.jpg
 
 Features
 --------
