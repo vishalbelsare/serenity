@@ -13,14 +13,23 @@ Serenity: A Trading System
 .. image:: https://img.shields.io/pypi/pyversions/serenity-trading.svg
     :target: https://pypi.org/project/serenity-trading/
 
+.. image:: docs/logo.jpg
+   :align: right
+
 Features
 --------
+- Tick-by-tick and close-on-close backtesters
 - Phemex, Coinbase Pro and Binance marketdata recorders
 - Simple file-based journal and tick store
 - Postgresql-based trade record database
+- Postgresql-based Sharadar equity research database
 - U.S. tax calculation
 - Custom JupyterLab Docker container
 - Kubernetes deployment scripts
+
+Documentation
+-------------
+See https://serenity-trading.readthedocs.io/en/latest/.
 
 Installation
 ------------
