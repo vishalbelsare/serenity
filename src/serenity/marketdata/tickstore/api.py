@@ -12,6 +12,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Tuple, List
 
+import numpy as np
 import pandas as pd
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import BlobServiceClient
@@ -174,7 +175,7 @@ class DataFrameIndex:
         except KeyError:
             all_versions = pd.DataFrame()
 
-        if all_versions.any().any():
+        if all_versions.any():
             start_time = datetime.datetime.utcnow()
             end_time = BiTimestamp.latest_as_of
 
@@ -214,7 +215,7 @@ class DataFrameIndex:
         except KeyError:
             all_versions = pd.DataFrame()
 
-        if all_versions.any().any():
+        if all_versions.any():
             start_time = datetime.datetime.utcnow()
 
             # see note above in insert()
@@ -497,8 +498,8 @@ class AzureBlobTickstore(Tickstore):
         # pass 2: select ticks matching the exact start/end timestamps
         # noinspection PyTypeChecker
         all_ticks = pd.concat(loaded_dfs)
-        time_mask = (all_ticks.index.get_level_values(self.timestamp_column) >= start) \
-            & (all_ticks.index.get_level_values(self.timestamp_column) <= end)
+        time_mask = (all_ticks.index.get_level_values(self.timestamp_column) >= np.datetime64(start)) \
+            & (all_ticks.index.get_level_values(self.timestamp_column) <= np.datetime64(end))
 
         # sort the ticks -- probably need to optimize this to sort on paths and sort ticks on ingest
         selected_ticks = all_ticks.loc[time_mask]
