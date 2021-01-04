@@ -175,7 +175,7 @@ class DataFrameIndex:
         except KeyError:
             all_versions = pd.DataFrame()
 
-        if all_versions.any():
+        if len(all_versions) > 0:
             start_time = datetime.datetime.utcnow()
             end_time = BiTimestamp.latest_as_of
 
@@ -215,7 +215,7 @@ class DataFrameIndex:
         except KeyError:
             all_versions = pd.DataFrame()
 
-        if all_versions.any():
+        if len(all_versions) > 0:
             start_time = datetime.datetime.utcnow()
 
             # see note above in insert()
