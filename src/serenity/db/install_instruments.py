@@ -1,6 +1,9 @@
-import binance.client
 import coinbasepro
 import gemini
+from phemex import PublicCredentials
+
+from serenity.exchange.phemex import get_phemex_connection
+
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache, ExchangeEntityService
 
 if __name__ == '__main__':
@@ -11,9 +14,6 @@ if __name__ == '__main__':
     type_code_cache = TypeCodeCache(cur)
     instrument_cache = InstrumentCache(cur, type_code_cache)
     exch_service = ExchangeEntityService(cur, type_code_cache, instrument_cache)
-
-    type_code_cache = TypeCodeCache(cur)
-    instrument_cache = InstrumentCache(cur, type_code_cache)
 
     # map all Gemini products to exchange_instrument table
     gemini_client = gemini.PublicClient()
@@ -34,13 +34,20 @@ if __name__ == '__main__':
         currency_pair = instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
         instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), cbp)
 
-    # map all Binance products to exchange_instrument table
-    binance_client = binance.client.Client()
-    exchange_info = binance_client.get_exchange_info()
-    binance = exch_service.instrument_cache.get_crypto_exchange("BINANCE")
-    for product in exchange_info['symbols']:
+    # map all Phemex products to exchange_instrument table
+    (phemex, ws_uri) = get_phemex_connection(PublicCredentials())
+    products = phemex.get_products()
+    exchange_code = 'PHEMEX'
+    for product in products['data']:
         symbol = product['symbol']
-        base_ccy = product['baseAsset']
-        quote_ccy = product['quoteAsset']
-        currency_pair = instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
-        instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), binance)
+        base_ccy = product['baseCurrency']
+        quote_ccy = product['quoteCurrency']
+        price_scale = product['priceScale']
+        ul_symbol = f'.M{base_ccy}'
+        ccy_pair = instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
+        ul_instr = ccy_pair.get_instrument()
+        exchange = instrument_cache.get_crypto_exchange(exchange_code)
+        instrument_cache.get_or_create_exchange_instrument(ul_symbol, ul_instr, exchange)
+        future = instrument_cache.get_or_create_perpetual_future(ul_instr)
+        instr = future.get_instrument()
+        exch_instrument = instrument_cache.get_or_create_exchange_instrument(symbol, instr, exchange)
