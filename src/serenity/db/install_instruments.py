@@ -1,7 +1,7 @@
 import binance.client
 import coinbasepro
 import gemini
-from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
+from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache, ExchangeEntityService
 
 if __name__ == '__main__':
     conn = connect_serenity_db()
@@ -10,30 +10,37 @@ if __name__ == '__main__':
 
     type_code_cache = TypeCodeCache(cur)
     instrument_cache = InstrumentCache(cur, type_code_cache)
+    exch_service = ExchangeEntityService(cur, type_code_cache, instrument_cache)
+
+    type_code_cache = TypeCodeCache(cur)
+    instrument_cache = InstrumentCache(cur, type_code_cache)
 
     # map all Gemini products to exchange_instrument table
     gemini_client = gemini.PublicClient()
+    gemini = exch_service.instrument_cache.get_crypto_exchange("GEMINI")
     for symbol in gemini_client.symbols():
         base_ccy = symbol[0:3].upper()
         quote_ccy = symbol[3:].upper()
         currency_pair = instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
-        instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), 'Gemini')
+        instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), gemini)
 
     # map all Coinbase Pro products to exchange_instrument table
     cbp_client = coinbasepro.PublicClient()
+    cbp = exch_service.instrument_cache.get_crypto_exchange("COINBASEPRO")
     for product in cbp_client.get_products():
         symbol = product['id']
         base_ccy = product['base_currency']
         quote_ccy = product['quote_currency']
         currency_pair = instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
-        instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), 'CoinbasePro')
+        instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), cbp)
 
     # map all Binance products to exchange_instrument table
     binance_client = binance.client.Client()
     exchange_info = binance_client.get_exchange_info()
+    binance = exch_service.instrument_cache.get_crypto_exchange("BINANCE")
     for product in exchange_info['symbols']:
         symbol = product['symbol']
         base_ccy = product['baseAsset']
         quote_ccy = product['quoteAsset']
         currency_pair = instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
-        instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), 'Binance')
+        instrument_cache.get_or_create_exchange_instrument(symbol, currency_pair.get_instrument(), binance)
