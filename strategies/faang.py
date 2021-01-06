@@ -1,7 +1,7 @@
 from tau.core import NetworkScheduler
 
-from serenity.strategy.api import InvestmentStrategy, StrategyContext, RebalanceContext, TradingContext, PricingContext, \
-    DividendPolicy, TradableUniverse, MarketScheduleProvider, RebalanceSchedule, Portfolio
+from serenity.strategy.api import InvestmentStrategy, StrategyContext, RebalanceContext, TradingContext, \
+    PricingContext, DividendPolicy, TradableUniverse, MarketScheduleProvider, RebalanceSchedule, Portfolio
 
 
 class FAANG(InvestmentStrategy):
