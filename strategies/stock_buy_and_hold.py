@@ -11,6 +11,9 @@ from serenity.trading.api import Side
 
 
 class BuyAndHold(InvestmentStrategy):
+    """
+    A simple strategy that buys and holds AAPL stock and reinvests dividends.
+    """
     def __init__(self):
         self.ctx = None
         self.ticker_id = None
