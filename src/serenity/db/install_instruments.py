@@ -1,7 +1,7 @@
 import coinbasepro
-import gemini
 from phemex import PublicCredentials
 
+from serenity.exchange.gemini import GeminiConnection
 from serenity.exchange.phemex import get_phemex_connection
 
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache, ExchangeEntityService
@@ -16,9 +16,9 @@ if __name__ == '__main__':
     exch_service = ExchangeEntityService(cur, type_code_cache, instrument_cache)
 
     # map all Gemini products to exchange_instrument table
-    gemini_client = gemini.PublicClient()
+    gemini_client = GeminiConnection()
     gemini = exch_service.instrument_cache.get_crypto_exchange("GEMINI")
-    for symbol in gemini_client.symbols():
+    for symbol in gemini_client.get_products():
         base_ccy = symbol[0:3].upper()
         quote_ccy = symbol[3:].upper()
         currency_pair = instrument_cache.get_or_create_cryptocurrency_pair(base_ccy, quote_ccy)
