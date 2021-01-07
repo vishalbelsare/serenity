@@ -31,6 +31,19 @@ Plus, optionally (for equity trading support with Sharadar subscription):
 
 Be sure to change the passwords in ``serenitydb_install.sql`` and ``sharadar_schema.sql``!
 
+Refdata install
+---------------
+
+Once you have the database installed you should sync product refdata by running
+``serenity/db/install_instruments.py``. This script requires the following environment
+variables to be set matching your database install:
+
+* ``TIMESCALEDB_NODEPORT_SERVICE_HOST``
+* ``TIMESCALEDB_NODEPORT_SERVICE_PORT``
+* ``POSTGRES_SERENITY_PASSWORD``
+
+Note if you're running TimescaleDB on ``localhost:5432`` you only need to set the last environment variable.
+
 Kubernetes install
 ------------------
 
