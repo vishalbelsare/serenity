@@ -18,9 +18,8 @@ you are interested in cryptocurrency trading this is the place to start.
 :py:mod:`serenity.booker` is incomplete, but will eventually contain trade booking to the database.
 
 :py:mod:`serenity.db` is a bit of a mess. It contains a bespoke object-relational layer which
-will be replaced by sqlalchemy in the 0.10.x release, plus a number of helper scripts
-for backfilling reference data from different exchanges, and also a script for generating a
-TurboTax export file for taxes. This needs a lot of work.
+will be replaced by sqlalchemy in the 0.10.x release, plus a helper script
+for backfilling reference data from different exchanges. This needs a lot of work.
 
 :py:mod:`serenity.equity` contains a complete batch pipeline and object model for the
 `Sharadar <http://sharadar.com>`_ equity research database on `Quandl <http://quandl.com>`_. If you
@@ -56,6 +55,10 @@ be merged with it in 0.10.x when we switch to sqlalchemy.
 investment strategies, with an emphasis on equity trading strategies. Currently this package
 has a dependency on Sharadar, but it should be possible to integrate free resources like
 Yahoo Finance's API.
+
+:py:mod:`serenity.tax` has a script for generating a TurboTax export file for taxes plus
+several other scripts from backfilling trade data from different exchanges. This is very
+rough and needs to be totally redone.
 
 :py:mod:`serenity.trading` is an abstraction sitting on top of exchange connectivity, e.g. REST
 API's for cryptocurrency exchanges. It is currently implemented for Phemex and for a simple
