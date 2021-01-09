@@ -13,11 +13,13 @@ this time).
    :maxdepth: 2
 
    install
+   quickstart
    roadmap
    internals
    ddl
    codestandards
    contributing
+   devdays
    resources
 
 Links
