@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+0.9.0 (TBD January 2021)
+++++++++++++++++++++++++
+
+- Secured AzureBlobTickstore by switching to Azure AD credentials for read-only
+- Integrated documentation with http://readthedocs.org
+- Improved API docstrings
+
 0.8.0 (2021-01-01)
 ++++++++++++++++++
 

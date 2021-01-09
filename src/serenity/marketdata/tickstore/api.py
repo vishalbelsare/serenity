@@ -14,9 +14,11 @@ from typing import Tuple, List
 
 import numpy as np
 import pandas as pd
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, HttpResponseError
 from azure.storage.blob import BlobServiceClient
 from diskcache import Cache
+
+from serenity.utils import get_global_defaults
 
 
 class BiTimestamp:
@@ -444,9 +446,19 @@ class AzureBlobTickstore(Tickstore):
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, connect_str: str, db_name: str, cache_dir: Path = Path('/var/tmp/abs_lru_cache'),
+    def __init__(self, credential, db_name: str, cache_dir: Path = Path('/var/tmp/abs_lru_cache'),
                  timestamp_column: str = 'date'):
-        self.storage = BlobServiceClient.from_connection_string(connect_str)
+        """
+        Creates an instance of AzureBlobTickstore using either an Azure Identity credential class,
+        e.g. typically DeviceCodeCredential, or a connection string.
+        """
+
+        if isinstance(credential, str):
+            self.storage = BlobServiceClient.from_connection_string(credential)
+        else:
+
+            self.storage = BlobServiceClient(account_url=get_global_defaults()['azure']['blob_account_url'],
+                                             credential=credential)
         self.container_name = db_name.replace('_', '-').lower()
         self.container_client = self.storage.get_container_client(self.container_name)
         self.cache_dir = cache_dir
@@ -460,6 +472,8 @@ class AzureBlobTickstore(Tickstore):
             self.storage.create_container(self.container_name)
         except ResourceExistsError:
             self.logger.info(f'container {self.container_name} already exists')
+        except HttpResponseError:
+            self.logger.info(f'container {self.container_name} cannot be created (OK for read-only)')
 
         try:
             # fetch index from Azure
@@ -573,7 +587,10 @@ class AzureBlobTickstore(Tickstore):
         # upload index to Azure blob storage
         blob_client = self.storage.get_blob_client(container=self.container_name, blob='index')
         with open(self.index_path, 'rb') as index_data:
-            blob_client.upload_blob(index_data, overwrite=True)
+            try:
+                blob_client.upload_blob(index_data, overwrite=True)
+            except HttpResponseError:
+                self.logger.info('Unable to flush index back to Azure (OK for read-only)')
 
     def close(self):
         if not self.closed:
