@@ -1,9 +1,11 @@
+from azure.identity import DeviceCodeCredential
 from tau.core import Signal, HistoricNetworkScheduler, MutableSignal, NetworkScheduler, SignalGenerator
 
 from serenity.marketdata.api import MarketdataService, Trade, OrderBook, BookLevel
 from serenity.model.exchange import ExchangeInstrument
 from serenity.marketdata.tickstore.api import AzureBlobTickstore
 from serenity.trading.api import Side
+from serenity.utils import get_global_defaults
 
 
 class AzureHistoricMarketdataService(MarketdataService):
@@ -11,9 +13,8 @@ class AzureHistoricMarketdataService(MarketdataService):
     A historical replay service based off of Serenity's native AzureBlobTickstore.
     """
 
-    def __init__(self, scheduler: HistoricNetworkScheduler, azure_connect_str: str):
+    def __init__(self, scheduler: HistoricNetworkScheduler):
         self.scheduler = scheduler
-        self.azure_connect_str = azure_connect_str
         self.subscribed_instruments = MutableSignal()
         self.scheduler.get_network().attach(self.subscribed_instruments)
 
@@ -23,6 +24,9 @@ class AzureHistoricMarketdataService(MarketdataService):
         self.all_subscribed = set()
         self.book_signal_by_symbol = {}
         self.trade_signal_by_symbol = {}
+
+        self.credential = DeviceCodeCredential(client_id=get_global_defaults()['azure']['client_id'],
+                                               tenant_id=get_global_defaults()['azure']['tenant_id'])
 
     def get_subscribed_instruments(self) -> Signal:
         return self.subscribed_instruments
@@ -47,7 +51,7 @@ class AzureHistoricMarketdataService(MarketdataService):
                     self.mds = mds
 
                 def generate(self, scheduler: NetworkScheduler):
-                    tickstore = AzureBlobTickstore(self.mds.azure_connect_str, f'{exchange_code_upper}_BOOKS',
+                    tickstore = AzureBlobTickstore(self.mds.credential, f'{exchange_code_upper}_BOOKS',
                                                    timestamp_column='time')
                     books_df = tickstore.select(symbol, self.mds.start_time, self.mds.end_time)
                     for row in books_df.itertuples():
@@ -82,7 +86,7 @@ class AzureHistoricMarketdataService(MarketdataService):
                     self.mds = mds
 
                 def generate(self, scheduler: NetworkScheduler):
-                    tickstore = AzureBlobTickstore(self.mds.azure_connect_str, f'{exchange_code_upper}_TRADES',
+                    tickstore = AzureBlobTickstore(self.mds.credential, f'{exchange_code_upper}_TRADES',
                                                    timestamp_column='time')
                     trades_df = tickstore.select(trade_symbol, self.mds.start_time, self.mds.end_time)
                     for row in trades_df.itertuples():

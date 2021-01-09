@@ -4,13 +4,17 @@ import logging
 import os
 import socket
 
+import toml
 import websockets
 from tau.core import MutableSignal, NetworkScheduler
+
+defaults = dict()
 
 
 def init_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
+    logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
     console_logger = logging.StreamHandler()
     if os.getenv('DEBUG'):
         console_logger.setLevel(logging.DEBUG)
@@ -19,6 +23,18 @@ def init_logging():
     formatter = logging.Formatter('%(asctime)s [%(threadName)s] - %(name)s - %(levelname)s - %(message)s')
     console_logger.setFormatter(formatter)
     logger.addHandler(console_logger)
+
+
+def init_defaults():
+    global defaults
+    config_path = os.path.join(os.path.dirname(__file__), 'defaults.cfg')
+    defaults = toml.load(config_path)
+
+
+def get_global_defaults() -> dict:
+    if len(defaults) == 0:
+        init_defaults()
+    return defaults
 
 
 def custom_asyncio_error_handler(loop, context):

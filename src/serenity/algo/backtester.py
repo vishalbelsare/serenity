@@ -120,7 +120,7 @@ class AlgoBacktester:
 
         oms = OrderManagerService(self.scheduler)
 
-        md_service = AzureHistoricMarketdataService(self.scheduler, bt_env.getenv('AZURE_CONNECT_STR'))
+        md_service = AzureHistoricMarketdataService(self.scheduler)
         mark_service = MarketdataMarkService(self.scheduler.get_network(), md_service)
         op_service = OrderPlacerService(self.scheduler, oms)
         op_service.register_order_placer(f'{exchange_id}:{instance_id}',
