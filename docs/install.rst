@@ -68,3 +68,8 @@ instead of ``********``:
 You can generate an encoded password as follows -- not the "-n" argument is critical::
 
     $ echo -n $PASSWORD | base64
+
+Next steps
+----------
+
+Head on over to :docs:`quickstart` and get your first backtest running!
