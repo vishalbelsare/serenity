@@ -18,7 +18,8 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, instance_id: str = 'prod'):
+    def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, include_symbol: str = '*',
+                 instance_id: str = 'prod'):
         if instance_id == 'prod':
             self.ws_uri = 'wss://ws-feed.pro.coinbase.com'
             self.cbp_client = coinbasepro.PublicClient()
@@ -28,8 +29,10 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
         else:
             raise ValueError(f'Unknown instance_id: {instance_id}')
 
-        # ensure we've initialized PhemexConnection before loading instruments in super()
+        # ensure we've initialized client before loading instruments in super()
         super().__init__(scheduler, instrument_cache, instance_id)
+
+        self.include_symbol = include_symbol
 
         self.instrument_trades = {}
         self.instrument_quotes = {}
@@ -67,18 +70,19 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
         symbols = []
         for instrument in self.get_instruments():
             symbol = instrument.get_exchange_instrument_code()
-            symbols.append(f'{symbol}')
+            if symbol == self.include_symbol or self.include_symbol == '*':
+                symbols.append(f'{symbol}')
 
-            self.instrument_trades[symbol] = MutableSignal()
-            self.instrument_quotes[symbol] = MutableSignal()
-            self.instrument_order_books[symbol] = MutableSignal()
+                self.instrument_trades[symbol] = MutableSignal()
+                self.instrument_quotes[symbol] = MutableSignal()
+                self.instrument_order_books[symbol] = MutableSignal()
 
-            # magic: inject the bare Signal into the graph so we can
-            # fire events on it without any downstream connections
-            # yet made
-            network.attach(self.instrument_trades[symbol])
-            network.attach(self.instrument_quotes[symbol])
-            network.attach(self.instrument_order_books[symbol])
+                # magic: inject the bare Signal into the graph so we can
+                # fire events on it without any downstream connections
+                # yet made
+                network.attach(self.instrument_trades[symbol])
+                network.attach(self.instrument_quotes[symbol])
+                network.attach(self.instrument_order_books[symbol])
 
         subscribe_msg = {
             'type': 'subscribe',
@@ -127,7 +131,7 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
 
 
 def create_fh(scheduler: NetworkScheduler, instrument_cache: InstrumentCache, include_symbol: str, instance_id: str):
-    return CoinbaseProFeedHandler(scheduler, instrument_cache, instance_id)
+    return CoinbaseProFeedHandler(scheduler, instrument_cache, include_symbol, instance_id)
 
 
 def main(instance_id: str = 'prod', journal_path: str = '/behemoth/journals/', include_symbol: str = '*'):
