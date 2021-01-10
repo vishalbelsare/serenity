@@ -9,7 +9,7 @@ import pandas as pd
 
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.marketdata.tickstore.api import LocalTickstore, BiTimestamp, AzureBlobTickstore
-from serenity.marketdata.tickstore.journal import Journal, NoSuchJournalException
+from serenity.marketdata.tickstore.journal import Journal
 from serenity.utils import init_logging
 
 init_logging()
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # noinspection DuplicatedCode
 def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1, upload_start_date: str = None,
-                upload_end_date: str = None):
+                upload_end_date: str = None, cloud_upload: bool = True):
     if upload_start_date is not None and upload_end_date is not None:
         upload_start_date = datetime.datetime.strptime(upload_start_date, '%Y-%m-%d').date()
         upload_end_date = datetime.datetime.strptime(upload_end_date, '%Y-%m-%d').date()
@@ -26,13 +26,13 @@ def upload_main(behemoth_path: str = '/behemoth', days_back: int = 1, upload_sta
 
         for i in range(delta.days + 1):
             upload_date = upload_start_date + datetime.timedelta(days=i)
-            do_upload(behemoth_path, upload_date)
+            do_upload(behemoth_path, upload_date, cloud_upload)
     else:
         upload_date = datetime.datetime.utcnow().date() - datetime.timedelta(days_back)
-        do_upload(behemoth_path, upload_date)
+        do_upload(behemoth_path, upload_date, cloud_upload)
 
 
-def do_upload(behemoth_path: str, upload_date: datetime.date):
+def do_upload(behemoth_path: str, upload_date: datetime.date, cloud_upload: bool):
     logger.info(f'uploading into Behemoth for upload date = {upload_date}')
     conn = connect_serenity_db()
     conn.autocommit = True
@@ -40,122 +40,125 @@ def do_upload(behemoth_path: str, upload_date: datetime.date):
     instr_cache = InstrumentCache(cur, TypeCodeCache(cur))
 
     exchanges = {
-        'PHEMEX': 'PHEMEX',
-        'COINBASE_PRO': 'COINBASE_PRO'
+        'PHEMEX': {'db_prefix': 'PHEMEX', 'supported_products': {'BTCUSD'}},
+        'COINBASEPRO': {'db_prefix': 'COINBASE_PRO', 'supported_products': {'BTC-USD'}}
     }
-    for exchange, db_prefix in exchanges.items():
+    for exchange in exchanges.keys():
+        logger.info(f'Uploading for exchange: {exchange}')
+        db_prefix = exchanges[exchange]['db_prefix']
+        supported_products = exchanges[exchange]['supported_products']
         for instrument in instr_cache.get_all_exchange_instruments(exchange):
             symbol = instrument.get_exchange_instrument_code()
-
-            upload_trades(behemoth_path, db_prefix, exchange, symbol, upload_date)
-            upload_order_books(behemoth_path, db_prefix, exchange, symbol, upload_date)
+            if symbol in supported_products:
+                upload_trades(behemoth_path, db_prefix, exchange, symbol, upload_date, cloud_upload)
+                upload_order_books(behemoth_path, db_prefix, exchange, symbol, upload_date, cloud_upload)
 
 
 # noinspection DuplicatedCode
-def upload_order_books(behemoth_path, db_prefix, exchange, symbol, upload_date):
+def upload_order_books(behemoth_path, db_prefix, exchange, symbol, upload_date, cloud_upload):
     books_db = f'{db_prefix}_BOOKS'
     books_path = Path(f'{behemoth_path}/journals/{books_db}/{symbol}')
     books_journal = Journal(books_path)
-    try:
-        reader = books_journal.create_reader(upload_date)
+    reader = books_journal.create_reader(upload_date)
 
-        length = reader.get_length()
-        records = []
-        while reader.get_pos() < length:
-            time = reader.read_double()
+    length = reader.get_length()
+    records = []
+    while reader.get_pos() < length:
+        time = reader.read_double()
 
-            best_bid_qty = reader.read_long()
-            best_bid_px = reader.read_double()
-            best_ask_qty = reader.read_long()
-            best_ask_px = reader.read_double()
+        best_bid_qty = reader.read_long()
+        best_bid_px = reader.read_double()
+        best_ask_qty = reader.read_long()
+        best_ask_px = reader.read_double()
 
-            record = {
-                'time': datetime.datetime.fromtimestamp(time),
-                'best_bid_qty': best_bid_qty,
-                'best_bid_px': best_bid_px,
-                'best_ask_qty': best_ask_qty,
-                'best_ask_px': best_ask_px
-            }
-            records.append(record)
+        record = {
+            'time': datetime.datetime.fromtimestamp(time),
+            'best_bid_qty': best_bid_qty,
+            'best_bid_px': best_bid_px,
+            'best_ask_qty': best_ask_qty,
+            'best_ask_px': best_ask_px
+        }
+        records.append(record)
 
-        if len(records) > 0:
-            logger.info(
-                f'uploading journaled {exchange}/{symbol} books to Behemoth for UTC date {str(upload_date)}')
-            df = pd.DataFrame(records)
-            df.set_index('time', inplace=True)
-            logger.info(f'extracted {len(df)} {symbol} order books')
-            tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{books_db}')), 'time')
-            tickstore.insert(symbol, BiTimestamp(upload_date), df)
-            tickstore.close()
-            logger.info(f'inserted {len(df)} {symbol} order book records on local disk')
+    if len(records) > 0:
+        logger.info(
+            f'uploading journaled {exchange}/{symbol} books to Behemoth for UTC date {str(upload_date)}')
+        df = pd.DataFrame(records)
+        df.set_index('time', inplace=True)
+        logger.info(f'extracted {len(df)} {symbol} order books')
+        tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{books_db}')), 'time')
+        tickstore.insert(symbol, BiTimestamp(upload_date), df)
+        tickstore.close()
+        logger.info(f'inserted {len(df)} {symbol} order book records on local disk')
 
+        if cloud_upload:
             cloud_tickstore = connect_azure_blob_tickstore(books_db)
             cloud_tickstore.insert(symbol, BiTimestamp(upload_date), df)
             cloud_tickstore.close()
             logger.info(f'inserted {len(df)} {symbol} order book records in cloud storage')
-        else:
-            logger.info(f'zero {exchange}/{symbol} books for UTC date {str(upload_date)}')
-            tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{books_db}')), 'time')
-            tickstore.close()
-    except NoSuchJournalException:
-        logger.error(f'missing journal file: {books_path}')
+    else:
+        logger.info(f'zero {exchange}/{symbol} books for UTC date {str(upload_date)}')
+        tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{books_db}')), 'time')
+        tickstore.close()
+
+        if cloud_upload:
+            cloud_tickstore = connect_azure_blob_tickstore(books_db)
+            cloud_tickstore.close()
 
 
 # noinspection DuplicatedCode
-def upload_trades(behemoth_path, db_prefix, exchange, symbol, upload_date):
+def upload_trades(behemoth_path, db_prefix, exchange, symbol, upload_date, cloud_upload):
     trades_db = f'{db_prefix}_TRADES'
     trades_path = Path(f'{behemoth_path}/journals/{trades_db}/{symbol}')
     trades_journal = Journal(trades_path)
-    try:
-        reader = trades_journal.create_reader(upload_date)
+    reader = trades_journal.create_reader(upload_date)
 
-        length = reader.get_length()
-        records = []
-        while reader.get_pos() < length:
-            time = reader.read_double()
-            sequence = reader.read_long()
-            trade_id = reader.read_long()
-            product_id = reader.read_string()
-            side = 'buy' if reader.read_short() == 0 else 'sell'
-            size = reader.read_double()
-            price = reader.read_double()
+    length = reader.get_length()
+    records = []
+    while reader.get_pos() < length:
+        time = reader.read_double()
+        sequence = reader.read_long()
+        trade_id = reader.read_long()
+        product_id = reader.read_string()
+        side = 'buy' if reader.read_short() == 0 else 'sell'
+        size = reader.read_double()
+        price = reader.read_double()
 
-            record = {
-                'time': datetime.datetime.fromtimestamp(time),
-                'sequence': sequence,
-                'trade_id': trade_id,
-                'product_id': product_id,
-                'side': side,
-                'size': size,
-                'price': price
-            }
-            records.append(record)
+        record = {
+            'time': datetime.datetime.fromtimestamp(time),
+            'sequence': sequence,
+            'trade_id': trade_id,
+            'product_id': product_id,
+            'side': side,
+            'size': size,
+            'price': price
+        }
+        records.append(record)
 
-        if len(records) > 0:
-            logger.info(
-                f'uploading journaled {exchange}/{symbol} ticks to Behemoth for UTC date {str(upload_date)}')
-            df = pd.DataFrame(records)
-            df.set_index('time', inplace=True)
-            logger.info(f'extracted {len(df)} {symbol} trade records')
-            tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{trades_db}')), 'time')
-            tickstore.insert(symbol, BiTimestamp(upload_date), df)
-            tickstore.close()
-            logger.info(f'inserted {len(df)} {symbol} trade records on local disk')
+    if len(records) > 0:
+        logger.info(
+            f'uploading journaled {exchange}/{symbol} ticks to Behemoth for UTC date {str(upload_date)}')
+        df = pd.DataFrame(records)
+        df.set_index('time', inplace=True)
+        logger.info(f'extracted {len(df)} {symbol} trade records')
+        tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{trades_db}')), 'time')
+        tickstore.insert(symbol, BiTimestamp(upload_date), df)
+        tickstore.close()
+        logger.info(f'inserted {len(df)} {symbol} trade records on local disk')
 
+        if cloud_upload:
             cloud_tickstore = connect_azure_blob_tickstore(trades_db)
             cloud_tickstore.insert(symbol, BiTimestamp(upload_date), df)
             cloud_tickstore.close()
             logger.info(f'inserted {len(df)} {symbol} trade records in cloud storage')
-        else:
-            logger.info(f'zero {exchange}/{symbol} ticks for UTC date {str(upload_date)}')
-            tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{trades_db}')), 'time')
-            tickstore.close()
+    else:
+        logger.info(f'zero {exchange}/{symbol} ticks for UTC date {str(upload_date)}')
+        tickstore = LocalTickstore(Path(Path(f'{behemoth_path}/db/{trades_db}')), 'time')
+        tickstore.close()
 
+        if cloud_upload:
             cloud_tickstore = connect_azure_blob_tickstore(trades_db)
             cloud_tickstore.close()
-
-    except NoSuchJournalException:
-        logger.error(f'missing journal file: {trades_path}')
 
 
 def connect_azure_blob_tickstore(db: str):

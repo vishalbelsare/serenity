@@ -6,6 +6,7 @@ import pyarrow
 import pyarrow.parquet
 import re
 import shutil
+import warnings
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -19,6 +20,9 @@ from azure.storage.blob import BlobServiceClient
 from diskcache import Cache
 
 from serenity.utils import get_global_defaults
+
+# suppress noisy warning
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 
 class BiTimestamp:
