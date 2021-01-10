@@ -212,7 +212,8 @@ def create_fh(scheduler: NetworkScheduler, instrument_cache: InstrumentCache, in
 
 
 def main(instance_id: str = 'prod', include_symbol: str = '*', journal_path: str = '/behemoth/journals/'):
-    ws_fh_main(create_fh, PhemexFeedHandler.get_uri_scheme(), instance_id, journal_path, 'PHEMEX', True, include_symbol)
+    ws_fh_main(create_fh, PhemexFeedHandler.get_uri_scheme(), instance_id, journal_path, 'PHEMEX',
+               include_symbol=include_symbol)
 
 
 if __name__ == '__main__':
