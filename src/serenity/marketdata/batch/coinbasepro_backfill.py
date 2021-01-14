@@ -10,6 +10,11 @@ from time import sleep
 
 
 class CoinbaseHistoricalRatesDownloader:
+    """
+    Helper script that downloads one-minute binned trade data from Coinbase Pro API. This is not currently in use,
+    and if it turns out to be needed it should be converted to a Luigi task and integrated with Azure cloud upload.
+    """
+
     def __init__(self, tickstore: Tickstore):
         self.tickstore = tickstore
 
