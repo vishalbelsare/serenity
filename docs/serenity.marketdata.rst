@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   serenity.marketdata.batch
    serenity.marketdata.fh
    serenity.marketdata.tickstore
 

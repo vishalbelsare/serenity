@@ -4,26 +4,10 @@ serenity.marketdata.fh package
 Submodules
 ----------
 
-serenity.marketdata.fh.behemoth\_upload module
-----------------------------------------------
-
-.. automodule:: serenity.marketdata.fh.behemoth_upload
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 serenity.marketdata.fh.binance\_fh module
 -----------------------------------------
 
 .. automodule:: serenity.marketdata.fh.binance_fh
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-serenity.marketdata.fh.coinbasepro\_backfill module
----------------------------------------------------
-
-.. automodule:: serenity.marketdata.fh.coinbasepro_backfill
    :members:
    :undoc-members:
    :show-inheritance:
