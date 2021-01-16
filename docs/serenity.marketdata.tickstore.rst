@@ -20,10 +20,10 @@ serenity.marketdata.tickstore.journal module
    :undoc-members:
    :show-inheritance:
 
-serenity.marketdata.tickstore.tickstore\_admin module
------------------------------------------------------
+serenity.marketdata.tickstore.admin module
+------------------------------------------
 
-.. automodule:: serenity.marketdata.tickstore.tickstore_admin
+.. automodule:: serenity.marketdata.tickstore.admin
    :members:
    :undoc-members:
    :show-inheritance:

@@ -15,6 +15,11 @@ from serenity.trading.api import Side
 
 
 class CoinbaseProFeedHandler(WebsocketFeedHandler):
+    """
+    Market data feedhandler for the Coinbase Pro exchange. Supports both trade print and top of order book feeds.
+
+    :see: https://docs.pro.coinbase.com/
+    """
 
     logger = logging.getLogger(__name__)
 

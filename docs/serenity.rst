@@ -19,6 +19,7 @@ Subpackages
    serenity.position
    serenity.signal
    serenity.strategy
+   serenity.tax
    serenity.trading
 
 Submodules
