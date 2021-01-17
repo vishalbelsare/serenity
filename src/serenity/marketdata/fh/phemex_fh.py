@@ -20,6 +20,12 @@ from serenity.utils import websocket_subscribe_with_retry
 
 
 class PhemexFeedHandler(WebsocketFeedHandler):
+    """
+    Market data feedhandler for the Phemex derivatives exchange. Supports both trade print and top of order book feeds.
+
+    :see: https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md
+    """
+
     logger = logging.getLogger(__name__)
 
     def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, include_symbol: str = '*',
@@ -192,12 +198,13 @@ class PhemexFeedHandler(WebsocketFeedHandler):
             book_levels = []
             for px_qty in px_qty_list:
                 px = float(px_qty[0]) / pow(10, price_scale)
-                qty = px_qty[1]
+                qty = float(px_qty[1])
                 book_levels.append(BookLevel(px, qty))
             return book_levels
 
         book = msg['book']
         if msg_type == 'snapshot':
+            self.logger.info('received initial L2 order book snapshot')
             bids = to_book_level_list(book['bids'])
             asks = to_book_level_list(book['asks'])
             return OrderBookSnapshot(instrument, bids, asks, seq_num)
@@ -208,10 +215,16 @@ class PhemexFeedHandler(WebsocketFeedHandler):
 
 
 def create_fh(scheduler: NetworkScheduler, instrument_cache: InstrumentCache, include_symbol: str, instance_id: str):
+    """
+    Helper function that instantiates a Phemex feedhandler; used in the main method
+    """
     return PhemexFeedHandler(scheduler, instrument_cache, include_symbol, instance_id)
 
 
 def main(instance_id: str = 'prod', include_symbol: str = '*', journal_path: str = '/behemoth/journals/'):
+    """
+    Command-line entry point used by Fire runner for Phemex feedhandler.
+    """
     ws_fh_main(create_fh, PhemexFeedHandler.get_uri_scheme(), instance_id, journal_path, 'PHEMEX',
                include_symbol=include_symbol)
 

@@ -340,17 +340,17 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 def on_book_update(self, book: OrderBook):
                     self.appender.write_double(datetime.utcnow().timestamp())
                     if len(book.get_bids()) > 0:
-                        self.appender.write_long(book.get_best_bid().get_qty())
+                        self.appender.write_double(book.get_best_bid().get_qty())
                         self.appender.write_double(book.get_best_bid().get_px())
                     else:
-                        self.appender.write_long(0)
+                        self.appender.write_double(0)
                         self.appender.write_double(0)
 
                     if len(book.get_asks()) > 0:
-                        self.appender.write_long(book.get_best_ask().get_qty())
+                        self.appender.write_double(book.get_best_ask().get_qty())
                         self.appender.write_double(book.get_best_ask().get_px())
                     else:
-                        self.appender.write_long(0)
+                        self.appender.write_double(0)
                         self.appender.write_double(0)
 
             scheduler.get_network().connect(fh.get_state(), SubscribeOrderBook(symbol))
