@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: coinbasepro-fh-btcusd
-          image: cloudwallcapital/serenity:2020.12.10-b65
+          image: cloudwallcapital/serenity:2021.01.17-b78
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/marketdata/fh/coinbasepro_fh.py", "--include_symbol=BTC-USD"]
           env:
