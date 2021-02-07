@@ -11,7 +11,6 @@ help:
 	@echo ''
 
 deploy:
-	$(KUBECTL) apply -f common/
 	$(KUBECTL) apply -f db/
 	$(KUBECTL) apply -f feedhandlers/
 	$(KUBECTL) apply -f mail/
