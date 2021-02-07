@@ -12,7 +12,7 @@ spec:
           - name: sharadar-daily
             image: cloudwallcapital/serenity:2020.12.20-b76
             command: ["/app/venv-py3/bin/python"]
-            args: ["serenity/equity/batch/main.py", "--mode", "DAILY"]
+            args: ["serenity/data/batch/sharadar_main.py", "--mode", "DAILY"]
             env:
             - name: POSTGRES_SHARADAR_PASSWORD
               valueFrom:
