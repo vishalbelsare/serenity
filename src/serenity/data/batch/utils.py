@@ -10,7 +10,7 @@ import quandl
 from luigi import Target, LocalTarget
 from sqlalchemy.orm import Session
 
-from serenity.equity.sharadar_api import create_sharadar_session, BatchStatus
+from serenity.data.sharadar_api import create_sharadar_session, BatchStatus
 
 
 class ExportQuandlTableTask(luigi.Task):

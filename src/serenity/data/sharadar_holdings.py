@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean
 from sqlalchemy.orm import Session, relationship
 
-from serenity.equity.sharadar_api import Base, USD
-from serenity.equity.sharadar_refdata import Ticker
+from serenity.data.sharadar_api import Base, USD
+from serenity.data.sharadar_refdata import Ticker
 
 
 class SecurityType(Base):
