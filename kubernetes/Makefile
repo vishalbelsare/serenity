@@ -11,6 +11,7 @@ help:
 	@echo ''
 
 deploy:
+	$(KUBECTL) delete jobs/sharadar-backfill
 	$(KUBECTL) apply -f db/
 	$(KUBECTL) apply -f feedhandlers/
 	$(KUBECTL) apply -f mail/
