@@ -3,13 +3,13 @@ import datetime
 import fire
 import luigi
 
-from serenity.equity.batch.load_sharadar_corp_actions import LoadCorporateActionsTask
-from serenity.equity.batch.load_sharadar_event_calendar import LoadEventCalendarTask
-from serenity.equity.batch.load_sharadar_fundamentals import LoadEquityFundamentalsTask
-from serenity.equity.batch.load_sharadar_insider_holdings import LoadInsiderHoldingsTask
-from serenity.equity.batch.load_sharadar_institutional_holdings import LoadInstitutionalHoldingsTask
-from serenity.equity.batch.load_sharadar_meta import LoadSharadarMetaTask
-from serenity.equity.batch.load_sharadar_prices import LoadEquityPricesTask
+from serenity.data.batch.load_sharadar_corp_actions import LoadCorporateActionsTask
+from serenity.data.batch.load_sharadar_event_calendar import LoadEventCalendarTask
+from serenity.data.batch.load_sharadar_fundamentals import LoadEquityFundamentalsTask
+from serenity.data.batch.load_sharadar_insider_holdings import LoadInsiderHoldingsTask
+from serenity.data.batch.load_sharadar_institutional_holdings import LoadInstitutionalHoldingsTask
+from serenity.data.batch.load_sharadar_meta import LoadSharadarMetaTask
+from serenity.data.batch.load_sharadar_prices import LoadEquityPricesTask
 
 
 class SharadarDownloadTask(luigi.WrapperTask):

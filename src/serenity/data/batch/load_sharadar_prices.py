@@ -2,11 +2,11 @@ import datetime
 
 import luigi
 
-from serenity.equity.batch.load_sharadar_tickers import LoadSharadarTickersTask
-from serenity.equity.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
-from serenity.equity.sharadar_api import clean_nulls
-from serenity.equity.sharadar_prices import EquityPrice
-from serenity.equity.sharadar_refdata import Ticker
+from serenity.data.batch.load_sharadar_tickers import LoadSharadarTickersTask
+from serenity.data.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
+from serenity.data.sharadar_api import clean_nulls
+from serenity.data.sharadar_prices import EquityPrice
+from serenity.data.sharadar_refdata import Ticker
 
 
 # noinspection DuplicatedCode

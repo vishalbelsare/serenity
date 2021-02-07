@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, DECIMAL
 from sqlalchemy.orm import relationship, Session
 
-from serenity.equity.sharadar_api import Base
+from serenity.data.sharadar_api import Base
 
 
 class UnitType(Base):

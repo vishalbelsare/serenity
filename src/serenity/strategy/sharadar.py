@@ -6,8 +6,8 @@ import pandas as pd
 from money import Money
 from sqlalchemy.orm import Session
 
-from serenity.equity.sharadar_prices import EquityPrice
-from serenity.equity.sharadar_refdata import Ticker
+from serenity.data.sharadar_prices import EquityPrice
+from serenity.data.sharadar_refdata import Ticker
 from serenity.strategy.api import PricingContext, PriceField, Tradable, TradableUniverse, DividendContext, Dividend
 
 

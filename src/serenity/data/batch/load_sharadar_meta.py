@@ -1,6 +1,6 @@
-from serenity.equity.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
-from serenity.equity.sharadar_api import yes_no_to_bool
-from serenity.equity.sharadar_refdata import UnitType, Indicator
+from serenity.data.batch.utils import LoadSharadarTableTask, ExportQuandlTableTask
+from serenity.data.sharadar_api import yes_no_to_bool
+from serenity.data.sharadar_refdata import UnitType, Indicator
 
 
 class LoadSharadarMetaTask(LoadSharadarTableTask):

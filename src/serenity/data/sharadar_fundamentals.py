@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, Date, ForeignKey, String, DECIMAL
 from sqlalchemy.orm import relationship, Session
 
-from serenity.equity.sharadar_api import Base, USD
+from serenity.data.sharadar_api import Base, USD
 
 
 class DimensionType(Base):

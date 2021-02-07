@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy import Column, Integer, Date, ForeignKey, String
 from sqlalchemy.orm import relationship, Session
 
-from serenity.equity.sharadar_api import Base, USD
+from serenity.data.sharadar_api import Base, USD
 
 
 class EquityPrice(Base):
