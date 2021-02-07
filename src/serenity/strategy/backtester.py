@@ -5,7 +5,7 @@ import fire
 import toml
 from tau.core import HistoricNetworkScheduler, Event
 
-from serenity.equity.sharadar_api import create_sharadar_session
+from serenity.data.sharadar_api import create_sharadar_session
 from serenity.strategy.api import PriceField, InvestmentStrategy, Portfolio
 from serenity.strategy.core import TradableUniversePricingContext, DefaultRebalanceContext, \
     ZeroCommissionTradingCostCalculator, PandasMarketCalendarMarketScheduleProvider, TradableUniverseDividendContext, \
