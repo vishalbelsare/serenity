@@ -1,0 +1,29 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: elasticsearch-pv-volume
+  labels:
+    type: local
+    app: elasticsearch-logging
+spec:
+  storageClassName: elasticsearch-logging-rw-sc
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/raid/data/elasticsearch"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: elasticsearch-logging-pv-claim
+  labels:
+    app: elasticsearch-logging
+spec:
+  storageClassName: elasticsearch-logging-rw-sc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
