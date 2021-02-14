@@ -9,6 +9,7 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
     kubernetes.io/name: "Fluentd"
 spec:
+  type: ClusterIP
   clusterIP: None
   ports:
     - name: forward
@@ -18,4 +19,3 @@ spec:
   selector:
     k8s-app: fluentd-logging
   sessionAffinity: None
-  type: ClusterIP
