@@ -24,9 +24,6 @@ data:
       bind 0.0.0.0
       port 24224
     </source>
-    <match **>
-      type stdout
-    </match>
 
   monitoring.conf: |-
     # Prometheus Exporter Plugin
