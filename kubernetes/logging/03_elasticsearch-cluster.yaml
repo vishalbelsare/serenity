@@ -1,4 +1,15 @@
-# Elasticsearch deployment itself
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: kube-system
+  name: elasticsearch-master-config
+  labels:
+    app: elasticsearch-logging
+    role: master
+data:
+  elasticsearch.yml: |-
+    xpack.security.enabled: false
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -51,6 +62,10 @@ spec:
             initialDelaySeconds: 5
             timeoutSeconds: 10
           volumeMounts:
+            - name: config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              subPath: elasticsearch.yml
+              readOnly: true
             - name: elasticsearch-logging
               mountPath: /data
           env:
@@ -61,6 +76,9 @@ spec:
             - name: "MINIMUM_MASTER_NODES"
               value: "1"
       volumes:
+        - name: config
+          configMap:
+            name: elasticsearch-master-config
         - name: elasticsearch-logging
           persistentVolumeClaim:
             claimName: elasticsearch-logging-pv-claim
