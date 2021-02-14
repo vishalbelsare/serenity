@@ -21,7 +21,6 @@ spec:
         k8s-app: elasticsearch-logging
         version: v7.4.3
     spec:
-      serviceAccountName: elasticsearch-logging
       containers:
         - image: quay.io/fluentd_elasticsearch/elasticsearch:v7.4.3
           name: elasticsearch-logging
