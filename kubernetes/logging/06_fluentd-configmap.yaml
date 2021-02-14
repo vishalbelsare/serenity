@@ -6,6 +6,12 @@ metadata:
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
 data:
+  fluent.conf: |
+    @include system.conf
+    @include forward.input.conf
+    @include monitoring.conf
+    @include output.conf
+
   system.conf: |-
     <system>
       root_dir /tmp/fluentd-buffers/
