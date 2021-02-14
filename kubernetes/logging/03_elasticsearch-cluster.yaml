@@ -65,7 +65,6 @@ spec:
             - name: config
               mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
               subPath: elasticsearch.yml
-              readOnly: true
             - name: elasticsearch-logging
               mountPath: /data
           env:
