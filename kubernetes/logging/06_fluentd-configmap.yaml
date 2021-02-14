@@ -36,6 +36,7 @@ data:
         include_tag_key     true
         type_name           access_log
         tag_key             @log_name
+        suppress_type_name true
         <buffer>
           flush_mode            interval
           flush_interval        1s
@@ -43,7 +44,7 @@ data:
           flush_thread_count    2
           retry_forever         true
           retry_max_interval    30
-          chunk_limit_size      2M
+          chunk_limit_size      10M
           queue_limit_length    8
           overflow_action       block
         </buffer>
