@@ -2,6 +2,7 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: elasticsearch-pv-volume
+  namespace: kube-system
   labels:
     type: local
     app: elasticsearch-logging
@@ -18,6 +19,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: elasticsearch-logging-pv-claim
+  namespace: kube-system
   labels:
     app: elasticsearch-logging
 spec:
