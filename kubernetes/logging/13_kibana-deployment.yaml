@@ -4,17 +4,16 @@ metadata:
   name: kibana
   namespace: kube-system
   labels:
-    k8s-app: kibana
-    addonmanager.kubernetes.io/mode: Reconcile
+    app: kibana
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: kibana
+      app: kibana
   template:
     metadata:
       labels:
-        k8s-app: kibana
+        app: kibana
     spec:
       containers:
         - name: kibana
