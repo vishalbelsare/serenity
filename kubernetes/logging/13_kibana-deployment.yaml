@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kibana-logging
+  name: kibana
   namespace: kube-system
   labels:
     k8s-app: kibana
