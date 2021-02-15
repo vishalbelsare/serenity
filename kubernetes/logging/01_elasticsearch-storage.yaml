@@ -5,9 +5,9 @@ metadata:
   namespace: kube-system
   labels:
     type: local
-    app: elasticsearch-logging
+    app: elasticsearch
 spec:
-  storageClassName: elasticsearch-logging-rw-sc
+  storageClassName: elasticsearch-rw-sc
   capacity:
     storage: 50Gi
   accessModes:
@@ -18,12 +18,12 @@ spec:
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: elasticsearch-logging-pv-claim
+  name: elasticsearch-pv-claim
   namespace: kube-system
   labels:
-    app: elasticsearch-logging
+    app: elasticsearch
 spec:
-  storageClassName: elasticsearch-logging-rw-sc
+  storageClassName: elasticsearch-rw-sc
   accessModes:
     - ReadWriteOnce
   resources:
