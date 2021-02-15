@@ -27,15 +27,18 @@ data:
       @type copy
 
       <store>
-        @type               elasticsearch
-        host                elasticsearch-client
-        port                9200
-        logstash_format     true
-        logstash_prefix     fluentd
-        logstash_dateformat %Y%m%d
-        include_tag_key     true
-        type_name           access_log
-        tag_key             @log_name
+        @type elasticsearch_dynamic
+        @log_level info
+        include_tag_key true
+        host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
+        port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
+        user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+        password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+        scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'http'}"
+        ssl_verify "#{ENV['FLUENT_ELASTICSEARCH_SSL_VERIFY'] || 'true'}"
+        reload_connections true
+        logstash_format true
+        logstash_prefix logstash
         suppress_type_name true
         <buffer>
           flush_mode            interval
