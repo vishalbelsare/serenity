@@ -41,7 +41,7 @@ spec:
           mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           readOnly: true
           subPath: elasticsearch.yml
-        - name: elasticsearch-data-persistent-storage
+        - name: data
           mountPath: /data/db
       volumes:
       - name: config
