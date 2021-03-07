@@ -6,6 +6,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import List
 
+# noinspection PyProtectedMember
+from prometheus_client import start_http_server, Counter
 from tau.core import Signal, MutableSignal, NetworkScheduler, Event, Network, RealtimeNetworkScheduler
 from tau.event import Do
 from tau.signal import Function
@@ -287,6 +289,10 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
     fh = create_fh(scheduler, instr_cache, include_symbol, instance_id)
     registry.register(fh)
 
+    # register Prometheus metrics
+    trade_counter = Counter('serenity_trade_counter', 'Number of trade prints received by feedhandler')
+    book_update_counter = Counter('serenity_book_update_counter', 'Number of book updates received by feedhandler')
+
     for instrument in fh.get_instruments():
         symbol = instrument.get_exchange_instrument_code()
         if not (symbol == include_symbol or include_symbol == '*'):
@@ -310,6 +316,7 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 return False
 
             def on_trade_print(self, trade):
+                trade_counter.inc()
                 logger.info(trade)
 
                 self.appender.write_double(datetime.utcnow().timestamp())
@@ -338,6 +345,7 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                     return False
 
                 def on_book_update(self, book: OrderBook):
+                    book_update_counter.inc()
                     self.appender.write_double(datetime.utcnow().timestamp())
                     if len(book.get_bids()) > 0:
                         self.appender.write_double(book.get_best_bid().get_qty())
@@ -356,6 +364,9 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
             scheduler.get_network().connect(fh.get_state(), SubscribeOrderBook(symbol))
 
         scheduler.get_network().connect(fh.get_state(), SubscribeTrades(symbol))
+
+    # launch the monitoring endpoint
+    start_http_server(8000)
 
     # async start the feedhandler
     asyncio.ensure_future(fh.start())
