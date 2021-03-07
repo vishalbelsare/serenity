@@ -198,7 +198,6 @@ class JournalAppender:
     def __init__(self, journal: Journal, mm: MMap, current_date: datetime.date):
         self.journal = journal
         self.mm = mm
-        self.max_size = journal.max_size
         self.current_date = current_date
         self.num_extents = 1
 
@@ -275,9 +274,9 @@ class JournalAppender:
 
     # noinspection PyProtectedMember
     def _check_space(self, add_length: int):
-        if self.mm.get_pos() + add_length >= self.max_size:
+        if self.mm.get_pos() + add_length >= self.journal.max_size:
             self.mm.close()
-            self.max_size += DEFAULT_MAX_JOURNAL_SIZE
+            self.journal.max_size += DEFAULT_MAX_JOURNAL_SIZE
             self.mm = self.journal._get_mmap(self.current_date, mode='a+b', extending=True)
 
     def __del__(self):
