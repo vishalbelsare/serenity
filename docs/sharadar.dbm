@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1.05" max-obj-count="31"
+<dbmodel pgmodeler-ver="0.9.3" use-changelog="false" last-position="0,0" last-zoom="1.05" max-obj-count="31"
 	 default-schema="public" default-owner="postgres">
 <role name="sharadar"
       login="true"
@@ -430,9 +430,9 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA sharadar TO sharadar;]]></appended-sql>
 		<type name="money" length="0"/>
 	</column>
 	<column name="volume">
-		<type name="integer" length="0"/>
+		<type name="bigint" length="0"/>
 	</column>
-	<column name="dividends" not-null="true">
+	<column name="close_adj" not-null="true">
 		<type name="money" length="0"/>
 	</column>
 	<column name="close_unadj" not-null="true">

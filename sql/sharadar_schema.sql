@@ -1,9 +1,8 @@
 -- Database generated with pgModeler (PostgreSQL Database Modeler).
--- pgModeler  version: 0.9.3-beta
--- PostgreSQL version: 12.0
+-- pgModeler  version: 0.9.3
+-- PostgreSQL version: 13.0
 -- Project Site: pgmodeler.io
 -- Model Author: ---
-
 -- object: sharadar | type: ROLE --
 -- DROP ROLE IF EXISTS sharadar;
 CREATE ROLE sharadar WITH 
@@ -12,13 +11,14 @@ CREATE ROLE sharadar WITH
 -- ddl-end --
 
 
--- Database creation must be done outside a multicommand file.
+-- Database creation must be performed outside a multi lined SQL file. 
 -- These commands were put in this file only as a convenience.
--- -- object: sharadar | type: DATABASE --
--- -- DROP DATABASE IF EXISTS sharadar;
--- CREATE DATABASE sharadar;
--- -- ddl-end --
 -- 
+-- object: sharadar | type: DATABASE --
+-- DROP DATABASE IF EXISTS sharadar;
+CREATE DATABASE sharadar;
+-- ddl-end --
+
 
 -- object: sharadar | type: SCHEMA --
 -- DROP SCHEMA IF EXISTS sharadar CASCADE;
@@ -40,6 +40,7 @@ CREATE SEQUENCE sharadar.indicator_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.indicator_seq OWNER TO postgres;
 -- ddl-end --
@@ -54,6 +55,7 @@ CREATE SEQUENCE sharadar.unit_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.unit_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -68,6 +70,7 @@ CREATE SEQUENCE sharadar.corporate_action_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.corporate_action_seq OWNER TO postgres;
 -- ddl-end --
@@ -82,6 +85,7 @@ CREATE SEQUENCE sharadar.ticker_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.ticker_seq OWNER TO postgres;
 -- ddl-end --
@@ -96,6 +100,7 @@ CREATE SEQUENCE sharadar.fundamentals_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.fundamentals_seq OWNER TO postgres;
 -- ddl-end --
@@ -110,6 +115,7 @@ CREATE SEQUENCE sharadar.institutional_holdings_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.institutional_holdings_seq OWNER TO postgres;
 -- ddl-end --
@@ -124,6 +130,7 @@ CREATE SEQUENCE sharadar.event_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.event_seq OWNER TO postgres;
 -- ddl-end --
@@ -138,6 +145,7 @@ CREATE SEQUENCE sharadar.equity_price_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.equity_price_seq OWNER TO postgres;
 -- ddl-end --
@@ -183,6 +191,7 @@ CREATE SEQUENCE sharadar.event_code_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.event_code_seq OWNER TO postgres;
 -- ddl-end --
@@ -212,6 +221,7 @@ CREATE SEQUENCE sharadar.insider_holdings_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.insider_holdings_seq OWNER TO postgres;
 -- ddl-end --
@@ -226,6 +236,7 @@ CREATE SEQUENCE sharadar.scale_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.scale_seq OWNER TO postgres;
 -- ddl-end --
@@ -240,6 +251,7 @@ CREATE SEQUENCE sharadar.sector_map_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.sector_map_seq OWNER TO postgres;
 -- ddl-end --
@@ -254,6 +266,7 @@ CREATE SEQUENCE sharadar.sector_code_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.sector_code_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -283,6 +296,7 @@ CREATE SEQUENCE sharadar.ticker_category_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.ticker_category_seq OWNER TO postgres;
 -- ddl-end --
@@ -345,6 +359,7 @@ CREATE SEQUENCE sharadar.cusip_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.cusip_seq OWNER TO postgres;
 -- ddl-end --
@@ -372,6 +387,7 @@ CREATE SEQUENCE sharadar.exchange_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.exchange_seq OWNER TO postgres;
 -- ddl-end --
@@ -399,6 +415,7 @@ CREATE SEQUENCE sharadar.currency_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.currency_seq OWNER TO postgres;
 -- ddl-end --
@@ -453,8 +470,8 @@ CREATE TABLE sharadar.equity_price (
 	high money NOT NULL,
 	low money NOT NULL,
 	close money NOT NULL,
-	volume integer,
-	dividends money NOT NULL,
+	volume bigint,
+	close_adj money NOT NULL,
 	close_unadj money NOT NULL,
 	last_updated date NOT NULL,
 	CONSTRAINT equity_price_pk PRIMARY KEY (equity_price_id)
@@ -529,6 +546,7 @@ CREATE SEQUENCE sharadar.institutional_investor_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.institutional_investor_seq OWNER TO postgres;
 -- ddl-end --
@@ -556,6 +574,7 @@ CREATE SEQUENCE sharadar.security_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.security_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -706,6 +725,7 @@ CREATE SEQUENCE sharadar.form_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.form_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -733,6 +753,7 @@ CREATE SEQUENCE sharadar.security_ad_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.security_ad_seq OWNER TO postgres;
 -- ddl-end --
@@ -760,6 +781,7 @@ CREATE SEQUENCE sharadar.tranaction_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.tranaction_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -787,6 +809,7 @@ CREATE SEQUENCE sharadar.security_title_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.security_title_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -814,6 +837,7 @@ CREATE SEQUENCE sharadar.dimension_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.dimension_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -840,6 +864,7 @@ CREATE SEQUENCE sharadar.corp_action_type_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.corp_action_type_seq OWNER TO postgres;
 -- ddl-end --
@@ -973,6 +998,7 @@ CREATE SEQUENCE sharadar.batch_status_seq
 	CACHE 1
 	NO CYCLE
 	OWNED BY NONE;
+
 -- ddl-end --
 ALTER SEQUENCE sharadar.batch_status_seq OWNER TO postgres;
 -- ddl-end --

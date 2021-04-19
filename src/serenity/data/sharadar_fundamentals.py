@@ -32,7 +32,7 @@ class Fundamentals(Base):
     fundamentals_id = Column(Integer, primary_key=True)
     ticker_code = Column(String(16), name='ticker')
     ticker_id = Column(Integer, ForeignKey('ticker.ticker_id'))
-    ticker = relationship('serenity.equity.sharadar_refdata.Ticker', lazy='joined')
+    ticker = relationship('Ticker', lazy='joined')
     dimension_type_id = Column(Integer, ForeignKey('dimension_type.dimension_type_id'))
     dimension_type = relationship('DimensionType')
     calendar_date = Column(Date)

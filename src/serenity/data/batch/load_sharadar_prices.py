@@ -29,7 +29,7 @@ class LoadEquityPricesTask(LoadSharadarTableTask):
         low_px = clean_price(row['low'])
         close_px = clean_price(row['close'])
         volume = clean_nulls(row['volume'])
-        dividends = row['dividends']
+        close_adj = row['closeadj']
         close_unadj = row['closeunadj']
         last_updated = row['lastupdated']
 
@@ -38,7 +38,7 @@ class LoadEquityPricesTask(LoadSharadarTableTask):
         if equity_price is None:
             equity_price = EquityPrice(ticker_code=ticker_code, ticker=ticker, date=date, open_px=open_px,
                                        high_px=high_px, low_px=low_px, close_px=close_px, volume=volume,
-                                       dividends=dividends, close_unadj=close_unadj, last_updated=last_updated)
+                                       close_adj=close_adj, close_unadj=close_unadj, last_updated=last_updated)
         else:
             equity_price.ticker = ticker
             equity_price.open_px = open_px
@@ -46,7 +46,7 @@ class LoadEquityPricesTask(LoadSharadarTableTask):
             equity_price.low_px = low_px
             equity_price.close_px = close_px
             equity_price.volume = volume
-            equity_price.dividends = dividends
+            equity_price.close_adj = close_adj
             equity_price.close_unadj = close_unadj
             equity_price.last_updated = last_updated
 
