@@ -8,8 +8,7 @@ from money import Money
 
 from sqlalchemy import create_engine, TypeDecorator, Column, Integer, String, Date, Boolean
 from sqlalchemy.dialects.postgresql import MONEY
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 Base = declarative_base()
 
@@ -18,9 +17,11 @@ def create_sharadar_session(hostname: str = os.getenv('TIMESCALEDB_NODEPORT_SERV
                             port: int = os.getenv('TIMESCALEDB_NODEPORT_SERVICE_PORT', '5432'),
                             username: str = os.getenv('POSTGRES_SHARADAR_USER', 'sharadar'),
                             password: str = os.getenv('POSTGRES_SHARADAR_PASSWORD', None)) -> Session:
-    engine = create_engine(f'postgresql://{username}:{password}@{hostname}:{port}/')
+    engine = create_engine(f'postgresql://{username}:{password}@{hostname}:{port}/sharadar')
     session = sessionmaker(bind=engine)
-    return session()
+    sess_instance = session()
+    sess_instance.execute("SET search_path TO sharadar")
+    return sess_instance
 
 
 def init_quandl(quandl_api_key: str = os.getenv('QUANDL_API_KEY')):
