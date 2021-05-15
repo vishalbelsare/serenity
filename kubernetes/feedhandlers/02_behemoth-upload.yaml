@@ -1,4 +1,4 @@
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: behemoth-md-upload
@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: behemoth-md-upload
-            image: cloudwallcapital/serenity:2021.01.16-b77
+            image: cloudwallcapital/serenity:2021.05.15-b82
             command: ["/app/venv-py3/bin/python"]
             args: ["serenity/marketdata/batch/behemoth_main.py"]
             env:
