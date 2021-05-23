@@ -24,6 +24,8 @@ spec:
                 secretKeyRef:
                   name: azure-secret-config
                   key: connect-str
+            - name: SMTP_HOSTNAME
+              value: serenity-postfix
             volumeMounts:
             - mountPath: /behemoth
               name: behemoth
