@@ -56,7 +56,8 @@ async def websocket_subscribe_with_retry(ws_uri, timeout: int, logger: logging.L
                 await sock.send(subscribe_msg_txt)
                 while True:
                     try:
-                        scheduler.schedule_update(messages, await sock.recv())
+                        async for message in sock:
+                            scheduler.schedule_update(messages, message)
                     except BaseException as error:
                         logger.error(f'disconnected; attempting to reconnect after {timeout} '
                                      f'seconds: {error}')

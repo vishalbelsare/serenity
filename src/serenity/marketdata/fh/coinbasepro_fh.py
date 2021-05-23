@@ -1,18 +1,19 @@
+import asyncio
 import json
 import logging
 
 import coinbasepro
 import fire
-import websockets
 from tau.core import MutableSignal, NetworkScheduler, Event
 from tau.signal import Map, Filter
 
 from serenity.db.api import InstrumentCache
-from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHandler, ws_fh_main, Feed, \
-    OrderBookBuilder
+from serenity.marketdata.fh.feedhandler import WebsocketFeedHandler, ws_fh_main, Feed, OrderBookBuilder, \
+    FeedHandlerState
 from serenity.marketdata.api import Trade, OrderBookEvent, BookLevel, OrderBookSnapshot, OrderBookUpdate
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
+from serenity.utils import websocket_subscribe_with_retry
 
 
 class CoinbaseProFeedHandler(WebsocketFeedHandler):
@@ -43,6 +44,9 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
         self.instrument_trades = {}
         self.instrument_order_book_events = {}
         self.instrument_order_books = {}
+
+        # timeout in seconds
+        self.timeout = 60
 
     @staticmethod
     def get_uri_scheme() -> str:
@@ -135,13 +139,11 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
                     return False
 
         network.connect(books, OrderBookScheduler(self))
+        asyncio.ensure_future(websocket_subscribe_with_retry(self.ws_uri, self.timeout, self.logger, subscribe_msg,
+                                                             self.scheduler, messages, 'all products', 'global'))
 
-        async with websockets.connect(self.ws_uri) as sock:
-            self.logger.info('Sending subscription request for all products')
-            await sock.send(json.dumps(subscribe_msg))
-            self.scheduler.schedule_update(self.state, FeedHandlerState.LIVE)
-            while True:
-                self.scheduler.schedule_update(messages, await sock.recv())
+        # we are now live
+        self.scheduler.schedule_update(self.state, FeedHandlerState.LIVE)
 
     def __extract_trade(self, msg) -> Trade:
         sequence = msg['sequence']

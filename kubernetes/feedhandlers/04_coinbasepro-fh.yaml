@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: coinbasepro-fh-btcusd
+  name: coinbasepro-fh
   labels:
-    app: coinbasepro-fh-btcusd
+    app: coinbasepro-fh
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: coinbasepro-fh-btcusd
+      app: coinbasepro-fh
   template:
     metadata:
       labels:
-        app: coinbasepro-fh-btcusd
+        app: coinbasepro-fh
     spec:
       containers:
-        - name: coinbasepro-fh-btcusd
+        - name: coinbasepro-fh
           image: cloudwallcapital/serenity:2021.05.15-b82
           command: ["/app/venv-py3/bin/python"]
-          args: ["serenity/marketdata/fh/coinbasepro_fh.py", "--include_symbol=BTC-USD"]
+          args: ["serenity/marketdata/fh/coinbasepro_fh.py"]
           env:
             - name: POSTGRES_SERENITY_PASSWORD
               valueFrom:
