@@ -56,9 +56,9 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
         while reader.get_pos() < length:
             time = reader.read_double()
 
-            best_bid_qty = reader.read_long()
+            best_bid_qty = reader.read_double()
             best_bid_px = reader.read_double()
-            best_ask_qty = reader.read_long()
+            best_ask_qty = reader.read_double()
             best_ask_px = reader.read_double()
 
             record = {
