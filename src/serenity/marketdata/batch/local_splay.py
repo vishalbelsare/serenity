@@ -45,6 +45,7 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
         # mark as complete
         self.output().done()
 
+    # noinspection DuplicatedCode
     def __splay_books_db(self, upload_date: datetime.date):
         books_db = str(self.db)
         books_path = Path(f'{str(self.behemoth_path)}/journals/{books_db}/{str(self.product)}')
@@ -86,5 +87,48 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
             tickstore = LocalTickstore(Path(Path(f'{str(self.behemoth_path)}/db/{books_db}')), 'time')
             tickstore.close()
 
+    # noinspection DuplicatedCode
     def __splay_trades_db(self, upload_date: datetime.date):
-        pass
+        trades_db = str(self.db)
+        trades_path = Path(f'{str(self.behemoth_path)}/journals/{trades_db}/{str(self.product)}')
+        trades_journal = Journal(trades_path)
+        reader = trades_journal.create_reader(upload_date)
+
+        length = reader.get_length()
+        records = []
+        while reader.get_pos() < length:
+            time = reader.read_double()
+            sequence = reader.read_long()
+            trade_id = reader.read_long()
+            product_id = reader.read_string()
+            side = 'buy' if reader.read_short() == 0 else 'sell'
+            size = reader.read_double()
+            price = reader.read_double()
+
+            record = {
+                'time': datetime.datetime.fromtimestamp(time),
+                'sequence': sequence,
+                'trade_id': trade_id,
+                'product_id': product_id,
+                'side': side,
+                'size': size,
+                'price': price
+            }
+            records.append(record)
+
+        if len(records) > 0:
+            self.logger.info(
+                f'uploading journaled {str(self.db)}/{str(self.product)} trades to Behemoth '
+                f'for UTC date {str(upload_date)}')
+            df = pd.DataFrame(records)
+            df.set_index('time', inplace=True)
+            self.logger.info(f'extracted {len(df)} {str(self.product)} trades')
+            tickstore = LocalTickstore(Path(Path(f'{str(self.behemoth_path)}/db/{trades_db}')), 'time')
+            tickstore.insert(str(self.product), BiTimestamp(upload_date), df)
+            tickstore.close()
+            self.logger.info(f'inserted {len(df)} {str(self.product)} trade records on local disk')
+        else:
+            self.logger.info(f'zero {str(self.db)}/{str(self.product)} trades for UTC date {str(upload_date)}')
+            tickstore = LocalTickstore(Path(Path(f'{str(self.behemoth_path)}/db/{trades_db}')), 'time')
+            tickstore.close()
+
