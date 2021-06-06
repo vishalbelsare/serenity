@@ -16,9 +16,9 @@ spec:
     spec:
       containers:
         - name: phemex-fh-btcusd
-          image: cloudwallcapital/serenity:2021.05.23-b84
+          image: cloudwallcapital/serenity:2021.06.06-b87
           command: ["/app/venv-py3/bin/python"]
-          args: ["serenity/marketdata/fh/phemex_fh.py", "--include_symbol=BTCUSD"]
+          args: ["serenity/marketdata/fh/phemex_fh.py"]
           env:
             - name: POSTGRES_SERENITY_PASSWORD
               valueFrom:
