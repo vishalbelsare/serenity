@@ -21,7 +21,7 @@ from serenity.trading.api import Side
 from serenity.utils import init_logging, custom_asyncio_error_handler
 
 
-capnp_path = Path(__file__).parent / '../../../../capnp/serenity-fh.capnp'
+capnp_path = Path(__file__).parent / 'serenity-fh.capnp'
 
 capnp.remove_import_hook()
 capnp_def = capnp.load(str(capnp_path))
