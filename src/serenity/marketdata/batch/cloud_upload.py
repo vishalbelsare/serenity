@@ -40,9 +40,9 @@ class AzureBlobUploadTask(luigi.Task):
 
         for i in range(delta.days + 1):
             upload_date = upload_start_date + datetime.timedelta(days=i)
-            upload_date_start = datetime.datetime.combine(upload_date, datetime.datetime.min.time())
-            upload_date_end = datetime.datetime.combine(upload_date, datetime.time(11, 59, 59))
-            df = local_tickstore.select(str(self.product), upload_date_start, upload_date_end)
+            upload_datetime_start = datetime.datetime.combine(upload_date, datetime.datetime.min.time())
+            upload_datetime_end = datetime.datetime.combine(upload_date, datetime.time(23, 59, 59))
+            df = local_tickstore.select(str(self.product), upload_datetime_start, upload_datetime_end)
 
             cloud_tickstore.insert(str(self.product), BiTimestamp(upload_date), df)
             cloud_tickstore.close()

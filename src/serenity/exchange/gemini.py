@@ -25,3 +25,7 @@ class GeminiConnection:
     def get_products(self):
         r = requests.get(self.api_url + '/symbols')
         return r.json()
+
+    def get_product_details(self, symbol):
+        r = requests.get(self.api_url + f'/symbols/details/{symbol}')
+        return r.json()

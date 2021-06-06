@@ -6,9 +6,17 @@ enum Side {
 }
 
 struct TradeMessage {
-    tradeId @0 : Int64;
-    side @1 : Side;
-    size @2 : Float64;
-    price @3 : Float64;
-    tradedProductId @4 : Int64;
+    time @0 : Float64;
+    tradeId @1 : Int64;
+    side @2 : Side;
+    size @3 : Float64;
+    price @4 : Float64;
+}
+
+struct Level1BookUpdateMessage {
+    time @0 : Float64;
+    bestBidQty @1 : Float64;
+    bestBidPx @2 : Float64;
+    bestAskQty @3 : Float64;
+    bestAskPx @4 : Float64;
 }

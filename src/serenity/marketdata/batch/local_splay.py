@@ -3,12 +3,14 @@ import logging
 from pathlib import Path
 
 import luigi
+import numpy as np
 import pandas as pd
 
 from luigi.contrib.simulate import RunAnywayTarget
 
+from serenity.marketdata.fh.feedhandler import capnp_def
+from serenity.marketdata.fh.txlog import TransactionLog
 from serenity.marketdata.tickstore.api import BiTimestamp, LocalTickstore
-from serenity.marketdata.tickstore.journal import Journal
 
 
 class GenerateBehemothSplayFilesTask(luigi.Task):
@@ -49,25 +51,18 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
     def __splay_books_db(self, upload_date: datetime.date):
         books_db = str(self.db)
         books_path = Path(f'{str(self.behemoth_path)}/journals/{books_db}/{str(self.product)}')
-        books_journal = Journal(books_path)
+        books_journal = TransactionLog(books_path)
         reader = books_journal.create_reader(upload_date)
+        books = reader.read_messages(capnp_def.Level1BookUpdateMessage)
 
-        length = reader.get_length()
         records = []
-        while reader.get_pos() < length:
-            time = reader.read_double()
-
-            best_bid_qty = reader.read_double()
-            best_bid_px = reader.read_double()
-            best_ask_qty = reader.read_double()
-            best_ask_px = reader.read_double()
-
+        for book in books:
             record = {
-                'time': datetime.datetime.fromtimestamp(time),
-                'best_bid_qty': best_bid_qty,
-                'best_bid_px': best_bid_px,
-                'best_ask_qty': best_ask_qty,
-                'best_ask_px': best_ask_px
+                'time': np.datetime64(datetime.datetime.fromtimestamp(book.time)),
+                'best_bid_qty': book.bestBidQty,
+                'best_bid_px': book.bestBidPx,
+                'best_ask_qty': book.bestAskQty,
+                'best_ask_px': book.bestAskPx
             }
             records.append(record)
 
@@ -91,28 +86,18 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
     def __splay_trades_db(self, upload_date: datetime.date):
         trades_db = str(self.db)
         trades_path = Path(f'{str(self.behemoth_path)}/journals/{trades_db}/{str(self.product)}')
-        trades_journal = Journal(trades_path)
+        trades_journal = TransactionLog(trades_path)
         reader = trades_journal.create_reader(upload_date)
+        trades = reader.read_messages(capnp_def.TradeMessage)
 
-        length = reader.get_length()
         records = []
-        while reader.get_pos() < length:
-            time = reader.read_double()
-            sequence = reader.read_long()
-            trade_id = reader.read_long()
-            product_id = reader.read_string()
-            side = 'buy' if reader.read_short() == 0 else 'sell'
-            size = reader.read_double()
-            price = reader.read_double()
-
+        for trade in trades:
             record = {
-                'time': datetime.datetime.fromtimestamp(time),
-                'sequence': sequence,
-                'trade_id': trade_id,
-                'product_id': product_id,
-                'side': side,
-                'size': size,
-                'price': price
+                'time': np.datetime64(datetime.datetime.fromtimestamp(trade.time)),
+                'trade_id': trade.tradeId,
+                'side': str(trade.side),
+                'size': trade.size,
+                'price': trade.price
             }
             records.append(record)
 
@@ -131,4 +116,3 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
             self.logger.info(f'zero {str(self.db)}/{str(self.product)} trades for UTC date {str(upload_date)}')
             tickstore = LocalTickstore(Path(Path(f'{str(self.behemoth_path)}/db/{trades_db}')), 'time')
             tickstore.close()
-

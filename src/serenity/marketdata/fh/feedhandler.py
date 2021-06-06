@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
+import capnp
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
@@ -14,10 +15,16 @@ from tau.signal import Function
 
 from serenity.db.api import TypeCodeCache, InstrumentCache, connect_serenity_db
 from serenity.marketdata.api import MarketdataService, OrderBook, OrderBookSnapshot
+from serenity.marketdata.fh.txlog import TransactionLog
 from serenity.model.exchange import ExchangeInstrument
-from serenity.marketdata.tickstore.journal import Journal
 from serenity.trading.api import Side
 from serenity.utils import init_logging, custom_asyncio_error_handler
+
+
+capnp_path = Path(__file__).parent / '../../../../capnp/serenity-fh.capnp'
+
+capnp.remove_import_hook()
+capnp_def = capnp.load(str(capnp_path))
 
 
 class FeedHandlerState(Enum):
@@ -302,14 +309,14 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
         class SubscribeTrades(Event):
             def __init__(self, trade_symbol):
                 self.trade_symbol = trade_symbol
-                self.appender = None
+                self.tx_writer = None
 
             def on_activate(self) -> bool:
                 if fh.get_state().get_value() == FeedHandlerState.LIVE:
                     feed = registry.get_feed(f'{uri_scheme}:{instance_id}:{self.trade_symbol}')
                     instrument_code = feed.get_instrument().get_exchange_instrument_code()
-                    journal = Journal(Path(f'{journal_path}/{db}_TRADES/{instrument_code}'))
-                    self.appender = journal.create_appender()
+                    txlog = TransactionLog(Path(f'{journal_path}/{db}_TRADES/{instrument_code}'))
+                    self.tx_writer = txlog.create_writer()
 
                     trades = feed.get_trades()
                     Do(scheduler.get_network(), trades, lambda: self.on_trade_print(trades.get_value()))
@@ -319,26 +326,27 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 trade_counter.inc()
                 logger.info(trade)
 
-                self.appender.write_double(datetime.utcnow().timestamp())
-                self.appender.write_long(trade.get_trade_id())
-                self.appender.write_long(trade.get_trade_id())
-                self.appender.write_string(trade.get_instrument().get_exchange_instrument_code())
-                self.appender.write_short(1 if trade.get_side() == Side.BUY else 0)
-                self.appender.write_double(trade.get_qty())
-                self.appender.write_double(trade.get_price())
+                trade_msg = capnp_def.TradeMessage.new_message()
+                trade_msg.time = datetime.utcnow().timestamp()
+                trade_msg.tradeId = trade.get_trade_id()
+                trade_msg.side = capnp_def.Side.buy if trade.get_side() == Side.BUY else capnp_def.Side.sell
+                trade_msg.size = trade.get_qty()
+                trade_msg.price = trade.get_price()
+
+                self.tx_writer.append_msg(trade_msg)
 
         if journal_books:
             class SubscribeOrderBook(Event):
                 def __init__(self, trade_symbol):
                     self.trade_symbol = trade_symbol
-                    self.appender = None
+                    self.tx_writer = None
 
                 def on_activate(self) -> bool:
                     if fh.get_state().get_value() == FeedHandlerState.LIVE:
                         feed = registry.get_feed(f'{uri_scheme}:{instance_id}:{self.trade_symbol}')
                         instrument_code = feed.get_instrument().get_exchange_instrument_code()
-                        journal = Journal(Path(f'{journal_path}/{db}_BOOKS/{instrument_code}'))
-                        self.appender = journal.create_appender()
+                        txlog = TransactionLog(Path(f'{journal_path}/{db}_BOOKS/{instrument_code}'))
+                        self.tx_writer = txlog.create_writer()
 
                         books = feed.get_order_books()
                         Do(scheduler.get_network(), books, lambda: self.on_book_update(books.get_value()))
@@ -346,20 +354,24 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
 
                 def on_book_update(self, book: OrderBook):
                     book_update_counter.inc()
-                    self.appender.write_double(datetime.utcnow().timestamp())
+
+                    book_msg = capnp_def.Level1BookUpdateMessage.new_message()
+                    book_msg.time = datetime.utcnow().timestamp()
                     if len(book.get_bids()) > 0:
-                        self.appender.write_double(book.get_best_bid().get_qty())
-                        self.appender.write_double(book.get_best_bid().get_px())
+                        book_msg.bestBidQty = book.get_best_bid().get_qty()
+                        book_msg.bestBidPx = book.get_best_bid().get_px()
                     else:
-                        self.appender.write_double(0)
-                        self.appender.write_double(0)
+                        book_msg.bestBidQty = 0
+                        book_msg.bestBidPx = 0
 
                     if len(book.get_asks()) > 0:
-                        self.appender.write_double(book.get_best_ask().get_qty())
-                        self.appender.write_double(book.get_best_ask().get_px())
+                        book_msg.bestAskQty = book.get_best_ask().get_qty()
+                        book_msg.bestAskPx = book.get_best_ask().get_px()
                     else:
-                        self.appender.write_double(0)
-                        self.appender.write_double(0)
+                        book_msg.bestAskQty = 0
+                        book_msg.bestAskPx = 0
+
+                    self.tx_writer.append_msg(book_msg)
 
             scheduler.get_network().connect(fh.get_state(), SubscribeOrderBook(symbol))
 

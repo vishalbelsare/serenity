@@ -4,14 +4,6 @@ serenity.marketdata.fh package
 Submodules
 ----------
 
-serenity.marketdata.fh.binance\_fh module
------------------------------------------
-
-.. automodule:: serenity.marketdata.fh.binance_fh
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 serenity.marketdata.fh.coinbasepro\_fh module
 ---------------------------------------------
 

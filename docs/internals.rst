@@ -12,7 +12,7 @@ Package map
 
 :py:mod:`serenity.algo` contains a complete reactive algo engine based on the `Tau <https://pypi.org/project/pytau/>`_
 library, with both live and backtest versions. This is the older of the two backtesting API's, and
-the plan is to merge it with :py:mod:`serenity.strategy` in the 0.10.x release. (See :doc:`roadmap`.) If
+the plan is to merge it with :py:mod:`serenity.strategy` in the future. If
 you are interested in cryptocurrency trading this is the place to start.
 
 :py:mod:`serenity.booker` is incomplete, but will eventually contain trade booking to the database.
@@ -29,7 +29,7 @@ are interested in equity trading this is a good place to start.
 only `Phemex <http://phemex.com/>`_ has code here.
 
 :py:mod:`serenity.marketdata` is some of the oldest code in the system, and contains a number of
-websocket clients for exchange feedhandlers: Binance, Coinbase Pro and Phemex. Again, Phemex is
+websocket clients for exchange feedhandlers: Coinbase Pro and Phemex. Again, Phemex is
 the best supported at this time. There is also an upload script which runs daily and uploads
 the tick-by-tick marketdata recorded by the feedhandlers to both a Parquet-based flat file store
 and to Azure blob storage. The latter is an essential component for tick-by-tick backtesting and

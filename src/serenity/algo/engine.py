@@ -64,8 +64,6 @@ class AlgoEngine:
                     if fh_name == 'Phemex':
                         self.fh_registry.register(PhemexFeedHandler(scheduler, instrument_cache, include_symbol,
                                                                     instance_id))
-                    elif fh_name == 'Binance':
-                        self.fh_registry.register(BinanceFeedHandler(scheduler, instrument_cache, instance_id))
                     elif fh_name == 'CoinbasePro':
                         self.fh_registry.register(CoinbaseProFeedHandler(scheduler, instrument_cache, instance_id))
                     else:

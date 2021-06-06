@@ -3,11 +3,15 @@
 Release History
 ---------------
 
-0.9.0 (TBD January 2021)
-++++++++++++++++++++++++
+0.9.0 (TBD)
++++++++++++
 
-- Secured AzureBlobTickstore by switching to Azure AD credentials for read-only
+- Secured AzureBlobTickstore by switching to Azure AD credentials for read-only access
 - Integrated documentation with http://readthedocs.org
+- Started integrating Prometheus for monitoring
+- Complete rewrite of the marketdata feedhandler journaling mechanism
+- Replaced hand-rolled Coinbase Pro feedhandler with cryptofeed
+- Added Gemini feedhandler support with cryptofeed
 - Improved API docstrings
 
 0.8.0 (2021-01-01)
