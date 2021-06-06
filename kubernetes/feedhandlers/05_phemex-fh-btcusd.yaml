@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: phemex-fh-btcusd
+  name: phemex-fh
   labels:
-    app: phemex-fh-btcusd
+    app: phemex-fh
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: phemex-fh-btcusd
+      app: phemex-fh
   template:
     metadata:
       labels:
-        app: phemex-fh-btcusd
+        app: phemex-fh
     spec:
       containers:
-        - name: phemex-fh-btcusd
+        - name: phemex-fh
           image: cloudwallcapital/serenity:2021.06.06-b87
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/marketdata/fh/phemex_fh.py"]
