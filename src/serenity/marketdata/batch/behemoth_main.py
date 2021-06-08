@@ -1,8 +1,10 @@
 import datetime
 
+import coinbasepro
 import fire
 import luigi
 
+from serenity.exchange.phemex import get_phemex_connection
 from serenity.marketdata.batch.cloud_upload import AzureBlobUploadTask
 
 
@@ -16,9 +18,17 @@ class BehemothDailyTask(luigi.WrapperTask):
     end_date = luigi.DateParameter(default=datetime.date.today())
 
     def requires(self):
+        cbp_conn = coinbasepro.PublicClient()
+        cbp_products_raw = cbp_conn.get_products()
+        cbp_products = [product['id'] for product in cbp_products_raw]
+
+        phemex_conn, phemex_ws = get_phemex_connection()
+        phemex_products_raw = phemex_conn.get_products()['data']
+        phemex_products = [product['symbol'] for product in phemex_products_raw]
+
         exchanges = {
-            'PHEMEX': {'db_prefix': 'PHEMEX', 'supported_products': {'BTCUSD'}},
-            'COINBASEPRO': {'db_prefix': 'COINBASE_PRO', 'supported_products': {'BTC-USD'}}
+            'PHEMEX': {'db_prefix': 'PHEMEX', 'supported_products': phemex_products},
+            'COINBASEPRO': {'db_prefix': 'COINBASE_PRO', 'supported_products': cbp_products}
         }
         for exchange in exchanges.keys():
             db_prefix = exchanges[exchange]['db_prefix']
