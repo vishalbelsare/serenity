@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SQL_DIR="${SCRIPT_DIR}/../sql"
+
 TIMESCALEDB_HOST=localhost
 TIMESCALEDB_PORT=30432
 TIMESCALEDB_PASSWORD=postgres
@@ -36,11 +39,11 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 pg_install_sql(){
   db=$1
   sql_script=$2
-  psql -h "$TIMESCALEDB_HOST" -p "$TIMESCALEDB_PORT" -U postgres -P "$TIMESCALEDB_PASSWORD" -d "$db" -f "$sql_script"
+  PGPASSWORD=$TIMESCALEDB_PASSWORD psql -h "$TIMESCALEDB_HOST" -p "$TIMESCALEDB_PORT" -U postgres -d "$db" -f "$sql_script"
 }
 
-pg_install_sql postgres ../sql/serenitydb_install.sql
-pg_install_sql serenity ../sql/serenitydb_schema.sql
-pg_install_sql serenity ../sql/serenitydb_grants.sql
-pg_install_sql postgres ../sql/sharadar_install.sql
-pg_install_sql sharadar  ../sql/sharadar_schema.sql
+pg_install_sql postgres $SQL_DIR/serenitydb_install.sql
+pg_install_sql serenity $SQL_DIR/serenitydb_schema.sql
+pg_install_sql serenity $SQL_DIR/serenitydb_grants.sql
+pg_install_sql postgres $SQL_DIR/sharadar_install.sql
+pg_install_sql sharadar $SQL_DIR/sharadar_schema.sql
