@@ -55,6 +55,3 @@ class TransactionLogReader:
     # noinspection PyUnresolvedReferences
     def read_messages(self, msg_class: object):
         return msg_class.read_multiple_packed(self.txlog_file)
-
-
-

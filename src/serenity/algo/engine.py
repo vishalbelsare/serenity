@@ -13,7 +13,6 @@ from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode
 from serenity.booker.api import TimescaleDbTradeBookingService
 from serenity.db.api import InstrumentCache, connect_serenity_db, TypeCodeCache
-from serenity.marketdata.fh.binance_fh import BinanceFeedHandler
 from serenity.marketdata.fh.coinbasepro_fh import CoinbaseProFeedHandler
 from serenity.marketdata.fh.feedhandler import FeedHandlerRegistry, FeedHandlerMarketdataService
 from serenity.marketdata.fh.phemex_fh import PhemexFeedHandler
