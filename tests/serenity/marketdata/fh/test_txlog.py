@@ -1,14 +1,14 @@
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from serenity.marketdata.fh.feedhandler import capnp_def
 from serenity.marketdata.fh.txlog import TransactionLog
-from tempfile import mkstemp
 
 
 def test_txlog_read_write():
-    (tmp_fd, tmp_txfile) = mkstemp()
-    tmp_txfile_path = Path(tmp_txfile)
+    tmp_txfile_dir = tempfile.TemporaryDirectory()
+    tmp_txfile_path = Path(tmp_txfile_dir.name)
     txlog = TransactionLog(tmp_txfile_path)
 
     txlog_writer = txlog.create_writer()
