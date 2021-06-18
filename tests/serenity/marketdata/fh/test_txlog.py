@@ -25,8 +25,7 @@ def test_txlog_read_write():
 
     txlog_reader = txlog.create_reader()
     book_msgs = txlog_reader.read_messages(capnp_def.Level1BookUpdateMessage)
-    assert len(book_msgs) == 1
-    loaded_book_msg = book_msgs[0]
+    loaded_book_msg = next(book_msgs)
     assert book_msg.bestBidQty == loaded_book_msg.bestBidQty
     assert book_msg.bestBidPx == loaded_book_msg.bestBidPx
     assert book_msg.bestAskQty == loaded_book_msg.bestAskQty
