@@ -1,10 +1,10 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: behemoth-pv-volume
+  name: luigi-pv-volume
   labels:
     type: local
-    app: behemoth
+    app: luigi
 spec:
   storageClassName: manual
   capacity:
@@ -12,14 +12,14 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: "/mnt/raid/data/behemoth"
+    path: "{{ luigi_mount_dir }}"
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: behemoth-pv-claim
+  name: luigi-pv-claim
   labels:
-    app: behemoth
+    app: luigi
 spec:
   storageClassName: manual
   accessModes:

@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: behemoth-md-upload
-            image: cloudwallcapital/serenity:2021.06.08-b89
+            image: {{ serenity_image }}
             command: ["/app/venv-py3/bin/python"]
             args: ["serenity/marketdata/batch/behemoth_main.py"]
             env:

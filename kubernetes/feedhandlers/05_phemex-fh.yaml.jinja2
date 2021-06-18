@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: phemex-fh
-          image: cloudwallcapital/serenity:2021.06.06-b88
+          image: {{ serenity_image }}
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/marketdata/fh/phemex_fh.py"]
           env:

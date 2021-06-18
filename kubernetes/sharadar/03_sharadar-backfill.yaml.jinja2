@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
         - name: sharadar-backfill
-          image: cloudwallcapital/serenity:2020.12.20-b76
+          image: {{ serenity_image }}
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/data/batch/main.py", "--mode", "BACKFILL"]
           env:
