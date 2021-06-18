@@ -1,0 +1,4 @@
+behemoth_mount_dir: /var/db/behemoth
+timescaledb_mount_dir: /var/db/timescaledb
+serenity_image: cloudwallcapital/serenity:latest
+timescaledb_image: timescale/timescaledb:latest-pg12-oss

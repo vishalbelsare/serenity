@@ -16,17 +16,41 @@ else
 fi
 
 if [ ! -x /usr/local/bin/brew ]; then
-    echo "installing homebrew"
+    echo "installing Homebrew"
     /usr/bin/env ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 else
-    echo "homebrew is installed"
+    echo "Homebrew is installed"
 fi
 
 if [ ! -x /usr/local/bin/ansible ]; then
-    echo "installing ansible via homebrew"
+    echo "installing Ansible via Homebrew"
     brew install ansible
 else
-    echo "ansible is installed"
+    echo "Ansible is installed"
 fi
+
+if [ ! -x /usr/local/bin/helm ]; then
+    echo "installing Helm via Homebrew"
+    brew install helm
+else
+    echo "Helm is installed"
+fi
+
+if [ ! -x /usr/local/bin/consul ]; then
+    echo "installing Consul via Homebrew"
+    brew install consul
+else
+    echo "Consul is installed"
+fi
+
+if [ ! -x /usr/local/bin/vault ]; then
+    echo "installing Vault via Homebrew"
+    brew install vault
+else
+    echo "Vault is installed"
+fi
+
+# ensure Helm can be used to deploy Consul and Vault to Kubernetes
+helm repo add hashicorp https://helm.releases.hashicorp.com
 
 echo "Ready to go!"

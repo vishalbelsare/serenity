@@ -1,0 +1,4 @@
+behemoth_mount_dir: /mnt/raid/data/behemoth
+timescaledb_mount_dir: /mnt/raid/data/timescaledb
+serenity_image: cloudwallcapital/serenity:testing
+timescaledb_image: timescale/timescaledb:latest-pg12-oss
