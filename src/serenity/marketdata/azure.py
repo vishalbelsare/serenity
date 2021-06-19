@@ -91,12 +91,11 @@ class AzureHistoricMarketdataService(MarketdataService):
                     trades_df = tickstore.select(trade_symbol, self.mds.start_time, self.mds.end_time)
                     for row in trades_df.itertuples():
                         at_time = row[0].asm8.astype('int64') / 10 ** 6
-                        sequence = row[1]
-                        trade_id = row[2]
-                        side = Side.SELL if row[4] == 'sell' else Side.BUY
-                        qty = row[5]
-                        price = row[6]
-                        trade = Trade(instrument, sequence, trade_id, side, qty, price)
+                        trade_id = row[1]
+                        side = Side.SELL if row[2] == 'sell' else Side.BUY
+                        qty = row[3]
+                        price = row[4]
+                        trade = Trade(instrument, trade_id, trade_id, side, qty, price)
                         scheduler.schedule_update_at(trades, trade, at_time)
 
                     tickstore.close()
