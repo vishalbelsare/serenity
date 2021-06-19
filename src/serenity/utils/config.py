@@ -7,7 +7,7 @@ defaults = dict()
 
 def init_defaults():
     global defaults
-    config_path = os.path.join(os.path.dirname(__file__), 'defaults.cfg')
+    config_path = os.path.join(os.path.dirname(__file__), '../defaults.cfg')
     defaults = toml.load(config_path)
 
 
