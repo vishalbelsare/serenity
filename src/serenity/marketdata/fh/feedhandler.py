@@ -13,12 +13,13 @@ from tau.core import Signal, MutableSignal, NetworkScheduler, Event, Network, Re
 from tau.event import Do
 from tau.signal import Function
 
+from serenity.app.base import Application
+from serenity.app.daemon import AIODaemon
 from serenity.db.api import TypeCodeCache, InstrumentCache, connect_serenity_db
 from serenity.marketdata.api import MarketdataService, OrderBook, OrderBookSnapshot
 from serenity.marketdata.fh.txlog import TransactionLog
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
-from serenity.utils import init_logging, custom_asyncio_error_handler
 
 
 capnp_path = Path(__file__).parent / 'serenity-fh.capnp'
@@ -282,7 +283,7 @@ class FeedHandlerMarketdataService(MarketdataService):
 
 def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, db: str, journal_books: bool = True,
                include_symbol: str = '*'):
-    init_logging()
+    Application.init_logging()
     logger = logging.getLogger(__name__)
 
     conn = connect_serenity_db()
@@ -384,7 +385,8 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
     asyncio.ensure_future(fh.start())
 
     # crash out on any exception
-    asyncio.get_event_loop().set_exception_handler(custom_asyncio_error_handler)
+    # noinspection PyProtectedMember
+    asyncio.get_event_loop().set_exception_handler(AIODaemon._custom_asyncio_error_handler)
 
     # go!
     asyncio.get_event_loop().run_forever()

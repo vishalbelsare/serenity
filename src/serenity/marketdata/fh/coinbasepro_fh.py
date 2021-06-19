@@ -13,7 +13,7 @@ from serenity.marketdata.fh.feedhandler import WebsocketFeedHandler, ws_fh_main,
 from serenity.marketdata.api import Trade, OrderBookEvent, BookLevel, OrderBookSnapshot, OrderBookUpdate
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
-from serenity.utils import websocket_subscribe_with_retry
+from serenity.utils.websockets import websocket_subscribe_with_retry
 
 
 class CoinbaseProFeedHandler(WebsocketFeedHandler):
@@ -162,6 +162,7 @@ class CoinbaseProFeedHandler(WebsocketFeedHandler):
 
         instrument = self.known_instrument_ids[symbol]
 
+        # noinspection PyShadowingNames
         def to_book_level_list(px_qty_list):
             book_levels = []
             for px_qty in px_qty_list:

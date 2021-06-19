@@ -5,7 +5,7 @@ from serenity.marketdata.api import MarketdataService, Trade, OrderBook, BookLev
 from serenity.model.exchange import ExchangeInstrument
 from serenity.marketdata.tickstore.api import AzureBlobTickstore
 from serenity.trading.api import Side
-from serenity.utils import get_global_defaults
+from serenity.utils.config import get_global_defaults
 
 
 class AzureHistoricMarketdataService(MarketdataService):

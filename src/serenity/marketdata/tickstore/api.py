@@ -19,7 +19,7 @@ from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, Ht
 from azure.storage.blob import BlobServiceClient
 from diskcache import Cache
 
-from serenity.utils import get_global_defaults
+from serenity.utils.config import get_global_defaults
 
 # suppress noisy warning
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)

@@ -22,6 +22,21 @@ else
     echo "Homebrew is installed"
 fi
 
+if [ ! -x /usr/local/bin/timescaledb_move.sh ]; then
+    echo "installing TimescaleDB"
+    brew tap timescale/tap
+    brew install timescaledb
+
+    /usr/local/bin/timescaledb_move.sh
+    /usr/local/bin/timescaledb-tune
+
+    brew services restart postgresql
+    createuser -s postgres
+else
+    echo "TimescaleDB is installed"
+fi
+
+
 if [ ! -x /usr/local/bin/ansible ]; then
     echo "installing Ansible via Homebrew"
     brew install ansible
@@ -46,6 +61,13 @@ fi
 if [ ! -x /usr/local/bin/vault ]; then
     echo "installing Vault via Homebrew"
     brew install vault
+else
+    echo "Vault is installed"
+fi
+
+if [ ! -x /usr/local/bin/flake8 ]; then
+    echo "installing flake8 via pip3"
+    pip3 install flake8
 else
     echo "Vault is installed"
 fi

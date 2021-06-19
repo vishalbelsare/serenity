@@ -6,7 +6,7 @@ azure-storage-blob==12.8.1
 pycapnp==1.1.0
 coinbasepro==0.2.1
 cryptofeed==1.9.1
-dask[complete]==2021.6.0
+dask[complete]==2021.6.1
 diskcache==5.2.1
 fire==0.4.0
 hvac==0.10.14

@@ -2,13 +2,13 @@ from pathlib import Path
 
 import fire
 
+from serenity.app.base import Application
 from serenity.marketdata.tickstore.api import LocalTickstore, AzureBlobTickstore
-from serenity.utils import init_logging
 
 
 def tickstore_admin(action: str, db: str, staging_dir: str = '/mnt/raid/data/behemoth/db',
                     connect_str: str = None, db_prefix: str = None):
-    init_logging()
+    Application.init_logging()
 
     if action == 'reindex':
         tickstore = LocalTickstore(Path(f'{staging_dir}/{db}'), timestamp_column='time')

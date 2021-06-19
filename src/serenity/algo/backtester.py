@@ -13,13 +13,14 @@ from tau.event import Do
 
 from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode, Snapshot
+from serenity.app.base import Application
 from serenity.db.api import connect_serenity_db, InstrumentCache, TypeCodeCache
 from serenity.marketdata.azure import AzureHistoricMarketdataService
 from serenity.pnl.api import MarketdataMarkService
 from serenity.position.api import PositionService, NullExchangePositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.simulator import AutoFillOrderPlacer
-from serenity.utils import init_logging, Environment
+from serenity.utils.config import Environment
 
 
 class BacktestConfig:
@@ -160,7 +161,7 @@ class AlgoBacktester:
 
 
 def main(config_path: str, start_time: str = None, end_time: str = None, strategy_dir: str = '.'):
-    init_logging()
+    Application.init_logging()
     config = BacktestConfig.load(Path(config_path), Path(strategy_dir), start_time, end_time)
     engine = AlgoBacktester(config)
     engine.run()

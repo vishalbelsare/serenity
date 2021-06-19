@@ -11,6 +11,8 @@ from tau.core import RealtimeNetworkScheduler
 
 from serenity.algo.api import StrategyContext
 from serenity.analytics.api import HDF5DataCaptureService, Mode
+from serenity.app.base import Application
+from serenity.app.daemon import AIODaemon
 from serenity.booker.api import TimescaleDbTradeBookingService
 from serenity.db.api import InstrumentCache, connect_serenity_db, TypeCodeCache
 from serenity.marketdata.fh.coinbasepro_fh import CoinbaseProFeedHandler
@@ -20,7 +22,7 @@ from serenity.pnl.phemex import PhemexMarkService
 from serenity.position.api import PositionService
 from serenity.trading.oms import OrderManagerService, OrderPlacerService
 from serenity.trading.connector.phemex_api import PhemexOrderPlacer, PhemexExchangePositionService
-from serenity.utils import init_logging, custom_asyncio_error_handler, Environment
+from serenity.utils.config import Environment
 
 
 class AlgoEngine:
@@ -138,7 +140,8 @@ class AlgoEngine:
         self.logger.info('<READY FOR TRADING>')
 
         # crash out on any exception
-        asyncio.get_event_loop().set_exception_handler(custom_asyncio_error_handler)
+        # noinspection PyProtectedMember
+        asyncio.get_event_loop().set_exception_handler(AIODaemon._custom_asyncio_error_handler)
 
         # store output after event loop shuts down, right before exit
         # noinspection PyUnusedLocal
@@ -155,7 +158,7 @@ class AlgoEngine:
 
 
 def main(config_path: str, strategy_dir='.'):
-    init_logging()
+    Application.init_logging()
     engine = AlgoEngine(config_path, strategy_dir)
     engine.start()
 

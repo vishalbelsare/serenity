@@ -5,6 +5,7 @@ import fire
 import toml
 from tau.core import HistoricNetworkScheduler, Event
 
+from serenity.app.base import Application
 from serenity.data.sharadar_api import create_sharadar_session
 from serenity.strategy.api import PriceField, InvestmentStrategy, Portfolio
 from serenity.strategy.core import TradableUniversePricingContext, DefaultRebalanceContext, \
@@ -13,7 +14,6 @@ from serenity.strategy.core import TradableUniversePricingContext, DefaultRebala
 from serenity.strategy.historical import BacktestStrategyContext, MarketOnCloseTradingSimulator
 from serenity.strategy.sharadar import SharadarTradableUniverse, SharadarPricingContext, SharadarDividendContext
 from serenity.strategy.utils import StrategyLoader
-from serenity.utils import init_logging
 
 
 class InvestmentStrategyBacktester:
@@ -90,7 +90,7 @@ class InvestmentStrategyBacktester:
 
 
 def main(config_path: str, strategy_dir: str, start_time: str, end_time: str):
-    init_logging()
+    Application.init_logging()
 
     config = toml.load(config_path)
     strategy_module = config['strategy']['module']

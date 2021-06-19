@@ -11,7 +11,7 @@ from serenity.exchange.phemex import get_phemex_connection
 from serenity.model.exchange import ExchangeInstrument
 from serenity.model.instrument import FutureContract, CurrencyPair, Instrument
 from serenity.pnl.api import MarkService, Mark
-from serenity.utils import websocket_subscribe_with_retry
+from serenity.utils.websockets import websocket_subscribe_with_retry
 
 
 class PhemexMarkService(MarkService):

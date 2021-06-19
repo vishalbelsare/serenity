@@ -16,7 +16,7 @@ from serenity.marketdata.fh.feedhandler import FeedHandlerState, WebsocketFeedHa
 from serenity.marketdata.api import Trade, OrderBookEvent, OrderBookSnapshot, OrderBookUpdate, BookLevel
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
-from serenity.utils import websocket_subscribe_with_retry
+from serenity.utils.websockets import websocket_subscribe_with_retry
 
 
 class PhemexFeedHandler(WebsocketFeedHandler):
