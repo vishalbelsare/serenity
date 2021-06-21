@@ -7,6 +7,9 @@ from contextlib import closing
 
 # noinspection PyPackageRequirements
 import consul
+import zmq
+
+# noinspection PyPackageRequirements
 from consul import Check
 from flask import Flask
 
@@ -63,14 +66,23 @@ class AIODaemon(Application):
         self.logger.info(f'\tHealth check: http://localhost:{port}/health')
 
         # register the service with Consul
-        self.consul.agent.service.register(name=self.get_service_name(),
-                                           service_id=self.get_service_id(),
-                                           port=port)
+        self._register_service('http', port)
 
         # register the health check with Consul
         http_check = Check.http(url=f'http://localhost:{port}/health', interval='1s')
-        self.consul.agent.check.register(name=f'{self.get_service_name()}:health_check',
-                                         check=http_check, service_id=self.get_service_id())
+        self.consul.agent.check.register(name=f'{self._get_fully_qualified_service_name("http")}/health_check',
+                                         check=http_check, service_id=self._get_fully_qualified_service_id('http'))
+
+    def _register_service(self, service_name: str, port: int):
+        self.consul.agent.service.register(name=self._get_fully_qualified_service_name(service_name),
+                                           service_id=self._get_fully_qualified_service_id(service_name),
+                                           port=port)
+
+    def _get_fully_qualified_service_name(self, service_name: str):
+        return f'{self.get_service_name()}-{service_name}'
+
+    def _get_fully_qualified_service_id(self, service_name: str):
+        return f'{self.get_service_id()}:{service_name}'
 
     @staticmethod
     def _find_free_port():
@@ -113,4 +125,16 @@ class ZeroMQDaemon(AIODaemon, ABC):
     actually open a socket; sub-classes can choose the
     specific socket type and messaging pattern they need.
     """
-    pass
+    def __init__(self, config_path: str):
+        super().__init__(config_path)
+        self.ctx = zmq.Context()
+
+    def _bind_socket(self, socket_type: int, socket_name: str):
+        sock = self.ctx.socket(socket_type)
+
+        # noinspection PyUnresolvedReferences
+        port = sock.bind_to_random_port('tcp://*', max_tries=100)
+        self._register_service(socket_name, port)
+
+        return sock
+

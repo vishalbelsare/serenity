@@ -19,7 +19,7 @@ class Application(ABC):
         self.config = Application.load_config(config_path)
         self.init_logging_config()
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self._get_subclass_name())
 
     @staticmethod
     def load_defaults():
@@ -34,14 +34,20 @@ class Application(ABC):
             return None
 
     @staticmethod
-    def init_logging():
+    def init_logging(log_level: str = None):
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
+
+        # suppress some particularly noisy loggers
         logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
         logging.getLogger('werkzeug').setLevel(logging.WARNING)
+        logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
+        logging.getLogger('websockets.protocol').setLevel(logging.INFO)
+        logging.getLogger('websockets.server').setLevel(logging.INFO)
+
         console_logger = logging.StreamHandler()
-        if os.getenv('DEBUG'):
-            console_logger.setLevel(logging.DEBUG)
+        if log_level:
+            console_logger.setLevel(logging.getLevelName(log_level))
         else:
             console_logger.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s [%(threadName)s] - %(name)s - %(levelname)s - %(message)s')
@@ -65,11 +71,13 @@ class Application(ABC):
         # code to the new framework: we will dispense with the
         # environment variable and static method later
         log_level = self.get_config('logging', 'log_level', 'INFO').upper()
-        os.putenv('LOG_LEVEL', log_level)
-        Application.init_logging()
+        Application.init_logging(log_level)
 
     def get_default(self, section: str, key: str, default_val: str = None):
         return Application._get_config(self.defaults, section, key, default_val)
 
     def get_config(self, section: str, key: str, default_val: str = None):
         return Application._get_config(self.config, section, key, default_val)
+
+    def _get_subclass_name(self):
+        return self.__class__.__name__

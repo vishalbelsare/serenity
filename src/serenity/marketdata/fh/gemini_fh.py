@@ -1,57 +1,50 @@
 import fire
-from cryptofeed import FeedHandler
-from cryptofeed.callback import BookCallback, TradeCallback
-from cryptofeed.defines import BID, ASK, L2_BOOK, TRADES
+from cryptofeed.defines import BID, ASK
 from cryptofeed.exchanges import Gemini
 
-from serenity.app.daemon import AIODaemon
 from serenity.exchange.gemini import GeminiConnection
+from serenity.marketdata.fh.feedhandler import CryptofeedFeedHandler
 
 
-# noinspection PyUnusedLocal
-async def trade(feed, symbol, order_id, timestamp, side, amount, price, receipt_timestamp, order_type):
-    print(f"Timestamp: {timestamp} Feed: {feed} Pair: {symbol} ID: {order_id} Side: {side} Amount: {amount} "
-          f"Price: {price} Order Type {order_type}")
+class GeminiFeedHandler(CryptofeedFeedHandler):
+    def __init__(self, config_path: str):
+        super().__init__(config_path, enable_book_deltas=False)
 
-
-# noinspection PyUnusedLocal
-async def book(feed, symbol, book, timestamp, receipt_timestamp):
-    print(f'Timestamp: {timestamp} Feed: {feed} Pair: {symbol} Book Bid Size is {len(book[BID])} '
-          f'Ask Size is {len(book[ASK])}')
-
-
-class GeminiFeedhandler(AIODaemon):
     def get_service_id(self):
         return 'serenity/feedhandlers/gemini'
 
     def get_service_name(self):
         return 'gemini-fh'
 
-    def __init__(self, config_path: str):
-        super().__init__(config_path)
-        self.get_event_loop().call_soon(GeminiFeedhandler.run)
+    def get_feed_code(self):
+        return 'GEMINI'
 
-    @staticmethod
-    def run():
-        f = FeedHandler()
+    def _create_feed(self, subscription: dict, callbacks: dict):
+        return Gemini(subscription=subscription, callbacks=callbacks)
 
+    def _load_symbols(self):
         gemini_conn = GeminiConnection()
         products = gemini_conn.get_products()
+        self.logger.debug(f'downloaded {len(products)} symbols from Gemini exchange')
+
         product_details = [gemini_conn.get_product_details(product) for product in products]
-        normalized_products = [f'{details["base_currency"]}-{details["quote_currency"]}' for details in product_details]
-        normalized_products.remove('BTC-GUSD')
-        normalized_products.remove('ETH-GUSD')
+        symbols = [f'{details["base_currency"]}-{details["quote_currency"]}' for details in product_details]
 
-        f.add_feed(Gemini(subscription={TRADES: normalized_products, L2_BOOK: normalized_products}, callbacks={
-            TRADES: TradeCallback(trade, include_order_type=True),
-            L2_BOOK: BookCallback(book)
-        }))
+        # workaround for bug in handling longer symbol names in cryptofeed's Gemini support
+        # Issue reported here: https://github.com/bmoscon/cryptofeed/issues/531
+        symbols.remove('BTC-GUSD')
+        symbols.remove('ETH-GUSD')
 
-        f.run(start_loop=False)
+        return symbols
+
+    # noinspection PyUnusedLocal
+    async def _on_l2_book_update(self, feed, symbol, book, timestamp, receipt_timestamp):
+        self.logger.debug(f'Timestamp: {timestamp} Feed: {feed} Pair: {symbol} Book Bid Size is {len(book[BID])} '
+                          f'Ask Size is {len(book[ASK])}')
 
 
 def main(config_path: str):
-    fh = GeminiFeedhandler(config_path)
+    fh = GeminiFeedHandler(config_path)
     fh.run_forever()
 
 

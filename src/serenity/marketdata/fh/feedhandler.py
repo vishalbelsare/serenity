@@ -1,26 +1,35 @@
 import asyncio
-import logging
-from abc import ABC, abstractmethod
+from decimal import Decimal
+
 import capnp
+import cryptofeed
+import logging
+
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
 from typing import List
 
 # noinspection PyProtectedMember
-from prometheus_client import start_http_server, Counter
+import zmq
+from cryptofeed.callback import TradeCallback, BookUpdateCallback
+from cryptofeed.defines import TRADES, BOOK_DELTA, L2_BOOK, BID, ASK
+
+# noinspection PyProtectedMember
+from prometheus_client import start_http_server, Counter, Summary
 from tau.core import Signal, MutableSignal, NetworkScheduler, Event, Network, RealtimeNetworkScheduler
 from tau.event import Do
 from tau.signal import Function
 
 from serenity.app.base import Application
-from serenity.app.daemon import AIODaemon
+from serenity.app.daemon import ZeroMQDaemon, AIODaemon
 from serenity.db.api import TypeCodeCache, InstrumentCache, connect_serenity_db
 from serenity.marketdata.api import MarketdataService, OrderBook, OrderBookSnapshot
 from serenity.marketdata.fh.txlog import TransactionLog
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
-
+from serenity.utils.metrics import HighPerformanceTimer
 
 capnp_path = Path(__file__).parent / 'serenity-fh.capnp'
 
@@ -126,11 +135,138 @@ class FeedHandler(ABC):
         pass
 
 
-class WebsocketFeedHandler(FeedHandler):
+class FeedHandlerDaemon(ZeroMQDaemon, ABC):
+    """
+    Base class for all new-style feedhandlers that run as daemons only
+    and distribute data via ZeroMQ sockets.
+    """
+    def __init__(self, config_path: str):
+        super().__init__(config_path)
+        self.pub_socket = self._bind_socket(zmq.PUB, 'publisher')
+
+        self.trade_counter = Counter('trade_counter',
+                                     'Number of trade prints received by feedhandler')
+        self.book_update_counter = Counter('book_update_counter',
+                                           'Number of book updates received by feedhandler')
+        self.msg_pub_latency = Summary('msg_pub_latency_us', 'Marketdata message publication latency (us)')
+
+    @abstractmethod
+    def get_feed_code(self):
+        pass
+
+    def _publish_trade_print(self, symbol: str, trade_id: str, timestamp: float, side: str, amount: Decimal,
+                             price: Decimal, receipt_timestamp: float):
+        self.trade_counter.inc()
+
+        msg = capnp_def.RawFeedTradeMessage.new_message()
+        msg.recvTime = receipt_timestamp
+        msg.exchTime = timestamp
+        msg.feedCode = self.get_feed_code()
+        msg.symbolCode = symbol
+        msg.tradeId = trade_id
+        msg.side = capnp_def.Side.buy if side == 'buy' else capnp_def.Side.sell
+        msg.size = float(amount)
+        msg.price = float(price)
+
+        self._publish_msg(f'{symbol}/trades', msg.to_segments())
+
+    def _publish_book_delta(self, symbol: str, delta: dict, timestamp: float, receipt_timestamp: float):
+        self.book_update_counter.inc()
+
+        msg = capnp_def.RawFeedBookDeltaMessage.new_message()
+        msg.recvTime = receipt_timestamp
+        msg.exchTime = timestamp
+        msg.feedCode = self.get_feed_code()
+        msg.symbolCode = symbol
+
+        msg.init('bidDeltas', len(delta[BID]))
+        FeedHandlerDaemon._to_price_levels(delta[BID], msg.bidDeltas)
+
+        msg.init('askDeltas', len(delta[ASK]))
+        FeedHandlerDaemon._to_price_levels(delta[ASK], msg.askDeltas)
+
+        self._publish_msg(f'{symbol}/book_deltas', msg.to_segments())
+
+    def _publish_msg(self, topic: str, msg_segments: list):
+        with HighPerformanceTimer(self.msg_pub_latency.observe):
+            self.pub_socket.send(topic.encode('utf8'), zmq.SNDMORE)
+            for count, msg_segment in enumerate(msg_segments):
+                if count == len(msg_segments) - 1:
+                    self.pub_socket.send(msg_segment)
+                else:
+                    self.pub_socket.send(msg_segment, zmq.SNDMORE)
+
+    @staticmethod
+    def _to_price_levels(level_tuples: list, price_levels: list):
+        i = 0
+        for level_tuple in level_tuples:
+            price_levels[i].px = float(level_tuple[0])
+            price_levels[i].qty = float(level_tuple[1])
+            i = i + 1
+
+
+class CryptofeedFeedHandler(FeedHandlerDaemon, ABC):
+    """
+    Base class for all feedhandlers that use cryptofeed to subscribe to market data.
+    """
+    def __init__(self, config_path: str, enable_book_deltas: bool = True):
+        super().__init__(config_path)
+        self.cryptofeed = cryptofeed.FeedHandler()
+        self.enable_book_deltas = enable_book_deltas
+
+    def run_forever(self):
+        self.get_event_loop().call_soon(self.run)
+        super().run_forever()
+
+    def run(self):
+        self._subscribe(self.cryptofeed)
+        self.cryptofeed.run(start_loop=False)
+
+    @abstractmethod
+    def _create_feed(self, subscription: dict, callbacks: dict):
+        pass
+
+    @abstractmethod
+    def _load_symbols(self):
+        pass
+
+    def _subscribe(self, f: cryptofeed.FeedHandler):
+        symbols = self._load_symbols()
+        self.logger.info(f'preparing to subscribe to {len(symbols)} symbols:')
+        for symbol in symbols:
+            self.logger.info(f'\t{symbol}')
+
+        subscription = {TRADES: symbols, L2_BOOK: symbols}
+        callbacks = {
+            TRADES: TradeCallback(self._on_trade, include_order_type=False),
+            BOOK_DELTA: BookUpdateCallback(self._on_book_delta)
+        }
+        f.add_feed(self._create_feed(subscription=subscription, callbacks=callbacks))
+
+    # noinspection PyUnusedLocal
+    async def _on_trade(self, feed: str, symbol: str, order_id, timestamp: float, side: str, amount: Decimal,
+                        price: Decimal, receipt_timestamp: float, order_type: str = None):
+        self._publish_trade_print(symbol, order_id, timestamp, side, amount, price, receipt_timestamp)
+
+    # noinspection PyUnusedLocal
+    async def _on_book_delta(self, feed: str, symbol: str, delta: dict, timestamp: float, receipt_timestamp: float):
+        self._publish_book_delta(symbol, delta, timestamp, receipt_timestamp)
+
+
+class WebsocketFeedHandler(FeedHandler, ABC):
+    """
+    Base class for feedhandlers which implement raw websocket-based
+    connections.
+
+    This base class is only used for feedhandlers that are not
+    currently supported by the cryptofeed package, e.g. Phemex.
+    This code is currently being refactored and the "legacy"
+    feedhandlers do not yet have the same functionality as the
+    newer cryptofeed-based feedhandlers.
+    """
     logger = logging.getLogger(__name__)
 
-    def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache,
-                 instance_id: str):
+    def __init__(self, scheduler: NetworkScheduler, instrument_cache: InstrumentCache, instance_id: str):
         self.scheduler = scheduler
         self.instrument_cache = instrument_cache
         self.type_code_cache = instrument_cache.get_type_code_cache()
@@ -161,8 +297,6 @@ class WebsocketFeedHandler(FeedHandler):
             raise ValueError(f'Unsupported instance ID: {instance_id}')
         if instrument_id not in self.known_instrument_ids:
             raise ValueError(f'Unknown exchange Instrument: {instrument_id}')
-        self.logger.info(f'Acquiring Feed for {uri}')
-
         return self._create_feed(self.known_instrument_ids[instrument_id])
 
     async def start(self):
