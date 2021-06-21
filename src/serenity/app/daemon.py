@@ -137,4 +137,3 @@ class ZeroMQDaemon(AIODaemon, ABC):
         self._register_service(socket_name, port)
 
         return sock
-
