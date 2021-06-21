@@ -1,3 +1,4 @@
+env=dev
 behemoth_mount_dir: /var/db/behemoth
 timescaledb_mount_dir: /var/db/timescaledb
 luigi_mount_dir: /var/db/luigi

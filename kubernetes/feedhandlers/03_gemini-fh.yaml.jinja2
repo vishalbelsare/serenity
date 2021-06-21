@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gemini-fh
+  labels:
+    app: gemini-fh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gemini-fh
+  template:
+    metadata:
+      labels:
+        app: gemini-fh
+    spec:
+      containers:
+        - name: gemini-fh
+          image: {{ serenity_image }}
+          command: ["/app/venv-py3/bin/python"]
+          args: ["serenity/marketdata/fh/gemini_fh.py --config_path /etc/config/environments/{{ env }}/feedhandlers/gemini_fh.cfg"]

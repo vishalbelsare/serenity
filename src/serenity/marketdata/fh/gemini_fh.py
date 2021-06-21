@@ -1,5 +1,4 @@
 import fire
-from cryptofeed.defines import BID, ASK
 from cryptofeed.exchanges import Gemini
 
 from serenity.exchange.gemini import GeminiConnection
@@ -36,11 +35,6 @@ class GeminiFeedHandler(CryptofeedFeedHandler):
         symbols.remove('ETH-GUSD')
 
         return symbols
-
-    # noinspection PyUnusedLocal
-    async def _on_l2_book_update(self, feed, symbol, book, timestamp, receipt_timestamp):
-        self.logger.debug(f'Timestamp: {timestamp} Feed: {feed} Pair: {symbol} Book Bid Size is {len(book[BID])} '
-                          f'Ask Size is {len(book[ASK])}')
 
 
 def main(config_path: str):
