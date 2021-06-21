@@ -2,11 +2,12 @@ import asyncio
 import socket
 import threading
 
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from contextlib import closing
 
 # noinspection PyPackageRequirements
 import consul
+from consul import Check
 from flask import Flask
 
 # noinspection PyProtectedMember
@@ -51,16 +52,25 @@ class AIODaemon(Application):
 
         # Add prometheus wsgi middleware to route /metrics requests
         app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
-            '/metrics': make_wsgi_app()
+            '/metrics': make_wsgi_app(),
+            '/health': AIODaemon._create_health_wsgi_app(self.get_service_id())
         })
 
         port = AIODaemon._find_free_port()
         threading.Thread(target=app.run, kwargs={'port': port, 'debug': False}).start()
+        self.logger.info('started up HTTP server:')
+        self.logger.info(f'\tOpenTelemetry: http://localhost:{port}/metrics')
+        self.logger.info(f'\tHealth check: http://localhost:{port}/health')
 
         # register the service with Consul
         self.consul.agent.service.register(name=self.get_service_name(),
                                            service_id=self.get_service_id(),
                                            port=port)
+
+        # register the health check with Consul
+        http_check = Check.http(url=f'http://localhost:{port}/health', interval='1s')
+        self.consul.agent.check.register(name=f'{self.get_service_name()}:health_check',
+                                         check=http_check, service_id=self.get_service_id())
 
     @staticmethod
     def _find_free_port():
@@ -77,8 +87,24 @@ class AIODaemon(Application):
         # force shutdown
         loop.stop()
 
+    @staticmethod
+    def _create_health_wsgi_app(service_id: str):
+        def health_app(environ, start_response):
+            status = '200 OK'
+            header = ('', '')
+            if environ['PATH_INFO'] == '/favicon.ico':
+                output = b''
+            else:
+                output = f'{service_id} is OK'.encode('utf-8')
 
-class ZeroMQDaemon(AIODaemon):
+            # Return output
+            start_response(status, [header])
+            return [output]
+
+        return health_app
+
+
+class ZeroMQDaemon(AIODaemon, ABC):
     """
     Specialized base class for long-running microservices
     that communicate with each other by passing Cap'n Proto

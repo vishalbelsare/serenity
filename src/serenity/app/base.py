@@ -38,6 +38,7 @@ class Application(ABC):
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
         logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+        logging.getLogger('werkzeug').setLevel(logging.WARNING)
         console_logger = logging.StreamHandler()
         if os.getenv('DEBUG'):
             console_logger.setLevel(logging.DEBUG)
