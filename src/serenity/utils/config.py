@@ -1,9 +1,11 @@
-import os
-
 import mergedeep
+import os
+import re
 import toml
 
 defaults = dict()
+decoder = toml.TomlDecoder()
+RE_ENV_VAR = r'\$\{?([A-Z_][A-Z0-9_]+)\}?'
 
 
 def init_defaults():
@@ -32,6 +34,7 @@ class TOMLProcessor:
     def load(config_path: str):
         target = {}
         TOMLProcessor._merge_load(config_path, target)
+        TOMLProcessor._postprocess(target)
         return target
 
     @staticmethod
@@ -47,6 +50,38 @@ class TOMLProcessor:
                 TOMLProcessor._merge_load(load_path, target)
             del toml_dict['include']
         mergedeep.merge(target, toml_dict)
+
+    @staticmethod
+    def _postprocess(item):
+        iter_ = None
+        if isinstance(item, dict):
+            iter_ = item.items()
+        elif isinstance(item, list):
+            iter_ = enumerate(item)
+
+        for i, val in iter_:
+            if isinstance(val, (dict, list)):
+                TOMLProcessor._postprocess(val)
+            elif isinstance(val, str):
+                if re.match(RE_ENV_VAR, val):
+                    r = re.sub(RE_ENV_VAR, TOMLProcessor._env_replace, val)
+
+                    # Try to first load the value from the environment variable
+                    # (i.e. make what seems like a float a float, what seems like a
+                    # boolean a bool and so on). If that fails, fail back to
+                    # string.
+                    try:
+                        item[i], _ = decoder.load_value(r)
+                        continue
+                    except ValueError:
+                        pass
+
+                    item[i], _ = decoder.load_value('"{}"'.format(r))
+
+    @staticmethod
+    def _env_replace(x):
+        env_var = x.groups()[0]
+        return os.environ.get(env_var, '')
 
 
 class Environment:

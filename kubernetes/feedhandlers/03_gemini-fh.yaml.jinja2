@@ -18,4 +18,9 @@ spec:
         - name: gemini-fh
           image: {{ serenity_image }}
           command: ["/app/venv-py3/bin/python"]
-          args: ["serenity/marketdata/fh/gemini_fh.py --config_path /etc/config/environments/{{ env }}/feedhandlers/gemini_fh.cfg"]
+          args: ["serenity/marketdata/fh/gemini_fh.py", "--config_path", "/etc/config/environments/{{ env }}/feedhandlers/gemini_fh.cfg"]
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP

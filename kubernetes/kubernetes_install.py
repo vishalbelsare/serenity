@@ -23,11 +23,12 @@ class Deployer:
 
     @staticmethod
     def helm_install(app: str, chart: str, overlay_values: str = None, extra_args: list = None):
-        args = ['helm ', 'install', app, chart]
+        cmd = ['helm', 'install', app, chart]
         if overlay_values is not None:
-            args.append(['-f', overlay_values])
+            cmd.extend(['-f', Deployer._local_path(overlay_values)])
         if extra_args is not None:
-            args.extend(extra_args)
+            cmd.extend(extra_args)
+        Deployer._run_command(cmd)
 
     def kube_install(self, yaml_path: str, namespace: str = None):
         if self.env == 'dev':
@@ -74,11 +75,15 @@ class Deployer:
 
 # noinspection PyDefaultArgument
 def install_serenity(env: str = 'dev', components: list = ['core', 'db', 'infra', 'strategies', 'research']):
+    if isinstance(components, str):
+        components = [components]
+
+    # noinspection PyUnresolvedReferences
     component_set = set([x.lower() for x in components])
     deployer = Deployer(env)
 
     # install Helm charts for infrastructure
-    deployer.helm_install('consul', 'hashicorp/consol', f'kubernetes/consul/{env}-config.yaml',
+    deployer.helm_install('consul', 'hashicorp/consul', f'consul/{env}-config.yaml',
                           ['--set', 'global.name=consul'])
 
     # install requested Kubernetes objects

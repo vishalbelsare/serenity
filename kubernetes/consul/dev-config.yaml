@@ -1,2 +1,8 @@
 server:
   affinity: null
+
+ui:
+  enabled: true
+  service:
+    enabled: true
+    type: 'NodePort'

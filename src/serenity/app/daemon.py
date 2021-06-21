@@ -34,7 +34,8 @@ class AIODaemon(Application):
         super().__init__(config_path)
         self.event_loop = asyncio.get_event_loop()
         self.get_event_loop().set_exception_handler(AIODaemon._custom_asyncio_error_handler)
-        self.consul = consul.Consul()
+        self.consul = consul.Consul(host=self.get_config('consul', 'consul_agent_host', 'localhost'),
+                                    port=self.get_config('consul', 'consul_agent_port', '8500'))
 
     def get_service_id(self):
         return self.get_service_name()

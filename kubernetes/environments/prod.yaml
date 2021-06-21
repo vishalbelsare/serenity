@@ -1,4 +1,4 @@
-env=prod
+env: prod
 behemoth_mount_dir: /mnt/raid/data/behemoth
 timescaledb_mount_dir: /mnt/raid/data/timescaledb
 luigi_mount_dir: /mnt/raid/data/luigi
