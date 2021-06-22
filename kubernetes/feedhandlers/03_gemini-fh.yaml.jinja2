@@ -20,6 +20,12 @@ spec:
           command: ["/app/venv-py3/bin/python"]
           args: ["serenity/marketdata/fh/gemini_fh.py", "--config_path", "/etc/config/environments/{{ env }}/feedhandlers/gemini_fh.cfg"]
           env:
+            - name: FLASK_ENV
+              value: development
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
             - name: HOST_IP
               valueFrom:
                 fieldRef:

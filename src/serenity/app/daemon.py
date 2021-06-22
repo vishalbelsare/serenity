@@ -51,6 +51,7 @@ class AIODaemon(Application):
         self._start_http_server()
         self.get_event_loop().run_forever()
 
+    # noinspection HttpUrlsUsage
     def _start_http_server(self):
         app = Flask(self.get_service_id())
 
@@ -60,24 +61,26 @@ class AIODaemon(Application):
             '/health': AIODaemon._create_health_wsgi_app(self.get_service_id())
         })
 
+        host = self.get_config('networking', 'hostname')
         port = AIODaemon._find_free_port()
-        threading.Thread(target=app.run, kwargs={'port': port, 'debug': False}).start()
+        threading.Thread(target=app.run, kwargs={'host': host, 'port': port, 'debug': False}).start()
         self.logger.info('started up HTTP server:')
-        self.logger.info(f'\tOpenTelemetry: http://localhost:{port}/metrics')
-        self.logger.info(f'\tHealth check: http://localhost:{port}/health')
+        self.logger.info(f'\tOpenTelemetry: http://{host}:{port}/metrics')
+        self.logger.info(f'\tHealth check: http://{host}:{port}/health')
 
         # register the service with Consul
         self._register_service('http', port)
 
         # register the health check with Consul
-        http_check = Check.http(url=f'http://localhost:{port}/health', interval='1s')
+        http_check = Check.http(url=f'http://{host}:{port}/health', interval='1s')
         self.consul.agent.check.register(name=f'{self._get_fully_qualified_service_name("http")}/health_check',
                                          check=http_check, service_id=self._get_fully_qualified_service_id('http'))
 
     def _register_service(self, service_name: str, port: int):
+        host = self.get_config('networking', 'hostname')
         self.consul.agent.service.register(name=self._get_fully_qualified_service_name(service_name),
                                            service_id=self._get_fully_qualified_service_id(service_name),
-                                           port=port)
+                                           address=host, port=port)
 
     def _get_fully_qualified_service_name(self, service_name: str):
         return f'{self.get_service_name()}-{service_name}'
