@@ -2,7 +2,7 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-from serenity.marketdata.fh.feedhandler import capnp_def
+from serenity.marketdata.fh.feedhandler import feedhandler_capnp
 from serenity.marketdata.fh.txlog import TransactionLog
 
 
@@ -13,7 +13,7 @@ def test_txlog_read_write():
 
     txlog_writer = txlog.create_writer()
 
-    book_msg = capnp_def.Level1BookUpdateMessage.new_message()
+    book_msg = feedhandler_capnp.Level1BookUpdateMessage.new_message()
     book_msg.time = datetime.utcnow().timestamp()
     book_msg.bestBidQty = 5.0
     book_msg.bestBidPx = 38000.0
@@ -24,7 +24,7 @@ def test_txlog_read_write():
     txlog_writer.close()
 
     txlog_reader = txlog.create_reader()
-    book_msgs = txlog_reader.read_messages(capnp_def.Level1BookUpdateMessage)
+    book_msgs = txlog_reader.read_messages(feedhandler_capnp.Level1BookUpdateMessage)
     loaded_book_msg = next(book_msgs)
     assert book_msg.bestBidQty == loaded_book_msg.bestBidQty
     assert book_msg.bestBidPx == loaded_book_msg.bestBidPx

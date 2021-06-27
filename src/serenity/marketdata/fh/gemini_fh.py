@@ -7,7 +7,7 @@ from serenity.marketdata.fh.feedhandler import CryptofeedFeedHandler
 
 class GeminiFeedHandler(CryptofeedFeedHandler):
     def __init__(self, config_path: str):
-        super().__init__(config_path, enable_book_deltas=False)
+        super().__init__(config_path)
 
     def get_service_id(self):
         return 'serenity/feedhandlers/gemini'

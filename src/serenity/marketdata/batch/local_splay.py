@@ -8,7 +8,7 @@ import pandas as pd
 
 from luigi.contrib.simulate import RunAnywayTarget
 
-from serenity.marketdata.fh.feedhandler import capnp_def
+from serenity.marketdata.fh.feedhandler import feedhandler_capnp
 from serenity.marketdata.fh.txlog import TransactionLog
 from serenity.marketdata.tickstore.api import BiTimestamp, LocalTickstore
 
@@ -53,7 +53,7 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
         books_path = Path(f'{str(self.behemoth_path)}/journals/{books_db}/{str(self.product)}')
         books_journal = TransactionLog(books_path)
         reader = books_journal.create_reader(upload_date)
-        books = reader.read_messages(capnp_def.Level1BookUpdateMessage)
+        books = reader.read_messages(feedhandler_capnp.Level1BookUpdateMessage)
 
         records = []
         for book in books:
@@ -88,7 +88,7 @@ class GenerateBehemothSplayFilesTask(luigi.Task):
         trades_path = Path(f'{str(self.behemoth_path)}/journals/{trades_db}/{str(self.product)}')
         trades_journal = TransactionLog(trades_path)
         reader = trades_journal.create_reader(upload_date)
-        trades = reader.read_messages(capnp_def.TradeMessage)
+        trades = reader.read_messages(feedhandler_capnp.TradeMessage)
 
         records = []
         for trade in trades:

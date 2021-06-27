@@ -4,10 +4,9 @@ Quandl==3.6.1
 Werkzeug==2.0.1
 azure-identity==1.6.0
 azure-storage-blob==12.8.1
-pycapnp==1.1.0
 coinbasepro==0.2.1
 cryptofeed==1.9.1
-dask[complete]==2021.6.1
+dask[complete]==2021.6.2
 decorator==5.0.9
 diskcache==5.2.1
 fire==0.4.0
@@ -17,11 +16,12 @@ luigi==3.0.3
 mergedeep==1.3.4
 money==1.3.0
 msal==1.12.0
-numpy==1.20.3
-pandas==1.2.4
+numpy==1.21.0
+pandas==1.2.5
 pandas_market_calendars==2.0
 phemex==0.3.0
 prometheus-client==0.11.0
+pycapnp==1.1.0
 psycopg2-binary==2.9.1
 py-consul==1.2.3
 pyarrow==4.0.1
@@ -35,7 +35,7 @@ pyzmq==22.1.0
 requests==2.25.1
 scipy==1.7.0
 setuptools==57.0.0
-sqlalchemy==1.4.18
+sqlalchemy==1.4.19
 tables==3.6.1
 toml==0.10.2
 websockets==9.1

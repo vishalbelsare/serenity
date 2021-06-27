@@ -23,18 +23,19 @@ from tau.event import Do
 from tau.signal import Function
 
 from serenity.app.base import Application
-from serenity.app.daemon import ZeroMQDaemon, AIODaemon
+from serenity.app.daemon import AIODaemon, ZeroMQPublisher
 from serenity.db.api import TypeCodeCache, InstrumentCache, connect_serenity_db
 from serenity.marketdata.api import MarketdataService, OrderBook, OrderBookSnapshot
 from serenity.marketdata.fh.txlog import TransactionLog
 from serenity.model.exchange import ExchangeInstrument
 from serenity.trading.api import Side
-from serenity.utils.metrics import HighPerformanceTimer
 
-capnp_path = Path(__file__).parent / 'serenity-fh.capnp'
+common_capnp_path = Path(__file__).parent / '../common.capnp'
+feedhandler_capnp_path = Path(__file__).parent / 'feedhandler.capnp'
 
 capnp.remove_import_hook()
-capnp_def = capnp.load(str(capnp_path))
+common_capnp = capnp.load(str(common_capnp_path))
+feedhandler_capnp = capnp.load(str(feedhandler_capnp_path))
 
 
 class FeedHandlerState(Enum):
@@ -135,20 +136,21 @@ class FeedHandler(ABC):
         pass
 
 
-class FeedHandlerDaemon(ZeroMQDaemon, ABC):
+class FeedHandlerDaemon(ZeroMQPublisher, ABC):
     """
     Base class for all new-style feedhandlers that run as daemons only
     and distribute data via ZeroMQ sockets.
     """
     def __init__(self, config_path: str):
         super().__init__(config_path)
-        self.pub_socket = self._bind_socket(zmq.PUB, 'publisher')
+        service_id = self._get_fully_qualified_service_id('publisher')
+        meta = {'protocol': 'ZMQ', 'feed': self.get_feed_code()}
+        self.pub_socket = self._bind_socket(zmq.PUB, 'feedhandler-publisher', service_id, tags=None, meta=meta)
 
         self.trade_counter = Counter('trade_counter',
                                      'Number of trade prints received by feedhandler')
         self.book_update_counter = Counter('book_update_counter',
                                            'Number of book updates received by feedhandler')
-        self.msg_pub_latency = Summary('msg_pub_latency_us', 'Marketdata message publication latency (us)')
 
     @abstractmethod
     def get_feed_code(self):
@@ -158,26 +160,28 @@ class FeedHandlerDaemon(ZeroMQDaemon, ABC):
                              price: Decimal, receipt_timestamp: float):
         self.trade_counter.inc()
 
-        msg = capnp_def.RawFeedTradeMessage.new_message()
-        msg.recvTime = receipt_timestamp
+        msg = feedhandler_capnp.TradeMessage.new_message()
+        msg.time = receipt_timestamp
         msg.exchTime = timestamp
-        msg.feedCode = self.get_feed_code()
-        msg.symbolCode = symbol
+        msg.symbol = common_capnp.Symbol.new_message()
+        msg.symbol.feedCode = self.get_feed_code()
+        msg.symbol.symbolCode = symbol
         msg.tradeId = trade_id
-        msg.side = capnp_def.Side.buy if side == 'buy' else capnp_def.Side.sell
+        msg.side = common_capnp.Side.buy if side == 'buy' else common_capnp.Side.sell
         msg.size = float(amount)
         msg.price = float(price)
 
-        self._publish_msg(f'{symbol}/trades', msg.to_segments())
+        asyncio.ensure_future(self._publish_msg('trades', msg.to_segments()))
 
     def _publish_book_delta(self, symbol: str, delta: dict, timestamp: float, receipt_timestamp: float):
         self.book_update_counter.inc()
 
-        msg = capnp_def.RawFeedBookDeltaMessage.new_message()
-        msg.recvTime = receipt_timestamp
+        msg = feedhandler_capnp.OrderBookDeltaMessage.new_message()
+        msg.time = receipt_timestamp
         msg.exchTime = timestamp
-        msg.feedCode = self.get_feed_code()
-        msg.symbolCode = symbol
+        msg.symbol = common_capnp.Symbol.new_message()
+        msg.symbol.feedCode = self.get_feed_code()
+        msg.symbol.symbolCode = symbol
 
         msg.init('bidDeltas', len(delta[BID]))
         FeedHandlerDaemon._to_price_levels(delta[BID], msg.bidDeltas)
@@ -185,16 +189,7 @@ class FeedHandlerDaemon(ZeroMQDaemon, ABC):
         msg.init('askDeltas', len(delta[ASK]))
         FeedHandlerDaemon._to_price_levels(delta[ASK], msg.askDeltas)
 
-        self._publish_msg(f'{symbol}/book_deltas', msg.to_segments())
-
-    def _publish_msg(self, topic: str, msg_segments: list):
-        with HighPerformanceTimer(self.msg_pub_latency.observe):
-            self.pub_socket.send(topic.encode('utf8'), zmq.SNDMORE)
-            for count, msg_segment in enumerate(msg_segments):
-                if count == len(msg_segments) - 1:
-                    self.pub_socket.send(msg_segment)
-                else:
-                    self.pub_socket.send(msg_segment, zmq.SNDMORE)
+        asyncio.ensure_future(self._publish_msg('book_deltas', msg.to_segments()))
 
     @staticmethod
     def _to_price_levels(level_tuples: list, price_levels: list):
@@ -209,10 +204,9 @@ class CryptofeedFeedHandler(FeedHandlerDaemon, ABC):
     """
     Base class for all feedhandlers that use cryptofeed to subscribe to market data.
     """
-    def __init__(self, config_path: str, enable_book_deltas: bool = True):
+    def __init__(self, config_path: str):
         super().__init__(config_path)
         self.cryptofeed = cryptofeed.FeedHandler()
-        self.enable_book_deltas = enable_book_deltas
 
     def run_forever(self):
         self.get_event_loop().call_soon(self.run)
@@ -461,10 +455,11 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 trade_counter.inc()
                 logger.info(trade)
 
-                trade_msg = capnp_def.TradeMessage.new_message()
+                trade_msg = feedhandler_capnp.TradeMessage.new_message()
                 trade_msg.time = datetime.utcnow().timestamp()
                 trade_msg.tradeId = trade.get_trade_id()
-                trade_msg.side = capnp_def.Side.buy if trade.get_side() == Side.BUY else capnp_def.Side.sell
+                trade_msg.side = feedhandler_capnp.Side.buy if trade.get_side() == Side.BUY \
+                    else feedhandler_capnp.Side.sell
                 trade_msg.size = trade.get_qty()
                 trade_msg.price = trade.get_price()
 
@@ -490,7 +485,7 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
                 def on_book_update(self, book: OrderBook):
                     book_update_counter.inc()
 
-                    book_msg = capnp_def.Level1BookUpdateMessage.new_message()
+                    book_msg = feedhandler_capnp.Level1BookUpdateMessage.new_message()
                     book_msg.time = datetime.utcnow().timestamp()
                     if len(book.get_bids()) > 0:
                         book_msg.bestBidQty = book.get_best_bid().get_qty()

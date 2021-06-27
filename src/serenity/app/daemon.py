@@ -9,15 +9,18 @@ from contextlib import closing
 import consul
 import zmq
 
+from zmq.asyncio import Context
+
 # noinspection PyPackageRequirements
 from consul import Check
 from flask import Flask
 
 # noinspection PyProtectedMember
-from prometheus_client import make_wsgi_app
+from prometheus_client import make_wsgi_app, Summary
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from serenity.app.base import Application
+from serenity.utils.metrics import HighPerformanceTimer
 
 
 class AIODaemon(Application):
@@ -69,18 +72,23 @@ class AIODaemon(Application):
         self.logger.info(f'\tHealth check: http://{host}:{port}/health')
 
         # register the service with Consul
-        self._register_service('http', port)
+        self._register_default_service('http', port)
 
         # register the health check with Consul
         http_check = Check.http(url=f'http://{host}:{port}/health', interval='1s')
         self.consul.agent.check.register(name=f'{self._get_fully_qualified_service_name("http")}/health_check',
                                          check=http_check, service_id=self._get_fully_qualified_service_id('http'))
 
-    def _register_service(self, service_name: str, port: int):
+    def _register_default_service(self, service_name: str, port: int):
+        fq_service_name = self._get_fully_qualified_service_name(service_name)
+        fq_service_id = self._get_fully_qualified_service_id(service_name)
+        self._register_service(service_name=fq_service_name, service_id=fq_service_id, port=port)
+
+    def _register_service(self, service_name: str, service_id: str, port: int, tags: list = None, meta: dict = None):
         host = self.get_config('networking', 'hostname')
-        self.consul.agent.service.register(name=self._get_fully_qualified_service_name(service_name),
-                                           service_id=self._get_fully_qualified_service_id(service_name),
-                                           address=host, port=port)
+        self.logger.debug(f'registering service={service_name}, service_id={service_id} on {host}:{port}')
+        self.consul.agent.service.register(name=service_name, service_id=service_id, address=host, port=port,
+                                           tags=tags, meta=meta)
 
     def _get_fully_qualified_service_name(self, service_name: str):
         return f'{self.get_service_name()}-{service_name}'
@@ -131,13 +139,46 @@ class ZeroMQDaemon(AIODaemon, ABC):
     """
     def __init__(self, config_path: str):
         super().__init__(config_path)
-        self.ctx = zmq.Context()
+        self.ctx = Context.instance()
 
-    def _bind_socket(self, socket_type: int, socket_name: str):
+    def _connect_sockets(self, socket_type: int, service_name: str, tag: str = None):
+        (index, services) = self.consul.catalog.service(service_name, tag=tag)
+        sockets = []
+        for service in services:
+            sock = self.ctx.socket(socket_type)
+            host = service['Address']
+            port = service['ServicePort']
+            tags = service['ServiceTags']
+            self.logger.debug(f'discovered {service_name} on {host}:{port}; tags={tags}')
+            sock.connect(f'tcp://{host}:{port}')
+            sockets.append(sock)
+        return sockets
+
+    def _bind_socket(self, socket_type: int, service_name: str,
+                     service_id: str, tags: list = None,
+                     meta: dict = None):
         sock = self.ctx.socket(socket_type)
 
         # noinspection PyUnresolvedReferences
         port = sock.bind_to_random_port('tcp://*', max_tries=100)
-        self._register_service(socket_name, port)
+        self._register_service(service_name, service_id, port, tags, meta)
 
         return sock
+
+
+class ZeroMQPublisher(ZeroMQDaemon, ABC):
+    def __init__(self, config_path: str):
+        super().__init__(config_path)
+        self.pub_socket = None
+        self.msg_pub_latency = Summary('msg_pub_latency_us', 'ZeroMQ message publication latency (us)')
+
+    async def _publish_msg(self, topic: str, msg_segments: list):
+        with HighPerformanceTimer(self.msg_pub_latency.observe):
+            await self.pub_socket.send(topic.encode('utf8'), zmq.SNDMORE)
+            for count, msg_segment in enumerate(msg_segments):
+                if count == len(msg_segments) - 1:
+                    await self.pub_socket.send(msg_segment)
+                else:
+                    await self.pub_socket.send(msg_segment, zmq.SNDMORE)
+
+
