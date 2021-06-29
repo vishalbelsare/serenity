@@ -11,16 +11,22 @@ from serenity.marketdata.fh.feedhandler import feedhandler_capnp
 class MarketdataDistributor(ZeroMQPublisher):
     def __init__(self, config_path: str):
         super().__init__(config_path)
-
-        # open a socket for downstream consumers
-        service_id = self._get_fully_qualified_service_id('publisher')
-        meta = {'protocol': 'ZMQ'}
-        self.pub_socket = self._bind_socket(zmq.PUB, 'marketdata-distributor-publisher', service_id, meta=meta)
-
         self.trade_counter = Counter('trade_republish_counter',
                                      'Number of trade prints distributed')
         self.book_delta_counter = Counter('book_delta_republish_counter',
                                           'Number of order book deltas distributed')
+
+    def get_service_id(self):
+        return 'serenity/marketdata/distributor'
+
+    def get_service_name(self):
+        return 'marketdata-distributor'
+
+    def start_services(self):
+        # open a socket for downstream consumers
+        service_id = self._get_fully_qualified_service_id('publisher')
+        meta = {'protocol': 'ZMQ'}
+        self.pub_socket = self._bind_socket(zmq.PUB, 'marketdata-distributor-publisher', service_id, meta=meta)
 
         # discover all feedhandlers in the registry and subscribe to their feeds
         fh_sockets = self._connect_sockets(zmq.SUB, 'feedhandler-publisher')
@@ -28,12 +34,6 @@ class MarketdataDistributor(ZeroMQPublisher):
             fh_socket.setsockopt(zmq.SUBSCRIBE, b'trades')
             fh_socket.setsockopt(zmq.SUBSCRIBE, b'book_deltas')
             asyncio.ensure_future(self._distribute_messages(fh_socket))
-
-    def get_service_id(self):
-        return 'serenity/marketdata/distributor'
-
-    def get_service_name(self):
-        return 'marketdata-distributor'
 
     async def _distribute_messages(self, sock):
         while True:

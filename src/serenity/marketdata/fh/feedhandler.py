@@ -143,10 +143,6 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
     """
     def __init__(self, config_path: str):
         super().__init__(config_path)
-        service_id = self._get_fully_qualified_service_id('publisher')
-        meta = {'protocol': 'ZMQ', 'feed': self.get_feed_code()}
-        self.pub_socket = self._bind_socket(zmq.PUB, 'feedhandler-publisher', service_id, tags=None, meta=meta)
-
         self.trade_counter = Counter('trade_counter',
                                      'Number of trade prints received by feedhandler')
         self.book_update_counter = Counter('book_update_counter',
@@ -155,6 +151,11 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
     @abstractmethod
     def get_feed_code(self):
         pass
+
+    def start_services(self):
+        service_id = self._get_fully_qualified_service_id('publisher')
+        meta = {'protocol': 'ZMQ', 'feed': self.get_feed_code()}
+        self.pub_socket = self._bind_socket(zmq.PUB, 'feedhandler-publisher', service_id, tags=None, meta=meta)
 
     def _publish_trade_print(self, symbol: str, trade_id: str, timestamp: float, side: str, amount: Decimal,
                              price: Decimal, receipt_timestamp: float):
@@ -208,11 +209,8 @@ class CryptofeedFeedHandler(FeedHandlerDaemon, ABC):
         super().__init__(config_path)
         self.cryptofeed = cryptofeed.FeedHandler()
 
-    def run_forever(self):
-        self.get_event_loop().call_soon(self.run)
-        super().run_forever()
-
-    def run(self):
+    def start_services(self):
+        super().start_services()
         self._subscribe(self.cryptofeed)
         self.cryptofeed.run(start_loop=False)
 
