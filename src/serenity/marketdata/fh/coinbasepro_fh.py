@@ -14,7 +14,7 @@ class CoinbaseProFeedHandler(CryptofeedFeedHandler):
         return 'serenity/feedhandlers/coinbasepro'
 
     def get_service_name(self):
-        return 'coinbasepro-fh'
+        return 'feedhandler'
 
     def get_feed_code(self):
         return 'COINBASE_PRO'

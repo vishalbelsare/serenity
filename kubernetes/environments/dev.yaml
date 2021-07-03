@@ -1,6 +1,7 @@
 env: dev
 behemoth_mount_dir: /var/db/behemoth
 timescaledb_mount_dir: /var/db/timescaledb
+victoriametrics_mount_dir: /var/db/victoriametrics
 luigi_mount_dir: /var/db/luigi
 serenity_image: localhost:5000/cloudwallcapital/serenity:latest
 timescaledb_image: timescale/timescaledb:latest-pg12-oss

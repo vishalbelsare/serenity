@@ -13,7 +13,7 @@ class GeminiFeedHandler(CryptofeedFeedHandler):
         return 'serenity/feedhandlers/gemini'
 
     def get_service_name(self):
-        return 'gemini-fh'
+        return 'feedhandler'
 
     def get_feed_code(self):
         return 'GEMINI'

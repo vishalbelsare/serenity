@@ -1,6 +1,7 @@
 env: prod
 behemoth_mount_dir: /mnt/raid/data/behemoth
 timescaledb_mount_dir: /mnt/raid/data/timescaledb
+victoriametrics_mount_dir: /mnt/raid/data/victoriametrics
 luigi_mount_dir: /mnt/raid/data/luigi
 serenity_image: cloudwallcapital/serenity:stable
 timescaledb_image: timescale/timescaledb:latest-pg12-oss

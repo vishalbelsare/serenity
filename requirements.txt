@@ -35,7 +35,7 @@ pyzmq==22.1.0
 requests==2.25.1
 scipy==1.7.0
 setuptools==57.0.0
-sqlalchemy==1.4.19
+sqlalchemy==1.4.20
 tables==3.6.1
 toml==0.10.2
 websockets==9.1

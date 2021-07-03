@@ -21,14 +21,27 @@ class Deployer:
         config_file = open(Deployer._local_path(f'environments/{self.env}.yaml'), 'r')
         self.config = yaml.safe_load(config_file)
 
-    @staticmethod
-    def helm_install(app: str, chart: str, overlay_values: str = None, extra_args: list = None):
+    def helm_install(self, app: str, chart: str, overlay_values: str = None, extra_args: list = None):
         cmd = ['helm', 'install', app, chart]
         if overlay_values is not None:
-            cmd.extend(['-f', Deployer._local_path(overlay_values)])
-        if extra_args is not None:
-            cmd.extend(extra_args)
-        Deployer._run_command(cmd)
+            if overlay_values.endswith('.jinja2'):
+                # a bit ugly: reverse out to get back the relative path
+                # for Jinja2 template resolution
+                rel_path = path.relpath(overlay_values, path.dirname(__file__))
+                yaml_tmpl = self.tmpl_env.get_template(rel_path)
+                generated_yaml_txt = yaml_tmpl.render(self.config)
+                with tempfile.NamedTemporaryFile() as tmp:
+                    tmp.write(generated_yaml_txt.encode('utf-8'))
+                    tmp.flush()
+                    if extra_args is not None:
+                        cmd.extend(extra_args)
+                    Deployer._run_command(cmd)
+                    cmd.extend(['-f', tmp.name])
+            else:
+                cmd.extend(['-f', Deployer._local_path(overlay_values)])
+                if extra_args is not None:
+                    cmd.extend(extra_args)
+                Deployer._run_command(cmd)
 
     def kube_install(self, yaml_path: str, namespace: str = None):
         if self.env == 'dev':
@@ -83,8 +96,15 @@ def install_serenity(env: str = 'dev', components: list = ['core', 'db', 'infra'
     deployer = Deployer(env)
 
     # install Helm charts for infrastructure
-    deployer.helm_install('consul', 'hashicorp/consul', f'consul/{env}-config.yaml',
-                          ['--set', 'global.name=consul'])
+    if 'infra' in component_set:
+        deployer.helm_install('consul', 'hashicorp/consul', f'consul/consul-helm-values.yaml.jinja2',
+                              ['--set', 'global.name=consul'])
+        deployer.helm_install('victoria-metrics', 'vm/victoria-metrics-cluster', f'telemetry/vm-helm-values.yaml.jinja2')
+        deployer.helm_install('prometheus', 'prometheus-community/prometheus',
+                              f'telemetry/prometheus-helm-values.yaml')
+        deployer.helm_install('alertmanager', 'prometheus-community/alertmanager',
+                              f'telemetry/alertmanager-helm-values.yaml')
+        deployer.helm_install('grafana', 'grafana/grafana', f'telemetry/grafana-helm-values.yaml')
 
     # install requested Kubernetes objects
     if 'core' in component_set:
@@ -92,9 +112,6 @@ def install_serenity(env: str = 'dev', components: list = ['core', 'db', 'infra'
 
     if 'db' in component_set:
         deployer.deploy_all('db')
-
-    if 'infra' in component_set:
-        deployer.deploy_all('logging')
 
     if 'strategies' in component_set:
         deployer.deploy_all('strategies')

@@ -78,7 +78,7 @@ class AIODaemon(Application):
     # noinspection HttpUrlsUsage
     def _start_http_server(self):
         app = Flask(self.get_service_id())
-        http_service_id = self._get_fully_qualified_service_id('http')
+        http_service_id = self.get_service_id()
 
         # Add prometheus wsgi middleware to route /metrics requests
         app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
@@ -95,15 +95,10 @@ class AIODaemon(Application):
         self.logger.info(f'\tHealth check: http://{self.http_host}:{self.http_port}/health')
 
         # register the service with Consul
-        self._register_default_service('http', self.http_port)
+        self._register_service(self.get_service_name(), self.get_service_id(), self.http_port)
 
         # register the health check with Consul
         self._register_health_check(http_service_id)
-
-    def _register_default_service(self, service_name: str, port: int):
-        fq_service_name = self._get_fully_qualified_service_name(service_name)
-        fq_service_id = self._get_fully_qualified_service_id(service_name)
-        self._register_service(service_name=fq_service_name, service_id=fq_service_id, port=port)
 
     def _register_service(self, service_name: str, service_id: str, port: int, tags: list = None, meta: dict = None):
         host = self.get_config('networking', 'hostname')

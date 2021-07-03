@@ -58,6 +58,20 @@ else
     echo "Consul is installed"
 fi
 
+if [ ! -x /usr/local/bin/prometheus ]; then
+    echo "installing Prometheus via Homebrew"
+    brew install prometheus
+else
+    echo "Prometheus is installed"
+fi
+
+if [ ! -x /usr/local/bin/grafana-server ]; then
+    echo "installing Grafana via Homebrew"
+    brew install grafana
+else
+    echo "Grafana is installed"
+fi
+
 if [ ! -x /usr/local/bin/vault ]; then
     echo "installing Vault via Homebrew"
     brew install vault
@@ -72,7 +86,11 @@ else
     echo "Vault is installed"
 fi
 
-# ensure Helm can be used to deploy Consul and Vault to Kubernetes
+# set up Helm repositories
 helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo add vm https://victoriametrics.github.io/helm-charts/
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
 
 echo "Ready to go!"
