@@ -22,6 +22,7 @@ pandas_market_calendars==2.0
 phemex==0.3.0
 prometheus-client==0.11.0
 pycapnp==1.1.0
+psutil==5.8.0
 psycopg2-binary==2.9.1
 py-consul==1.2.3
 pyarrow==4.0.1

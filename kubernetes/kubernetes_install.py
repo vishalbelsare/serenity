@@ -35,8 +35,8 @@ class Deployer:
                     tmp.flush()
                     if extra_args is not None:
                         cmd.extend(extra_args)
-                    Deployer._run_command(cmd)
                     cmd.extend(['-f', tmp.name])
+                    Deployer._run_command(cmd)
             else:
                 cmd.extend(['-f', Deployer._local_path(overlay_values)])
                 if extra_args is not None:
