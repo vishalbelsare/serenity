@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+    - targets: ["localhost:9090"]
+  - job_name: "serenity"
+    scrape_interval: 15s
+    honor_labels: true
+    consul_sd_configs:
+    - server: localhost:8500
+      services: [feedhandler, marketdata-distributor, marketdata-recorder, ohlcv-publisher]
+    relabel_configs:
+    - source_labels: ['__meta_consul_service']
+      target_label:  'service_name'
+    - source_labels: ['__meta_consul_service_id']
+      target_label:  'service_id'
+    - source_labels: ['__meta_consul_health']
+      target_label:  'service_health'
+    - source_labels: ['__meta_consul_dc']
+      target_label:  'datacenter'
+    - source_labels: ['__meta_consul_node']
+      target_label:  'node'

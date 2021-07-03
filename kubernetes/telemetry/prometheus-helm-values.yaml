@@ -1701,12 +1701,23 @@ serverFiles:
 # must be a string so you have to add a | after extraScrapeConfigs:
 # example adds prometheus-blackbox-exporter scrape config
 extraScrapeConfigs: |
-   - job_name: 'serenity-exporter'
-     scrape_interval: 15s
-     honor_labels: true
-     consul_sd_configs:
-     - server: localhost:8500
-       services: [serenity-exporter]
+  - job_name: "serenity"
+    scrape_interval: 15s
+    honor_labels: true
+    consul_sd_configs:
+    - server: localhost:8500
+      services: [feedhandler, marketdata-distributor, marketdata-recorder, ohlcv-publisher]
+    relabel_configs:
+    - source_labels: ['__meta_consul_service']
+      target_label:  'service_name'
+    - source_labels: ['__meta_consul_service_id']
+      target_label:  'service_id'
+    - source_labels: ['__meta_consul_health']
+      target_label:  'service_health'
+    - source_labels: ['__meta_consul_dc']
+      target_label:  'datacenter'
+    - source_labels: ['__meta_consul_node']
+      target_label:  'node'
 
 # Adds option to add alert_relabel_configs to avoid duplicate alerts in alertmanager
 # useful in H/A prometheus with different external labels but the same alerts

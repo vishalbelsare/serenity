@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 declare xcode_select_installed=$(xcode-select --install 2>&1 | grep "command line tools are already installed")
 if [ -z "$xcode_select_installed" ]; then
   echo "Installing xcode-select"
@@ -61,6 +62,8 @@ fi
 if [ ! -x /usr/local/bin/prometheus ]; then
     echo "installing Prometheus via Homebrew"
     brew install prometheus
+    cp "${script_dir}/../etc/prometheus.yml" /usr/local/etc/prometheus.yml
+    brew services start prometheus
 else
     echo "Prometheus is installed"
 fi
@@ -68,6 +71,7 @@ fi
 if [ ! -x /usr/local/bin/grafana-server ]; then
     echo "installing Grafana via Homebrew"
     brew install grafana
+    brew services start grafana
 else
     echo "Grafana is installed"
 fi
