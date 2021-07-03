@@ -18,17 +18,15 @@ spec:
         - name: coinbasepro-fh
           image: {{ serenity_image }}
           command: ["/app/venv-py3/bin/python"]
-          args: ["serenity/marketdata/fh/coinbasepro_fh.py"]
+          args: ["serenity/marketdata/fh/coinbasepro_fh.py", "--config_path", "/etc/config/environments/{{ env }}/feedhandlers/coinbasepro_fh.cfg"]
           env:
-            - name: POSTGRES_SERENITY_PASSWORD
+            - name: FLASK_ENV
+              value: development
+            - name: POD_IP
               valueFrom:
-                secretKeyRef:
-                  name: database-secret-config
-                  key: serenity-password
-          volumeMounts:
-            - mountPath: /behemoth
-              name: behemoth 
-      volumes:
-        - name: behemoth
-          persistentVolumeClaim:
-            claimName: behemoth-pv-claim
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
