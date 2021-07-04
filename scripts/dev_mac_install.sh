@@ -38,11 +38,13 @@ else
 fi
 
 
-if [ ! -x /usr/local/bin/ansible ]; then
-    echo "installing Ansible via Homebrew"
-    brew install ansible
+if [ ! -x /usr/local/bin/minikube ]; then
+    echo "installing Minikube (requires sudo)"
+    curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64
+    sudo install minikube-darwin-amd64 /usr/local/bin/minikube
+    minikube start
 else
-    echo "Ansible is installed"
+    echo "Minikube is installed"
 fi
 
 if [ ! -x /usr/local/bin/helm ]; then

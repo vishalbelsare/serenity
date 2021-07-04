@@ -1,6 +1,7 @@
 import glob
 import subprocess
 import tempfile
+import time
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from os import path
@@ -8,6 +9,7 @@ from os import path
 import fire
 
 import yaml
+from mergedeep import mergedeep
 
 
 class Deployer:
@@ -62,14 +64,18 @@ class Deployer:
         for input_path in input_paths:
             self.deploy(input_path)
 
-    def deploy(self, input_path: str):
+    def deploy(self, input_path: str, extra_vars: dict = None):
         print(f'processing {input_path}')
         if input_path.endswith('.jinja2'):
             # a bit ugly: reverse out to get back the relative path
             # for Jinja2 template resolution
             rel_path = path.relpath(input_path, path.dirname(__file__))
             yaml_tmpl = self.tmpl_env.get_template(rel_path)
-            generated_yaml_txt = yaml_tmpl.render(self.config)
+
+            tmpl_vars = self.config
+            if extra_vars is not None:
+                mergedeep.merge(tmpl_vars, extra_vars)
+            generated_yaml_txt = yaml_tmpl.render(tmpl_vars)
             with tempfile.NamedTemporaryFile() as tmp:
                 tmp.write(generated_yaml_txt.encode('utf-8'))
                 tmp.flush()
@@ -99,6 +105,13 @@ def install_serenity(env: str = 'dev', components: list = ['core', 'db', 'infra'
     if 'infra' in component_set:
         deployer.helm_install('consul', 'hashicorp/consul', f'consul/consul-helm-values.yaml.jinja2',
                               ['--set', 'global.name=consul'])
+        print('waiting for Consul to come up')
+        time.sleep(5)
+        get_svc = subprocess.Popen(['kubectl', 'get', 'svc', 'consul-dns', '-o', 'jsonpath="{.spec.clusterIP}"'],
+                                   stdout=subprocess.PIPE)
+        extra_vars = {'consul_dns_ip': get_svc.stdout.read().decode('utf8').replace('"', '')}
+        print(f'got Consul DNS IP: {extra_vars["consul_dns_ip"]}')
+        deployer.deploy('consul/consul-dns-configmap.yaml.jinja2', extra_vars)
         deployer.helm_install('victoria-metrics', 'vm/victoria-metrics-cluster', f'telemetry/vm-helm-values.yaml.jinja2')
         deployer.helm_install('prometheus', 'prometheus-community/prometheus',
                               f'telemetry/prometheus-helm-values.yaml')

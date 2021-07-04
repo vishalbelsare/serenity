@@ -1705,7 +1705,7 @@ extraScrapeConfigs: |
     scrape_interval: 15s
     honor_labels: true
     consul_sd_configs:
-    - server: localhost:8500
+    - server: consul.service.consul:8500
       services: [feedhandler, marketdata-distributor, marketdata-recorder, ohlcv-publisher]
     relabel_configs:
     - source_labels: ['__meta_consul_service']
