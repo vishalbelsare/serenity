@@ -17,7 +17,7 @@ from cryptofeed.callback import TradeCallback, BookUpdateCallback
 from cryptofeed.defines import TRADES, BOOK_DELTA, L2_BOOK, BID, ASK
 
 # noinspection PyProtectedMember
-from prometheus_client import start_http_server, Counter, Summary
+from prometheus_client import start_http_server, Counter
 from tau.core import Signal, MutableSignal, NetworkScheduler, Event, Network, RealtimeNetworkScheduler
 from tau.event import Do
 from tau.signal import Function
@@ -155,7 +155,7 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
     def start_services(self):
         service_id = self._get_fully_qualified_service_id('publisher')
         meta = {'protocol': 'ZMQ', 'feed': self.get_feed_code()}
-        self.pub_socket =  self._bind_socket(zmq.PUB, 'feedhandler-publisher', service_id, tags=None, meta=meta)
+        self.pub_socket = self._bind_socket(zmq.PUB, 'feedhandler-publisher', service_id, tags=None, meta=meta)
 
     def _publish_trade_print(self, symbol: str, trade_id: str, timestamp: float, side: str, amount: Decimal,
                              price: Decimal, receipt_timestamp: float):
