@@ -35,9 +35,10 @@ pyyaml==5.4.1
 pyzmq==22.1.0
 requests==2.25.1
 scipy==1.7.0
-setuptools==57.0.0
+setuptools==57.1.0
 sqlalchemy==1.4.20
 tables==3.6.1
 toml==0.10.2
+uvloop==0.15.2
 websockets==9.1
-yfinance==0.1.59
+yfinance==0.1.60

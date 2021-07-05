@@ -33,6 +33,7 @@ class GeminiFeedHandler(CryptofeedFeedHandler):
         # Issue reported here: https://github.com/bmoscon/cryptofeed/issues/531
         symbols.remove('BTC-GUSD')
         symbols.remove('ETH-GUSD')
+        symbols.remove('GUSD-USD')
 
         return symbols
 

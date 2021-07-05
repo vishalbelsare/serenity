@@ -1,6 +1,7 @@
 import asyncio
 import socket
 import threading
+import uvloop
 
 from abc import abstractmethod, ABC
 from collections import defaultdict
@@ -45,8 +46,8 @@ class AIODaemon(Application):
 
     def __init__(self, config_path: str):
         super().__init__(config_path)
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
         self.event_loop = asyncio.get_event_loop()
-        self.get_event_loop().set_exception_handler(AIODaemon._custom_asyncio_error_handler)
 
         consul_agent_host = self.get_config('consul', 'consul_agent_host', 'localhost')
         consul_agent_port = self.get_config('consul', 'consul_agent_port', '8500')
@@ -130,14 +131,6 @@ class AIODaemon(Application):
             s.bind(('', 0))
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             return s.getsockname()[1]
-
-    @staticmethod
-    def _custom_asyncio_error_handler(loop, context):
-        # first, handle with default handler
-        loop.default_exception_handler(context)
-
-        # force shutdown
-        loop.stop()
 
     def _create_health_wsgi_app(self, http_service_id):
         def health_app(environ, start_response):

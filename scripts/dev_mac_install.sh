@@ -89,7 +89,15 @@ if [ ! -x /usr/local/bin/flake8 ]; then
     echo "installing flake8 via pip3"
     pip3 install flake8
 else
-    echo "Vault is installed"
+    echo "flake8 is installed"
+fi
+
+if [ ! -x /usr/local/lib/libhdf5.dylib ]; then
+    echo "installing HDF5 libraries via Brew"
+    brew install hdf5
+    brew install c-blosc
+else
+    echo "HDF5 is installed"
 fi
 
 # set up Helm repositories
