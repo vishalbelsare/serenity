@@ -1,6 +1,10 @@
 import asyncio
 import socket
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+import psutil
 import uvloop
 
 from abc import abstractmethod, ABC
@@ -18,7 +22,7 @@ from consul import Check
 from flask import Flask
 
 # noinspection PyProtectedMember
-from prometheus_client import make_wsgi_app, Summary, Counter
+from prometheus_client import make_wsgi_app, Summary, Counter, Gauge
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from zmq.utils.monitor import parse_monitor_message
 
@@ -48,6 +52,7 @@ class AIODaemon(Application):
         super().__init__(config_path)
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
         self.event_loop = asyncio.get_event_loop()
+        self.proc = psutil.Process()
 
         consul_agent_host = self.get_config('consul', 'consul_agent_host', 'localhost')
         consul_agent_port = self.get_config('consul', 'consul_agent_port', '8500')
@@ -57,6 +62,9 @@ class AIODaemon(Application):
 
         self.http_host = None
         self.http_port = None
+
+        self.mem_usage_uss = Gauge('proc_mem_uss', 'Process memory size (uss, bytes)')
+        self.cpu_usage = Gauge('proc_cpu', 'Process CPU usage (%)')
 
     def get_service_id(self):
         return self.get_service_name()
@@ -77,6 +85,8 @@ class AIODaemon(Application):
 
     def run_forever(self):
         self._start_http_server()
+        executor = ThreadPoolExecutor()
+        self.event_loop.run_in_executor(executor, self._monitor_process)
         self.get_event_loop().call_soon(self.start_services)
         self.get_event_loop().run_forever()
 
@@ -155,6 +165,13 @@ class AIODaemon(Application):
             return [output]
 
         return health_app
+
+    def _monitor_process(self):
+        while True:
+            mem_info = self.proc.memory_full_info()
+            self.mem_usage_uss.set(mem_info.uss)
+            self.cpu_usage.set(self.proc.cpu_percent())
+            time.sleep(1)
 
 
 class ZeroMQDaemon(AIODaemon, ABC):
