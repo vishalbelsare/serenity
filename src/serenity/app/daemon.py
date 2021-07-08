@@ -262,15 +262,22 @@ class ZeroMQPublisher(ZeroMQDaemon, ABC):
         super().__init__(config_path)
         self.pub_socket = None
         self.msg_pub_latency = Summary('msg_pub_latency_us', 'ZeroMQ message publication latency (us)')
+        self.msg_pub_bytes = Counter('msg_pub_bytes', 'ZeroMQ message traffic - total bytes')
 
     async def _publish_msg(self, topic: str, msg_segments: list):
         with HighPerformanceTimer(self.msg_pub_latency.observe):
-            await self.pub_socket.send(topic.encode('utf8'), zmq.SNDMORE)
+            topic_bytes = topic.encode('utf8')
+            total_bytes = len(topic_bytes)
+            await self.pub_socket.send(topic_bytes, zmq.SNDMORE)
             for count, msg_segment in enumerate(msg_segments):
                 if count == len(msg_segments) - 1:
                     await self.pub_socket.send(msg_segment)
+                    total_bytes += len(msg_segment)
                 else:
                     await self.pub_socket.send(msg_segment, zmq.SNDMORE)
+                    total_bytes += len(msg_segment)
+
+        self.msg_pub_bytes.inc(total_bytes)
 
 
 class KeyDefaultDict(defaultdict):
