@@ -23,7 +23,7 @@ from tau.event import Do
 from tau.signal import Function
 
 from serenity.app.base import Application
-from serenity.app.daemon import AIODaemon, ZeroMQPublisher
+from serenity.app.daemon import ZeroMQPublisher
 from serenity.db.api import TypeCodeCache, InstrumentCache, connect_serenity_db
 from serenity.marketdata.api import MarketdataService, OrderBook, OrderBookSnapshot
 from serenity.marketdata.fh.txlog import TransactionLog
@@ -510,10 +510,6 @@ def ws_fh_main(create_fh, uri_scheme: str, instance_id: str, journal_path: str, 
 
     # async start the feedhandler
     asyncio.ensure_future(fh.start())
-
-    # crash out on any exception
-    # noinspection PyProtectedMember
-    asyncio.get_event_loop().set_exception_handler(AIODaemon._custom_asyncio_error_handler)
 
     # go!
     asyncio.get_event_loop().run_forever()
