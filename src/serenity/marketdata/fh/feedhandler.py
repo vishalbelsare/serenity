@@ -172,7 +172,7 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
         msg.size = float(amount)
         msg.price = float(price)
 
-        asyncio.ensure_future(self._publish_msg('trades', msg.to_segments()))
+        asyncio.ensure_future(self._publish_msg('trades', msg.to_bytes_packed()))
 
     def _publish_book_delta(self, symbol: str, delta: dict, timestamp: float, receipt_timestamp: float):
         self.book_update_counter.inc()
@@ -190,7 +190,7 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
         msg.init('askDeltas', len(delta[ASK]))
         FeedHandlerDaemon._to_price_levels(delta[ASK], msg.askDeltas)
 
-        asyncio.ensure_future(self._publish_msg('book_deltas', msg.to_segments()))
+        asyncio.ensure_future(self._publish_msg('book_deltas', msg.to_bytes_packed()))
 
     @staticmethod
     def _to_price_levels(level_tuples: list, price_levels: list):

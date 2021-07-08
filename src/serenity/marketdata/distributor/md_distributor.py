@@ -1,6 +1,7 @@
 import asyncio
 
 import fire
+import snappy
 import zmq
 from prometheus_client import Counter
 
@@ -39,16 +40,16 @@ class MarketdataDistributor(ZeroMQPublisher):
         while True:
             msg_received = await sock.recv_multipart()
             topic = msg_received[0]
-            segments = msg_received[1:]
+            msg_bytes = snappy.decompress(msg_received[1])
             if topic == b'trades':
-                trade = feedhandler_capnp.TradeMessage.from_segments(segments)
+                trade = feedhandler_capnp.TradeMessage.from_bytes_packed(msg_bytes)
                 topic = f'trades/{trade.symbol.feedCode}/{trade.symbol.symbolCode}'
-                await self._publish_msg(topic, segments)
+                await self._publish_msg(topic, msg_bytes)
                 self.trade_counter.inc()
             elif topic == b'book_deltas':
-                delta = feedhandler_capnp.OrderBookDeltaMessage.from_segments(segments)
+                delta = feedhandler_capnp.OrderBookDeltaMessage.from_bytes_packed(msg_bytes)
                 topic = f'book_deltas/{delta.symbol.feedCode}/{delta.symbol.symbolCode}'
-                await self._publish_msg(topic, segments)
+                await self._publish_msg(topic, msg_bytes)
                 self.book_delta_counter.inc()
             else:
                 raise ValueError(f'unknown topic: {topic}')
