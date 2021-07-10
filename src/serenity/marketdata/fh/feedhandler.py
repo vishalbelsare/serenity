@@ -159,8 +159,6 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
 
     def _publish_trade_print(self, symbol: str, trade_id: str, timestamp: float, side: str, amount: Decimal,
                              price: Decimal, receipt_timestamp: float):
-        self.trade_counter.inc()
-
         msg = feedhandler_capnp.TradeMessage.new_message()
         msg.time = receipt_timestamp
         msg.exchTime = timestamp
@@ -174,9 +172,9 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
 
         asyncio.ensure_future(self._publish_msg('trades', msg.to_bytes_packed()))
 
-    def _publish_book_delta(self, symbol: str, delta: dict, timestamp: float, receipt_timestamp: float):
-        self.book_update_counter.inc()
+        self.trade_counter.inc()
 
+    def _publish_book_delta(self, symbol: str, delta: dict, timestamp: float, receipt_timestamp: float):
         msg = feedhandler_capnp.OrderBookDeltaMessage.new_message()
         msg.time = receipt_timestamp
         msg.exchTime = timestamp
@@ -191,6 +189,8 @@ class FeedHandlerDaemon(ZeroMQPublisher, ABC):
         FeedHandlerDaemon._to_price_levels(delta[ASK], msg.askDeltas)
 
         asyncio.ensure_future(self._publish_msg('book_deltas', msg.to_bytes_packed()))
+
+        self.book_update_counter.inc()
 
     @staticmethod
     def _to_price_levels(level_tuples: list, price_levels: list):
