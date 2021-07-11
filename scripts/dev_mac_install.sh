@@ -23,6 +23,14 @@ else
     echo "Homebrew is installed"
 fi
 
+if [ ! -x /usr/local/bin/python3.8 ]; then
+    echo "installing Python 3.8"
+    brew install python@3.8
+    brew link --overwrite python@3.8
+else
+    echo "Python 3.8 is installed"
+fi
+
 if [ ! -x /usr/local/bin/timescaledb_move.sh ]; then
     echo "installing TimescaleDB"
     brew tap timescale/tap
@@ -87,18 +95,25 @@ fi
 
 if [ ! -x /usr/local/bin/flake8 ]; then
     echo "installing flake8 via pip3"
-    pip3 install flake8
+    /usr/local/bin/pip3 install flake8
 else
     echo "flake8 is installed"
 fi
 
-if [ ! -x /usr/local/lib/libhdf5.dylib ]; then
+if [ ! -e /usr/local/lib/libhdf5.dylib ]; then
     echo "installing HDF5 libraries via Brew"
     brew install hdf5
     brew install c-blosc
 else
     echo "HDF5 is installed"
 fi
+
+if [ ! -x "${script_dir}/../venv/bin/python3" ]; then
+    echo "creating initial virtual environment for Serneity"
+    virtualenv venv --python=/usr/local/bin/python3
+fi
+"${script_dir}/../venv/bin/pip" install --upgrade pip
+"${script_dir}/../venv/bin/pip" install -r "$script_dir/../requirements.txt"
 
 # set up Helm repositories
 helm repo add hashicorp https://helm.releases.hashicorp.com
