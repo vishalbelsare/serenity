@@ -112,7 +112,6 @@ def install_serenity(env: str = 'dev', components: list = ['core', 'db', 'infra'
         extra_vars = {'consul_dns_ip': get_svc.stdout.read().decode('utf8').replace('"', '')}
         print(f'got Consul DNS IP: {extra_vars["consul_dns_ip"]}')
         deployer.deploy('consul/consul-dns-configmap.yaml.jinja2', extra_vars)
-        deployer.helm_install('victoria-metrics', 'vm/victoria-metrics-cluster', f'telemetry/vm-helm-values.yaml.jinja2')
         deployer.helm_install('prometheus', 'prometheus-community/prometheus',
                               f'telemetry/prometheus-helm-values.yaml')
         deployer.helm_install('alertmanager', 'prometheus-community/alertmanager',
