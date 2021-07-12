@@ -6,8 +6,7 @@ Serenity
 
 Serenity is a Python 3.x-based, open source trading system. It supports both tick-by-tick style reactive programming
 and a more traditional strategy authoring approach that's more oriented toward investment strategies with longer time
-horizons. You can use it for either cryptocurrency trading (live & backtest) or equity trading (backtest only at
-this time).
+horizons. At this time only cryptocurrency exchanges and marketdata are supported.
 
 .. toctree::
    :maxdepth: 2

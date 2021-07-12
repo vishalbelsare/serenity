@@ -21,10 +21,6 @@ you are interested in cryptocurrency trading this is the place to start.
 will be replaced by sqlalchemy in the 0.10.x release, plus a helper script
 for backfilling reference data from different exchanges. This needs a lot of work.
 
-:py:mod:`serenity.equity` contains a complete batch pipeline and object model for the
-`Sharadar <http://sharadar.com>`_ equity research database on `Quandl <http://quandl.com>`_. If you
-are interested in equity trading this is a good place to start.
-
 :py:mod:`serenity.exchange` contains utilities for integrating with different exchanges. Right now
 only `Phemex <http://phemex.com/>`_ has code here.
 
@@ -52,9 +48,8 @@ of work that could be done here to create a unit-tested library of TA algorithms
 be merged with it in 0.10.x when we switch to sqlalchemy.
 
 :py:mod:`serenity.strategy` integrates Tau with a higher-level API for close-on-close
-investment strategies, with an emphasis on equity trading strategies. Currently this package
-has a dependency on Sharadar, but it should be possible to integrate free resources like
-Yahoo Finance's API.
+investment strategies. This is eventually going to be merged with the tick-by-tick
+backtester so they share more common code.
 
 :py:mod:`serenity.tax` has a script for generating a TurboTax export file for taxes plus
 several other scripts from backfilling trade data from different exchanges. This is very

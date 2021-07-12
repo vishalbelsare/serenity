@@ -25,10 +25,6 @@ Next, load the following files:
 * ``sql/serenitydb_schema.sql``
 * ``sql/serenitydb_grants.sql``
 
-Plus, optionally (for equity trading support with Sharadar subscription):
-
-* ``sql/sharadar_schema.sql``
-
 Be sure to change the passwords in ``serenitydb_install.sql`` and ``sharadar_schema.sql``!
 
 Refdata install

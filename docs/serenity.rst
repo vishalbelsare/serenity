@@ -11,7 +11,6 @@ Subpackages
    serenity.analytics
    serenity.booker
    serenity.db
-   serenity.equity
    serenity.exchange
    serenity.marketdata
    serenity.model
